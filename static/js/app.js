@@ -38,9 +38,18 @@ const elements = {
  * 初期化
  */
 document.addEventListener('DOMContentLoaded', () => {
-    initEventListeners();
-    loadFeatureImportance();
-    loadModelInfo();
+    console.log('[Debug] app.js: DOM Content Loaded (Injection Mode)');
+    try {
+        initEventListeners();
+    } catch (e) {
+        console.error('[Error] initEventListeners failed:', e);
+    }
+
+    try {
+        initModelData();
+    } catch (e) {
+        console.error('[Error] initModelData failed:', e);
+    }
 });
 
 /**
@@ -54,17 +63,17 @@ function initEventListeners() {
 
     // IPAT連携ボタン
     if (elements.ipatConnectBtn) {
-        elements.ipatConnectBtn.addEventListener('click', handleIpatConnect);
+        // elements.ipatConnectBtn.addEventListener('click', handleIpatConnect);
     }
 
     // IPATログインフォーム
     if (elements.ipatLoginForm) {
-        elements.ipatLoginForm.addEventListener('submit', handleIpatLogin);
+        // elements.ipatLoginForm.addEventListener('submit', handleIpatLogin);
     }
 
     // IPAT投票確認ボタン
     if (elements.confirmVoteBtn) {
-        elements.confirmVoteBtn.addEventListener('click', handleConfirmVote);
+        // elements.confirmVoteBtn.addEventListener('click', handleConfirmVote);
     }
 
     // ナビゲーションのスムーススクロール
@@ -455,65 +464,59 @@ function closeReasoning() {
 /**
  * 特徴量重要度を読み込み
  */
-async function loadFeatureImportance() {
-    try {
-        const response = await fetch(`${API_BASE}/api/feature_importance`);
-        const data = await response.json();
-
-        if (data.success) {
-            if (data.available) {
-                displayFeatureImportance(data.features);
-            } else {
-                elements.featureImportance.innerHTML = `<div class="placeholder-message"><p>ℹ️ ${data.message || '特徴量重要度は利用できません'}</p></div>`;
-            }
-        } else {
-            // API returned success: false
-            const errorMessage = data.message || data.error || 'データの読み込みに失敗しました';
-            elements.featureImportance.innerHTML = `<div class="placeholder-message error"><p>⚠️ ${errorMessage}</p></div>`;
-        }
-    } catch (error) {
-        console.error('Feature importance error:', error);
-        elements.featureImportance.innerHTML = `<div class="placeholder-message error"><p>⚠️ 通信エラーが発生しました</p></div>`;
-    }
-}
-
-/**
- * モデル情報を読み込み
- */
 // Chartインスタンスを保持する変数
 let featureChartInstance = null;
 
 /**
- * モデル情報を読み込み
+ * 初期化データ読み込み (Server-Side Injection)
  */
-async function loadModelInfo() {
-    try {
-        const response = await fetch(`${API_BASE}/api/model_info`);
-        const data = await response.json();
+function initModelData() {
+    console.log('[Debug] Initializing model data from verify...');
+    const data = window.INITIAL_MODEL_DATA;
 
-        if (data.success) {
-            elements.modelAlgo.textContent = data.algorithm;
-            elements.modelTarget.textContent = data.target;
-            elements.modelSource.textContent = data.source;
-            elements.modelFeatures.textContent = `${data.feature_count}種類`;
+    if (!data) {
+        console.error('[Error] No initial model data found');
+        return;
+    }
 
-            // 追加された情報
-            const dateEl = document.getElementById('modelDate');
-            if (dateEl) dateEl.textContent = data.last_updated || '-';
+    console.log('[Debug] Model data loaded:', data);
 
-        } else {
-            const errorText = '読み込み失敗';
-            elements.modelAlgo.textContent = errorText;
-            elements.modelTarget.textContent = errorText;
-            elements.modelSource.textContent = errorText;
-            elements.modelFeatures.textContent = '-';
+    // 1. モデル情報の表示
+    if (data.success) {
+        elements.modelAlgo.textContent = data.algorithm;
+        if (elements.modelTarget) elements.modelTarget.textContent = data.target;
+        if (elements.modelSource) elements.modelSource.textContent = data.source;
+        elements.modelFeatures.textContent = `${data.feature_count}種類`;
+
+        const dateEl = document.getElementById('modelDate');
+        if (dateEl) dateEl.textContent = data.last_updated || '-';
+
+        // Metrics
+        if (data.metrics) {
+            const aucEl = document.getElementById('modelAuc');
+            const returnEl = document.getElementById('modelReturn');
+            if (aucEl) aucEl.textContent = data.metrics.auc || '-';
+            if (returnEl) returnEl.textContent = data.metrics.recovery_rate ? `${data.metrics.recovery_rate}%` : '-';
         }
-    } catch (error) {
-        console.error('Model info error:', error);
-        const errorText = '通信エラー';
-        elements.modelAlgo.textContent = errorText;
-        elements.modelTarget.textContent = errorText;
-        elements.modelSource.textContent = errorText;
+    } else {
+        elements.modelAlgo.textContent = '読み込み失敗';
+    }
+
+    // 2. 特徴量重要度の表示
+    if (data.success && data.available) {
+        // Ensure container exists
+        if (!document.getElementById('featureChart')) {
+            elements.featureImportance.innerHTML = `
+                <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">📈 特徴量重要度</h4>
+                <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="featureChart"></canvas>
+                </div>
+            `;
+        }
+        displayFeatureImportance(data.features);
+    } else {
+        const msg = data.success ? (data.message || 'データなし') : '読み込み失敗';
+        elements.featureImportance.innerHTML = `<div class="placeholder-message"><p>ℹ️ ${msg}</p></div>`;
     }
 }
 

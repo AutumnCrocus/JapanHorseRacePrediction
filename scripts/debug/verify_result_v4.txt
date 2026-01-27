@@ -1,0 +1,23 @@
+
+--- Checking user_port_5000 (http://127.0.0.1:5000/) ---
+BROWSER_LOG: [Debug] app.js: DOM Content Loaded (Injection Mode)
+BROWSER_LOG: [Debug] Initializing model data from verify...
+BROWSER_LOG: [Debug] Model data loaded: {success: true, algorithm: LightGBM, last_updated: 2026/01/26 06:26, feature_count: 31, features: Array(15)}
+Title: 競馬予想AI - Horse Racing Predictor
+SUCCESS: window.INITIAL_MODEL_DATA found.
+Data dump: {"success": true, "algorithm": "LightGBM", "last_updated": "2026/01/26 06:26", "feature_count": 31, "features": [{"feature": "avg_last_3f", "importance": 63791.25431442261}, {"feature": "interval", "i...
+SUCCESS: #featureChart element found. Scrolling to view...
+Screenshot saved to: C:\Users\t4kic\.gemini\antigravity\brain\3ee8c28d-ec14-4236-b68a-45aff9c77235\screenshot_user_port_5000.png
+
+--- Checking test_port_5001 (http://127.0.0.1:5001/) ---
+BROWSER_LOG: [Debug] app.js: DOM Content Loaded (Injection Mode)
+BROWSER_LOG: [Debug] app.js: DOM Content Loaded (Injection Mode)
+BROWSER_LOG: [Debug] Initializing model data from verify...
+BROWSER_LOG: [Debug] Initializing model data from verify...
+BROWSER_LOG: [Debug] Model data loaded: {success: true, algorithm: LightGBM, last_updated: 2026/01/26 06:26, feature_count: 31, features: Array(15)}
+BROWSER_LOG: [Debug] Model data loaded: {success: true, algorithm: LightGBM, last_updated: 2026/01/26 06:26, feature_count: 31, features: Array(15)}
+Title: 競馬予想AI - Horse Racing Predictor
+SUCCESS: window.INITIAL_MODEL_DATA found.
+Data dump: {"success": true, "algorithm": "LightGBM", "last_updated": "2026/01/26 06:26", "feature_count": 31, "features": [{"feature": "avg_last_3f", "importance": 63791.25431442261}, {"feature": "interval", "i...
+SUCCESS: #featureChart element found. Scrolling to view...
+Screenshot saved to: C:\Users\t4kic\.gemini\antigravity\brain\3ee8c28d-ec14-4236-b68a-45aff9c77235\screenshot_test_port_5001.png
