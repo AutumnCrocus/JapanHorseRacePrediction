@@ -480,6 +480,12 @@ async function loadFeatureImportance() {
 /**
  * モデル情報を読み込み
  */
+// Chartインスタンスを保持する変数
+let featureChartInstance = null;
+
+/**
+ * モデル情報を読み込み
+ */
 async function loadModelInfo() {
     try {
         const response = await fetch(`${API_BASE}/api/model_info`);
@@ -490,6 +496,11 @@ async function loadModelInfo() {
             elements.modelTarget.textContent = data.target;
             elements.modelSource.textContent = data.source;
             elements.modelFeatures.textContent = `${data.feature_count}種類`;
+
+            // 追加された情報
+            const dateEl = document.getElementById('modelDate');
+            if (dateEl) dateEl.textContent = data.last_updated || '-';
+
         } else {
             const errorText = '読み込み失敗';
             elements.modelAlgo.textContent = errorText;
@@ -507,24 +518,82 @@ async function loadModelInfo() {
 }
 
 /**
- * 特徴量重要度を表示
+ * 特徴量重要度を表示 (Chart.js使用)
  */
 function displayFeatureImportance(features) {
     if (!features || features.length === 0) {
         features = getMockFeatureImportance();
     }
 
-    const maxImportance = Math.max(...features.map(f => f.importance));
+    // Canvas要素の取得
+    const ctx = document.getElementById('featureChart');
+    if (!ctx) return;
 
-    elements.featureImportance.innerHTML = features.slice(0, 10).map(feature => `
-        <div class="feature-bar">
-            <span class="feature-name">${translateFeatureName(feature.feature)}</span>
-            <div class="feature-bar-container">
-                <div class="feature-bar-fill" style="width: ${(feature.importance / maxImportance) * 100}%"></div>
-            </div>
-            <span class="feature-value">${feature.importance.toFixed(0)}</span>
-        </div>
-    `).join('');
+    // 既存のチャートがあれば破棄
+    if (featureChartInstance) {
+        featureChartInstance.destroy();
+    }
+
+    // データを整形 (上位15件)
+    const sortedFeatures = features.sort((a, b) => b.importance - a.importance).slice(0, 15);
+    const labels = sortedFeatures.map(f => translateFeatureName(f.feature));
+    const values = sortedFeatures.map(f => f.importance);
+
+    // チャート作成
+    try {
+        featureChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '重要度 (Gain)',
+                    data: values,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y', // 横棒グラフ
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return `重要度: ${context.raw.toFixed(1)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // ローディング表示を消す（もしあれば）
+        const loadingEl = document.querySelector('.feature-chart .loading-placeholder');
+        if (loadingEl) loadingEl.style.display = 'none';
+
+    } catch (e) {
+        console.error("Chart.js rendering failed:", e);
+        // フォールバック（テキスト表示など）が必要ならここに記述
+    }
 }
 
 /**

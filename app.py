@@ -436,17 +436,32 @@ def model_info():
     """モデル情報を取得"""
     model = get_model()
     
+    # モデルファイルのパスを特定（更新日時のため）
+    model_path = os.path.join(MODEL_DIR, 'production_model.pkl')
+    if not os.path.exists(model_path):
+        model_path = os.path.join(MODEL_DIR, 'horse_race_model.pkl')
+    
+    last_updated = "-"
+    if os.path.exists(model_path):
+        try:
+            mtime = os.path.getmtime(model_path)
+            dt = datetime.fromtimestamp(mtime)
+            last_updated = dt.strftime('%Y/%m/%d %H:%M')
+        except:
+            pass
+
     if model is None:
         return jsonify({
             'success': False,
-            'error': 'モデルがロードされていません'
+            'error': 'モデルがロードされていません',
+            'last_updated': last_updated
         })
     
     try:
         algo_map = {
             'lgbm': 'LightGBM',
             'rf': 'Random Forest',
-            'pytorch_mlp': 'PyTorch MLP (Deep Learning)',
+            'pytorch_mlp': 'PyTorch MLP',
             'catboost': 'CatBoost',
             'xgb': 'XGBoost',
             'gbc': 'Gradient Boosting'
@@ -463,7 +478,8 @@ def model_info():
             'algorithm': str(algo_name),
             'target': '複勝（3着以内）',
             'source': 'netkeiba.com',
-            'feature_count': int(feature_count)
+            'feature_count': int(feature_count),
+            'last_updated': last_updated
         })
         
     except Exception as e:
