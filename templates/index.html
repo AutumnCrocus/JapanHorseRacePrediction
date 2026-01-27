@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競馬予想AI - Horse Racing Predictor</title>
+    <meta name="description" content="機械学習を活用した競馬予想AIシステム。LightGBMモデルによる高精度な予測を提供。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🏇</span>
+                <h1>競馬予想AI</h1>
+            </div>
+            <nav class="nav">
+                <a href="#predictor" class="nav-link active">予測</a>
+                <a href="#analytics" class="nav-link">分析</a>
+                <a href="#about" class="nav-link">情報</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main">
+        <!-- ヒーローセクション -->
+        <section class="hero">
+            <div class="hero-bg"></div>
+            <div class="hero-content">
+                <h2 class="hero-title">
+                    <span class="gradient-text">AI</span>が導く
+                    <br>最適な予測
+                </h2>
+                <p class="hero-description">
+                    LightGBMによる機械学習モデルで<br>
+                    レース結果を高精度に予測
+                </p>
+                <button id="demoBtn" class="btn btn-primary btn-large">
+                    <span class="btn-icon">⚡</span>
+                    デモを試す
+                </button>
+            </div>
+        </section>
+
+        <!-- 予測セクション -->
+        <section id="predictor" class="section predictor-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">レース予測</h2>
+                    <p class="section-subtitle">出馬表データを入力して予測結果を確認</p>
+                </div>
+
+                <!-- 入力フォーム -->
+                <div class="input-section">
+                    <!-- URL入力カード -->
+                    <div class="input-card" style="margin-bottom: 20px;">
+                        <h4>🔗 出馬表URLから予測</h4>
+                        <div class="url-input-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="text" id="raceUrl" class="input-text"
+                                placeholder="https://race.netkeiba.com/race/shutuba.html?race_id=2026..."
+                                style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <input type="number" id="budget" class="input-text" placeholder="予算: 10000円" min="0"
+                                step="100"
+                                style="flex: 1; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <button id="predictUrlBtn" class="btn btn-primary">
+                                <span class="btn-icon">🌐</span>
+                                予測
+                            </button>
+                        </div>
+                        <p class="input-help" style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                            Netkeibaの出馬表ページのURLを入力してください。自動的にデータを取得して予測します。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ローディング -->
+                <div id="loading" class="loading hidden">
+                    <div class="loading-spinner"></div>
+                    <p>予測中...</p>
+                </div>
+
+                <!-- 予測結果カード -->
+                <div id="predictionResults" class="prediction-results hidden">
+                    <div class="results-header">
+                        <div class="race-info">
+                            <h3 id="raceName" class="race-name">レース名</h3>
+                            <div id="raceData01" class="race-data-01">発走情報</div>
+                            <div id="raceData02" class="race-data-02">開催情報</div>
+                            <span id="raceDetails" class="race-details hidden">コース情報</span>
+                        </div>
+                        <span id="timestamp" class="timestamp"></span>
+                    </div>
+
+                    <!-- オッズ警告 -->
+                    <div id="oddsWarningSection" class="odds-warning-section hidden">
+                        <div class="warning-message">
+                            <span class="warning-icon">⚠️</span>
+                            <p id="oddsWarningMessage" class="warning-text"></p>
+                        </div>
+                    </div>
+
+                    <!-- 推奨買い目 -->
+                    <div id="recommendationSection" class="recommendation-section hidden">
+                        <h3 class="section-title-sm">
+                            🎯 AI推奨買い目 (期待値重視)
+                            <span id="confidenceLevel" class="confidence-badge hidden"></span>
+                        </h3>
+                        <div class="table-wrapper">
+                            <table class="recommendation-table">
+                                <thead>
+                                    <tr>
+                                        <th>券種</th>
+                                        <th>組み合わせ</th>
+                                        <th>馬名</th>
+                                        <th>オッズ</th>
+                                        <th>的中率</th>
+                                        <th>期待値</th>
+                                        <th>推奨金額</th>
+                                        <th>理由</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recommendationTableBody">
+                                    <!-- JSで生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="ipat-button-wrapper" style="margin-top: var(--space-lg); text-align: center;">
+                            <button id="ipatConnectBtn" class="btn btn-primary btn-large"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem 2rem; font-size: 1.1rem;">
+                                <span class="btn-icon">🎫</span>
+                                IPATで馬券を購入
+                            </button>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: var(--space-sm);">
+                                JRA即PAT連携で推奨買い目を自動投票
+                            </p>
+                        </div>
+                    </div>
+
+                    <style>
+                        .race-info {
+                            flex: 1;
+                            padding: var(--space-sm) 0;
+                        }
+
+                        .race-name {
+                            font-size: 1.8rem;
+                            font-weight: 700;
+                            margin-bottom: var(--space-xs);
+                            color: var(--text-primary);
+                            letter-spacing: -0.01em;
+                        }
+
+                        .race-data-01 {
+                            font-size: 1.15rem;
+                            font-weight: 600;
+                            color: var(--accent);
+                            margin-bottom: var(--space-xs);
+                            display: flex;
+                            align-items: center;
+                            gap: var(--space-sm);
+                        }
+
+                        .race-data-01::before {
+                            content: '🕙';
+                            font-size: 1.1rem;
+                        }
+
+                        .race-data-02 {
+                            font-size: 0.95rem;
+                            color: var(--text-secondary);
+                            line-height: 1.5;
+                            display: flex;
+                            align-items: center;
+                        }
+
+                        .results-header {
+                            border-bottom: 1px solid var(--border-color);
+                            padding-bottom: var(--space-lg);
+                            margin-bottom: var(--space-xl);
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                        }
+                    </style>
+
+                    <div class="results-grid">
+                        <!-- 上位3頭のハイライト -->
+                        <div class="top-horses">
+                            <h4 class="top-horses-title">🏆 推奨馬TOP3</h4>
+                            <div id="topHorses" class="top-horses-grid">
+                                <!-- 動的に生成 -->
+                            </div>
+                        </div>
+
+                        <!-- 全馬の予測テーブル -->
+                        <div class="all-horses">
+                            <h4 class="all-horses-title">📊 全馬予測一覧</h4>
+                            <div class="table-wrapper">
+                                <table class="predictions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>予測順位</th>
+                                            <th>馬番</th>
+                                            <th>馬名</th>
+                                            <th>複勝確率</th>
+                                            <th>単勝オッズ</th>
+                                            <th>期待値</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="predictionsTable">
+                                        <!-- 動的に生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </section>
+
+        <!-- 分析セクション -->
+        <section id="analytics" class="section analytics-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">モデル分析</h2>
+                    <p class="section-subtitle">予測モデルの特徴量重要度</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-card feature-importance-card">
+                        <h4>📈 特徴量重要度</h4>
+                        <div id="featureImportance" class="feature-chart">
+                            <div class="loading-placeholder">
+                                <span>読み込み中...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-card model-info-card">
+                        <h4>🤖 モデル情報</h4>
+                        <div class="model-info">
+                            <div class="info-item">
+                                <span class="info-label">アルゴリズム</span>
+                                <span id="modelAlgo" class="info-value">読み込み中...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">目的変数</span>
+                                <span id="modelTarget" class="info-value">読み込み中...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">データソース</span>
+                                <span id="modelSource" class="info-value">netkeiba.com</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">特徴量数</span>
+                                <span id="modelFeatures" class="info-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 情報セクション -->
+        <section id="about" class="section about-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">システム情報</h2>
+                    <p class="section-subtitle">競馬予想AIについて</p>
+                </div>
+
+                <div class="about-grid">
+                    <div class="about-card">
+                        <div class="about-icon">🎯</div>
+                        <h4>高精度予測</h4>
+                        <p>過去の競走成績、血統、騎手・調教師の実績など多角的なデータを分析</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">⚡</div>
+                        <h4>リアルタイム</h4>
+                        <p>最新のオッズ情報を活用した期待値計算でより的確な判断をサポート</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">📊</div>
+                        <h4>データ駆動</h4>
+                        <p>netkeiba.comから収集した大量のレースデータで学習したAIモデル</p>
+                    </div>
+                </div>
+
+                <div class="disclaimer">
+                    <p>⚠️ 本システムは予測を保証するものではありません。馬券購入は自己責任でお願いします。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- IPATログインモーダル -->
+    <div id="ipatLoginModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>🎫 IPAT認証</h3>
+                <button class="close-btn" onclick="closeIpatLoginModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: var(--space-lg); color: var(--text-secondary);">
+                    JRA即PATの認証情報を入力してください。認証情報はブラウザに一時保存されます。
+                </p>
+                <form id="ipatLoginForm">
+                    <div class="form-group">
+                        <label for="inetid">INET-ID</label>
+                        <input type="text" id="inetid" name="inetid" class="input-text" required
+                            placeholder="P12345678901">
+                    </div>
+                    <div class="form-group">
+                        <label for="subscriberNo">加入者番号（10桁）</label>
+                        <input type="text" id="subscriberNo" name="subscriber_no" class="input-text" required
+                            maxlength="10" placeholder="1234567890">
+                    </div>
+                    <div class="form-group">
+                        <label for="pin">暗証番号（4桁）</label>
+                        <input type="password" id="pin" name="pin" class="input-text" required maxlength="4"
+                            placeholder="****">
+                    </div>
+                    <div class="form-group">
+                        <label for="parsNo">P-ARS番号（4桁）</label>
+                        <input type="text" id="parsNo" name="pars_no" class="input-text" required maxlength="4"
+                            placeholder="1234">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: var(--space-sm);">
+                        <input type="checkbox" id="saveCredentials" name="save_credentials">
+                        <label for="saveCredentials" style="margin: 0;">認証情報を保存（推奨しません）</label>
+                    </div>
+                    <div class="modal-actions"
+                        style="display: flex; gap: var(--space-md); margin-top: var(--space-xl);">
+                        <button type="button" class="btn btn-secondary" onclick="closeIpatLoginModal()">キャンセル</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">ログイン</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- IPAT投票確認モーダル -->
+    <div id="ipatVoteConfirmModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🎫 投票内容確認</h3>
+                <button class="close-btn" onclick="closeIpatVoteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="voteDetails" style="margin-bottom: var(--space-lg);">
+                    <!-- 投票詳細が動的に挿入されます -->
+                </div>
+                <div
+                    style="background: var(--bg-secondary); padding: var(--space-md); border-radius: 8px; margin-bottom: var(--space-lg);">
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        ⚠️ 投票実行後のキャンセルはできません。内容をよく確認してください。
+                    </p>
+                </div>
+                <div class="modal-actions" style="display: flex; gap: var(--space-md);">
+                    <button type="button" class="btn btn-secondary" onclick="closeIpatVoteModal()">キャンセル</button>
+                    <button type="button" id="confirmVoteBtn" class="btn btn-primary" style="flex: 1;"
+                        onclick="handleConfirmVote()">投票する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 競馬予想AI. Powered by LightGBM.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js?v=2.2"></script>
+</body>
+
+</html>

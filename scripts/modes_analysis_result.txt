@@ -1,0 +1,484 @@
+
+============================================
+ Analyzing: 3連複_ながし.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 21 found
+  Pattern: btn_sel_X
+    Sample: ID=btn_sel_1, Cls=['All_Action'], GP=<tr cls=['Header']>
+  Pattern: btn_mymark_X
+    Sample: ID=btn_mymark_1, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+  Pattern: uc-1-1
+    Sample: ID=uc-1-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-2
+    Sample: ID=uc-1-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-3
+    Sample: ID=uc-1-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-4
+    Sample: ID=uc-1-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-5
+    Sample: ID=uc-1-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-6
+    Sample: ID=uc-1-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-7
+    Sample: ID=uc-1-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-8
+    Sample: ID=uc-1-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-9
+    Sample: ID=uc-1-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-10
+    Sample: ID=uc-1-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-11
+    Sample: ID=uc-1-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-12
+    Sample: ID=uc-1-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-13
+    Sample: ID=uc-1-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-14
+    Sample: ID=uc-1-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-15
+    Sample: ID=uc-1-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-16
+    Sample: ID=uc-1-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-17
+    Sample: ID=uc-1-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-18
+    Sample: ID=uc-1-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+  Keyword '軸': <div cls=['Wrap_inner']>
+  Keyword '軸': <div cls=['Wrap_inner']>
+  Keyword '軸': <th cls=['ActionBtn']>
+  Keyword '相手': <th cls=['ActionBtn']>
+    -> Contains 2 checkboxes. First ID: btn_sel_1
+
+============================================
+ Analyzing: 3連複_フォーメーション.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 61 found
+  Pattern: btn_sel_X
+    Sample: ID=btn_sel_0, Cls=['All_Action'], GP=<tr cls=['Header']>
+    Sample: ID=btn_sel_1, Cls=['All_Action'], GP=<tr cls=['Header']>
+  Pattern: btn_mymark_X
+    Sample: ID=btn_mymark_0, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+    Sample: ID=btn_mymark_1, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+  Pattern: uc-0-1
+    Sample: ID=uc-0-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-1
+    Sample: ID=uc-1-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-1
+    Sample: ID=uc-2-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-2
+    Sample: ID=uc-0-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-2
+    Sample: ID=uc-1-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-2
+    Sample: ID=uc-2-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-3
+    Sample: ID=uc-0-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-3
+    Sample: ID=uc-1-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-3
+    Sample: ID=uc-2-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-4
+    Sample: ID=uc-0-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-4
+    Sample: ID=uc-1-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-4
+    Sample: ID=uc-2-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-5
+    Sample: ID=uc-0-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-5
+    Sample: ID=uc-1-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-5
+    Sample: ID=uc-2-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-6
+    Sample: ID=uc-0-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-6
+    Sample: ID=uc-1-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-6
+    Sample: ID=uc-2-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-7
+    Sample: ID=uc-0-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-7
+    Sample: ID=uc-1-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-7
+    Sample: ID=uc-2-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-8
+    Sample: ID=uc-0-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-8
+    Sample: ID=uc-1-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-8
+    Sample: ID=uc-2-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-9
+    Sample: ID=uc-0-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-9
+    Sample: ID=uc-1-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-9
+    Sample: ID=uc-2-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-10
+    Sample: ID=uc-0-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-10
+    Sample: ID=uc-1-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-10
+    Sample: ID=uc-2-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-11
+    Sample: ID=uc-0-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-11
+    Sample: ID=uc-1-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-11
+    Sample: ID=uc-2-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-12
+    Sample: ID=uc-0-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-12
+    Sample: ID=uc-1-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-12
+    Sample: ID=uc-2-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-13
+    Sample: ID=uc-0-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-13
+    Sample: ID=uc-1-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-13
+    Sample: ID=uc-2-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-14
+    Sample: ID=uc-0-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-14
+    Sample: ID=uc-1-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-14
+    Sample: ID=uc-2-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-15
+    Sample: ID=uc-0-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-15
+    Sample: ID=uc-1-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-15
+    Sample: ID=uc-2-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-16
+    Sample: ID=uc-0-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-16
+    Sample: ID=uc-1-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-16
+    Sample: ID=uc-2-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-17
+    Sample: ID=uc-0-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-17
+    Sample: ID=uc-1-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-17
+    Sample: ID=uc-2-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-18
+    Sample: ID=uc-0-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-18
+    Sample: ID=uc-1-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-2-18
+    Sample: ID=uc-2-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+
+============================================
+ Analyzing: 3連複_ボックス.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 21 found
+  Pattern: btn_sel_X
+    Sample: ID=btn_sel_0, Cls=['All_Action'], GP=<tr cls=['Header']>
+  Pattern: btn_mymark_X
+    Sample: ID=btn_mymark_0, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+  Pattern: uc-0-1
+    Sample: ID=uc-0-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-2
+    Sample: ID=uc-0-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-3
+    Sample: ID=uc-0-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-4
+    Sample: ID=uc-0-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-5
+    Sample: ID=uc-0-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-6
+    Sample: ID=uc-0-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-7
+    Sample: ID=uc-0-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-8
+    Sample: ID=uc-0-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-9
+    Sample: ID=uc-0-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-10
+    Sample: ID=uc-0-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-11
+    Sample: ID=uc-0-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-12
+    Sample: ID=uc-0-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-13
+    Sample: ID=uc-0-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-14
+    Sample: ID=uc-0-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-15
+    Sample: ID=uc-0-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-16
+    Sample: ID=uc-0-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-17
+    Sample: ID=uc-0-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-18
+    Sample: ID=uc-0-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+
+============================================
+ Analyzing: 3連複_通常.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 1 found
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+
+============================================
+ Analyzing: 馬連_ながし.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 21 found
+  Pattern: btn_sel_X
+    Sample: ID=btn_sel_1, Cls=['All_Action'], GP=<tr cls=['Header']>
+  Pattern: btn_mymark_X
+    Sample: ID=btn_mymark_1, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+  Pattern: uc-1-1
+    Sample: ID=uc-1-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-2
+    Sample: ID=uc-1-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-3
+    Sample: ID=uc-1-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-4
+    Sample: ID=uc-1-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-5
+    Sample: ID=uc-1-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-6
+    Sample: ID=uc-1-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-7
+    Sample: ID=uc-1-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-8
+    Sample: ID=uc-1-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-9
+    Sample: ID=uc-1-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-10
+    Sample: ID=uc-1-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-11
+    Sample: ID=uc-1-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-12
+    Sample: ID=uc-1-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-13
+    Sample: ID=uc-1-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-14
+    Sample: ID=uc-1-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-15
+    Sample: ID=uc-1-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-16
+    Sample: ID=uc-1-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-17
+    Sample: ID=uc-1-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-18
+    Sample: ID=uc-1-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+  Keyword '軸': <th cls=['ActionBtn']>
+  Keyword '相手': <th cls=['ActionBtn']>
+    -> Contains 2 checkboxes. First ID: btn_sel_1
+
+============================================
+ Analyzing: 馬連_フォーメーション.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 41 found
+  Pattern: btn_sel_X
+    Sample: ID=btn_sel_0, Cls=['All_Action'], GP=<tr cls=['Header']>
+    Sample: ID=btn_sel_1, Cls=['All_Action'], GP=<tr cls=['Header']>
+  Pattern: btn_mymark_X
+    Sample: ID=btn_mymark_0, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+    Sample: ID=btn_mymark_1, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+  Pattern: uc-0-1
+    Sample: ID=uc-0-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-1
+    Sample: ID=uc-1-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-2
+    Sample: ID=uc-0-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-2
+    Sample: ID=uc-1-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-3
+    Sample: ID=uc-0-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-3
+    Sample: ID=uc-1-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-4
+    Sample: ID=uc-0-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-4
+    Sample: ID=uc-1-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-5
+    Sample: ID=uc-0-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-5
+    Sample: ID=uc-1-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-6
+    Sample: ID=uc-0-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-6
+    Sample: ID=uc-1-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-7
+    Sample: ID=uc-0-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-7
+    Sample: ID=uc-1-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-8
+    Sample: ID=uc-0-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-8
+    Sample: ID=uc-1-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-9
+    Sample: ID=uc-0-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-9
+    Sample: ID=uc-1-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-10
+    Sample: ID=uc-0-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-10
+    Sample: ID=uc-1-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-11
+    Sample: ID=uc-0-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-11
+    Sample: ID=uc-1-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-12
+    Sample: ID=uc-0-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-12
+    Sample: ID=uc-1-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-13
+    Sample: ID=uc-0-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-13
+    Sample: ID=uc-1-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-14
+    Sample: ID=uc-0-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-14
+    Sample: ID=uc-1-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-15
+    Sample: ID=uc-0-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-15
+    Sample: ID=uc-1-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-16
+    Sample: ID=uc-0-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-16
+    Sample: ID=uc-1-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-17
+    Sample: ID=uc-0-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-17
+    Sample: ID=uc-1-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-18
+    Sample: ID=uc-0-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-1-18
+    Sample: ID=uc-1-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+
+============================================
+ Analyzing: 馬連_ボックス.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 21 found
+  Pattern: btn_sel_X
+    Sample: ID=btn_sel_0, Cls=['All_Action'], GP=<tr cls=['Header']>
+  Pattern: btn_mymark_X
+    Sample: ID=btn_mymark_0, Cls=['Mark_Action'], GP=<tr cls=['Header']>
+  Pattern: uc-0-1
+    Sample: ID=uc-0-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-2
+    Sample: ID=uc-0-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-3
+    Sample: ID=uc-0-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-4
+    Sample: ID=uc-0-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-5
+    Sample: ID=uc-0-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-6
+    Sample: ID=uc-0-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-7
+    Sample: ID=uc-0-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-8
+    Sample: ID=uc-0-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-9
+    Sample: ID=uc-0-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-10
+    Sample: ID=uc-0-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-11
+    Sample: ID=uc-0-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-12
+    Sample: ID=uc-0-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-13
+    Sample: ID=uc-0-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-14
+    Sample: ID=uc-0-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-15
+    Sample: ID=uc-0-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-16
+    Sample: ID=uc-0-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-17
+    Sample: ID=uc-0-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-18
+    Sample: ID=uc-0-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
+
+============================================
+ Analyzing: 馬連_通常.html
+============================================
+[Method Nav]: Not Found
+
+[Checkboxes]: 19 found
+  Pattern: uc-0-1
+    Sample: ID=uc-0-1, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-2
+    Sample: ID=uc-0-2, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-3
+    Sample: ID=uc-0-3, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-4
+    Sample: ID=uc-0-4, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-5
+    Sample: ID=uc-0-5, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-6
+    Sample: ID=uc-0-6, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-7
+    Sample: ID=uc-0-7, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-8
+    Sample: ID=uc-0-8, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-9
+    Sample: ID=uc-0-9, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-10
+    Sample: ID=uc-0-10, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-11
+    Sample: ID=uc-0-11, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-12
+    Sample: ID=uc-0-12, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-13
+    Sample: ID=uc-0-13, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-14
+    Sample: ID=uc-0-14, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-15
+    Sample: ID=uc-0-15, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-16
+    Sample: ID=uc-0-16, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-17
+    Sample: ID=uc-0-17, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: uc-0-18
+    Sample: ID=uc-0-18, Cls=['HorseCheck_Select'], GP=<td cls=['Horse_Select']>
+  Pattern: AllotmentCheck
+    Sample: ID=AllotmentCheck, Cls=None, GP=<div cls=['MoneyInputArea']>
+
+[Structure Hints]
