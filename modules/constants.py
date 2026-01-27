@@ -12,7 +12,8 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 REQUEST_INTERVAL = 1  # リクエスト間隔（秒）
-MAX_WORKERS = 5       # 並列実行数
+MAX_WORKERS = 10      # 並列実行数
+
 
 import os
 

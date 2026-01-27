@@ -95,13 +95,15 @@ class HorseRaceModel:
                 'bagging_freq': 5,
                 'verbose': -1,
                 'n_estimators': 500,
-                'random_state': 42
+                'random_state': 42,
+                'n_jobs': -1
             }
         elif self.model_type == 'rf':
             return {
                 'n_estimators': 100,
                 'max_depth': 10,
-                'random_state': 42
+                'random_state': 42,
+                'n_jobs': -1
             }
         elif self.model_type == 'gbc':
             return {
