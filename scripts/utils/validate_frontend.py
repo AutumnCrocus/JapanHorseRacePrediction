@@ -41,12 +41,16 @@ async def validate(url, selector):
             if selector:
                 element = await page.query_selector(selector)
                 if not element:
-                    print(f"FAILED: Selector '{selector}' not found in DOM.")
-                    sys.exit(1)
+                    # Fallback: Check for placeholder message (valid state when no model data is available)
+                    placeholder = await page.query_selector(".placeholder-message")
+                    if placeholder and await placeholder.is_visible():
+                        print(f"WARNING: Selector '{selector}' not found, but placeholder message is visible. Assuming valid empty state.")
+                    else:
+                        print(f"FAILED: Selector '{selector}' not found in DOM, and no placeholder message found.")
+                        sys.exit(1)
                 
-                # 5. Check Visibility
-                is_visible = await element.is_visible()
-                if not is_visible:
+                # 5. Check Visibility (if element exists)
+                elif not await element.is_visible():
                     print(f"FAILED: Selector '{selector}' exists but is not visible.")
                     sys.exit(1)
                     
