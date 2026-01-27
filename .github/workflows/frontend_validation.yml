@@ -27,7 +27,7 @@ jobs:
         pip install playwright
 
     - name: Install Playwright Browsers
-      run: python -m playwright install chromium
+      run: python -m playwright install --with-deps chromium
 
     - name: Start Flask Server
       run: |
