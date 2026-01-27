@@ -35,8 +35,24 @@ jobs:
         nohup python scripts/debug/run_app_test.py > server.log 2>&1 &
         echo "Server started with PID $!"
         
-        # Checking if server starts up
-        sleep 10
+        # Wait for server to be ready (loop check)
+        echo "Waiting for server to start..."
+        for i in {1..30}; do
+          if curl -s http://127.0.0.1:5001 > /dev/null; then
+            echo "Server is up!"
+            break
+          fi
+          echo "Waiting... ($i/30)"
+          sleep 2
+        done
+        
+        # Check if server is actually running
+        if ! curl -s http://127.0.0.1:5001 > /dev/null; then
+            echo "Server failed to start within 60 seconds."
+            cat server.log
+            exit 1
+        fi
+        
         cat server.log
 
     - name: Run Frontend Validation
