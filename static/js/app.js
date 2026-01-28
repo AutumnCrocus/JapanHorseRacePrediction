@@ -744,7 +744,7 @@ function displayRecommendations(recommendations) {
                 <span style="font-size:0.8em; margin-left:4px; color:#666;">${desc}</span>
             </td>
             <td><strong>${combo}</strong> <small style="color:#888;">(${pts}点)</small></td>
-            <td>-</td> <!-- 馬名はBOX等の場合複数になるため省略 -->
+            <td style="font-size: 0.9em;">${rec.horse_name || '-'}</td>
             <td>${odds}</td>
             <td>${prob}</td>
             <td>${ev}</td>
