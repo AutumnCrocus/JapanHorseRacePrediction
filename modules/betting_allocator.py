@@ -252,11 +252,20 @@ class BettingAllocator:
                             row.get('odds', 0.0),
                             [feature_dict]
                         )
+                        # Add stats for display (using head horse as representative)
+                        stats = {
+                            'horse_name': row.get('horse_name') or row.get('馬名'),
+                            'odds': row.get('odds', 0) if row.get('odds', 0) > 0 else None,
+                            'prob': row.get('probability'),
+                            'ev': row.get('expected_value')
+                        }
+
             except Exception as e:
                 print(f"Reason generation error: {e}")
                 reason = "予算最適化（詳細生成エラー）"
+                stats = {} # empty stats on error
 
-            final_list.append({
+            rec_dict = {
                 'bet_type': r['type'],
                 'method': r['method'],
                 'combination': combo_str,
@@ -266,5 +275,9 @@ class BettingAllocator:
                 'total_amount': r['amount'],
                 'horse_numbers': r['horses'],
                 'reason': reason
-            })
+            }
+            # Merge stats
+            rec_dict.update(stats)
+            
+            final_list.append(rec_dict)
         return final_list
