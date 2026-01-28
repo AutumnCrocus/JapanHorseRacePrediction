@@ -244,14 +244,21 @@ class BettingAllocator:
                         bet_code = type_map.get(r['type'], 'tan')
                         
                         # BettingStrategyを使って理由を生成
-                        reason = BettingStrategy.generate_reason(
-                            bet_code,
-                            [str(h) for h in r['horses']],
-                            row.get('probability', 0.1),
-                            row.get('expected_value', 1.0),
-                            row.get('odds', 0.0),
-                            [feature_dict]
-                        )
+                        if r['method'] == 'BOX':
+                            reason = BettingStrategy.generate_box_reason(
+                                r['type'],
+                                r['horses'],
+                                df_preds
+                            )
+                        else:
+                            reason = BettingStrategy.generate_reason(
+                                bet_code,
+                                [str(h) for h in r['horses']],
+                                row.get('probability', 0.1),
+                                row.get('expected_value', 1.0),
+                                row.get('odds', 0.0),
+                                [feature_dict]
+                            )
                         # Add stats for display
                         # IF SINGLE: use head horse stats
                         # IF BOX/Other: Set stats to None (as single odds/ev are misleading) and list all names

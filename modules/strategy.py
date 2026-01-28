@@ -93,6 +93,58 @@ class BettingStrategy:
                 return "一撃高配当狙い"
         
         return f"期待値{ev:.2f}倍" if ev > 0.1 else "推奨"
+
+    @staticmethod
+    def generate_box_reason(bet_type: str, horse_indices: list, df_preds: pd.DataFrame) -> str:
+        """
+        BOX買い用の理由生成
+        """
+        # 対象馬のデータを抽出
+        target_rows = df_preds[df_preds['horse_number'].isin([int(h) for h in horse_indices])]
+        
+        if target_rows.empty:
+            return "ボックス推奨"
+
+        # 集合的な指標を計算
+        avg_ev = target_rows['expected_value'].mean()
+        avg_prob = target_rows['probability'].mean()
+        max_odds = target_rows['odds'].max()
+        min_odds = target_rows['odds'].min()
+        
+        # 特徴的な馬がいるか
+        has_ana = any((target_rows['odds'] > 20) & (target_rows['probability'] > 0.05)) # 穴馬
+        is_solid = all(target_rows['probability'] > 0.15) # 堅実
+        
+        reason_parts = []
+        
+        # 1. 平均的な質への言及
+        if avg_ev > 1.5:
+            reason_parts.append(f"平均期待値{avg_ev:.2f}倍")
+        elif avg_prob > 0.3: # かなり高い
+            reason_parts.append(f"平均勝率{avg_prob*100:.0f}%")
+            
+        # 2. 構成の性質
+        if bet_type == '3連単':
+            if has_ana:
+                reason_parts.append("高配当狙いの波乱含みBOX")
+            elif is_solid:
+                reason_parts.append("上位拮抗の堅実BOX")
+            else:
+                reason_parts.append("一撃高配当狙い")
+        elif bet_type == '3連複':
+            if is_solid:
+                reason_parts.append("3頭の好走に期待")
+            else:
+                reason_parts.append("広角に流して高配当狙い")
+        elif bet_type in ['馬連', 'ワイド']:
+            if is_solid:
+                reason_parts.append("的中率重視の安定構成")
+            else:
+                reason_parts.append("好配当狙いのBOX")
+        else:
+            reason_parts.append("最適化された分散投資")
+            
+        return "。".join(reason_parts)
     
     @staticmethod
     def calculate_expected_value(predictions: pd.DataFrame, odds_data: dict) -> pd.DataFrame:
