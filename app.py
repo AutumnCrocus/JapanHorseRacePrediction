@@ -340,6 +340,10 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
         # Use all row data (features) for strategy reason generation
         item = row.to_dict()
         
+        # Ensure horse_name is in df for Allocator
+        if 'horse_name' not in df.columns:
+            df['horse_name'] = df['馬名'] if '馬名' in df.columns else df.index.map(lambda x: f"馬{x}")
+
         # Clean up NaN/inf values which might break JSON parsing in frontend
         for k, v in item.items():
             if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):

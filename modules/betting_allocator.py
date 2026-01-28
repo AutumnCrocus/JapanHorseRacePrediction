@@ -252,18 +252,40 @@ class BettingAllocator:
                             row.get('odds', 0.0),
                             [feature_dict]
                         )
-                        # Add stats for display (using head horse as representative)
+                        # Add stats for display
+                        # IF SINGLE: use head horse stats
+                        # IF BOX/Other: Set stats to None (as single odds/ev are misleading) and list all names
+                        
+                        is_single = (r['method'] == 'SINGLE')
+                        
+                        # Horse Name Logic
+                        horse_names = []
+                        for h_num in r['horses']:
+                            h_row = df_preds[df_preds['horse_number'] == int(h_num)]
+                            if not h_row.empty:
+                                name = h_row.iloc[0].get('horse_name') or h_row.iloc[0].get('馬名') or str(h_num)
+                                horse_names.append(name)
+                            else:
+                                horse_names.append(str(h_num))
+                        
+                        display_name = ",".join(horse_names) if len(horse_names) <= 3 else f"{','.join(horse_names[:3])}..."
+                        
                         stats = {
-                            'horse_name': row.get('horse_name') or row.get('馬名'),
-                            'odds': row.get('odds', 0) if row.get('odds', 0) > 0 else None,
-                            'prob': row.get('probability'),
-                            'ev': row.get('expected_value')
+                            'horse_name': display_name,
+                            'odds': (row.get('odds', 0) if row.get('odds', 0) > 0 else None) if is_single else None,
+                            'prob': row.get('probability') if is_single else None,
+                            'ev': row.get('expected_value') if is_single else None
                         }
 
             except Exception as e:
                 print(f"Reason generation error: {e}")
                 reason = "予算最適化（詳細生成エラー）"
-                stats = {} # empty stats on error
+                stats = {
+                    'horse_name': "-",
+                    'odds': None,
+                    'prob': None,
+                    'ev': None
+                }
 
             rec_dict = {
                 'bet_type': r['type'],
