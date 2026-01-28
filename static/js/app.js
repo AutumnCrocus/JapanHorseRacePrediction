@@ -317,7 +317,7 @@ function displayTopHorses(topHorses) {
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">単勝オッズ</span>
-                    <span class="stat-value">${horse.odds.toFixed(1)}倍</span>
+                    <span class="stat-value">${horse.odds != null ? horse.odds.toFixed(1) + '倍' : '-'}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">人気</span>
@@ -325,7 +325,7 @@ function displayTopHorses(topHorses) {
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">期待値</span>
-                    <span class="stat-value ${horse.expected_value >= 1 ? 'highlight' : ''}">${horse.expected_value.toFixed(2)}</span>
+                    <span class="stat-value ${horse.expected_value >= 1 ? 'highlight' : ''}">${horse.expected_value != null ? horse.expected_value.toFixed(2) : '-'}</span>
                 </div>
             </div>
         </div>
@@ -364,8 +364,8 @@ function displayPredictionsTable(predictions) {
                     <div class="probability-fill" style="width: ${horse.probability * 100}%"></div>
                 </div>
             </td>
-            <td>${horse.odds.toFixed(1)}倍</td>
-            <td class="${horse.expected_value >= 1 ? 'highlight' : ''}">${horse.expected_value.toFixed(2)}</td>
+            <td>${horse.odds != null ? horse.odds.toFixed(1) + '倍' : '-'}</td>
+            <td class="${horse.expected_value >= 1 ? 'highlight' : ''}">${horse.expected_value != null ? horse.expected_value.toFixed(2) : '-'}</td>
         </tr>
     `}).join('');
 }
@@ -409,7 +409,7 @@ function showReasoning(horseNumber, horseName, reasoning) {
                 ${positiveFactors.map(f => `
                     <li>
                         <strong>${FEATURE_LABELS[f.feature] || f.feature}</strong>: 
-                        ${f.value.toFixed(2)}
+                        ${f.value != null ? f.value.toFixed(2) : '-'}
                         <span class="contribution positive">+${Math.abs(f.contribution).toFixed(3)}</span>
                     </li>
                 `).join('')}
@@ -424,7 +424,7 @@ function showReasoning(horseNumber, horseName, reasoning) {
                 ${negativeFactors.map(f => `
                     <li>
                         <strong>${FEATURE_LABELS[f.feature] || f.feature}</strong>: 
-                        ${f.value.toFixed(2)}
+                        ${f.value != null ? f.value.toFixed(2) : '-'}
                         <span class="contribution negative">${f.contribution.toFixed(3)}</span>
                     </li>
                 `).join('')}
@@ -731,9 +731,9 @@ function displayRecommendations(recommendations) {
         const reason = rec.reason || '-';
 
         // 旧フォーマット互換 (evなど)
-        const ev = rec.ev !== undefined ? rec.ev.toFixed(2) : '-';
-        const prob = rec.prob !== undefined ? formatPercent(rec.prob) : '-';
-        const odds = rec.odds !== undefined ? rec.odds.toFixed(1) + '倍' : '-';
+        const ev = (rec.ev !== undefined && rec.ev !== null) ? rec.ev.toFixed(2) : '-';
+        const prob = (rec.prob !== undefined && rec.prob !== null) ? formatPercent(rec.prob) : '-';
+        const odds = (rec.odds !== undefined && rec.odds !== null) ? rec.odds.toFixed(1) + '倍' : '-';
 
         const money = amount ? `¥${amount.toLocaleString()}` : '-';
 
