@@ -52,9 +52,10 @@ class BettingStrategy:
             if ev > 2.0:
                 return f"{extra_text}高い期待値{ev:.2f}倍の本命"
             elif prob > 0.5:
+                # 確率が高いなら期待値が低くても勝率で推す
                 return f"{extra_text}勝率{prob*100:.0f}%と盤石"
             else:
-                return f"{extra_text}期待値{ev:.2f}倍で狙い目"
+                return f"{extra_text}期待値{ev:.2f}倍で狙い目" if ev > 0.1 else f"{extra_text}穴狙い"
                 
         elif bet_type == 'fuku':
             if prob > 0.8:
@@ -65,21 +66,33 @@ class BettingStrategy:
                 return f"{extra_text}複勝圏内有力"
                 
         elif bet_type == 'umaren':
-            return f"期待値{ev:.2f}倍。{extra_text}上位拮抗" if extra_text else f"上位2頭の組み合わせで期待値{ev:.2f}倍"
+            if ev > 0.1:
+                return f"期待値{ev:.2f}倍。{extra_text}上位拮抗" if extra_text else f"上位2頭の組み合わせで期待値{ev:.2f}倍"
+            else:
+                return f"{extra_text}上位拮抗" if extra_text else "上位2頭の組み合わせ推奨"
                 
         elif bet_type == 'wide':
-            return f"{extra_text}手堅く期待値{ev:.2f}倍" if extra_text else f"的中率重視で期待値{ev:.2f}倍"
+            if ev > 0.1:
+                return f"{extra_text}手堅く期待値{ev:.2f}倍" if extra_text else f"的中率重視で期待値{ev:.2f}倍"
+            else:
+                return f"{extra_text}手堅く的中狙い" if extra_text else "的中率重視で推奨"
                 
         elif bet_type == 'umatan':
             return f"{extra_text}着順通りの決着なら高配当"
             
         elif bet_type == 'sanrenpuku':
-            return f"期待値{ev:.2f}倍。{extra_text}3頭の好走に期待"
+            if ev > 0.1:
+                return f"期待値{ev:.2f}倍。{extra_text}3頭の好走に期待"
+            else:
+                return f"{extra_text}3頭の好走に期待" if extra_text else "3頭の好走に期待"
                 
         elif bet_type == 'sanrentan':
-            return f"一撃高配当狙い（{odds:.1f}倍）"
+            if odds > 0:
+                return f"一撃高配当狙い（{odds:.1f}倍）"
+            else:
+                return "一撃高配当狙い"
         
-        return f"期待値{ev:.2f}倍"
+        return f"期待値{ev:.2f}倍" if ev > 0.1 else "推奨"
     
     @staticmethod
     def calculate_expected_value(predictions: pd.DataFrame, odds_data: dict) -> pd.DataFrame:
