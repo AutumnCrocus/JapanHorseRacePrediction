@@ -331,6 +331,12 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
         
         # Use all row data (features) for strategy reason generation
         item = row.to_dict()
+        
+        # Clean up NaN/inf values which might break JSON parsing in frontend
+        for k, v in item.items():
+            if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
+                item[k] = None
+                
         # Explicitly update with prediction results
         item.update({
             'horse_number': int(row.get('馬番', i + 1)),
