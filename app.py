@@ -322,8 +322,16 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
     
     results = []
     for i, (_, row) in enumerate(df.iterrows()):
-        odds = row.get('単勝', 0.0)
-        popularity = row.get('人気', 0)
+        # data_loader returns standardized columns 'odds' and 'popularity'
+        odds = row.get('odds', 0.0)
+        popularity = row.get('popularity', 0)
+        
+        # Fallback to Japanese if english not found (though data_loader should provide english)
+        if odds == 0.0 and '単勝' in row:
+             odds = row.get('単勝', 0.0)
+        if popularity == 0 and '人気' in row:
+             popularity = row.get('人気', 0)
+
         if pd.isna(odds): odds = 0.0
         if pd.isna(popularity): popularity = 0
         

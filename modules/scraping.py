@@ -460,6 +460,7 @@ class Shutuba:
                 api_res = requests.get(api_url, headers=HEADERS)
                 api_res.encoding = "EUC-JP"
                 odds_data = api_res.json()
+                
                 if odds_data.get("status") == "result":
                     raw_odds = odds_data.get("data", {}).get("odds", {}).get("1", {})
                     for row_data in data_list:
