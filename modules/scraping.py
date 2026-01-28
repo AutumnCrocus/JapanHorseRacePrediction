@@ -464,9 +464,17 @@ class Shutuba:
                     raw_odds = odds_data.get("data", {}).get("odds", {}).get("1", {})
                     for row_data in data_list:
                         u_num = str(row_data["馬番"])
-                        if u_num in raw_odds:
-                            row_data["単勝"] = raw_odds[u_num][0]
-                            row_data["人気"] = raw_odds[u_num][2]
+                        # API keys are zero-padded (e.g., "01", "02")
+                        u_num_padded = u_num.zfill(2)
+                        
+                        # Check both original and padded keys
+                        target_key = None
+                        if u_num in raw_odds: target_key = u_num
+                        elif u_num_padded in raw_odds: target_key = u_num_padded
+                        
+                        if target_key:
+                            row_data["単勝"] = raw_odds[target_key][0]
+                            row_data["人気"] = raw_odds[target_key][2]
             except: pass
 
             needs_fallback = any(not r.get("単勝") or "---" in str(r.get("単勝")) for r in data_list)
