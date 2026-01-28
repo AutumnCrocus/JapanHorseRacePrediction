@@ -175,8 +175,12 @@ def predict():
         # DataFrameに変換
         df = pd.DataFrame(horses)
         
+        # 予算とレースID（あれば）を取得
+        budget = int(data.get('budget', 0))
+        race_id = data.get('race_id', 'custom_race')
+        
         # 共通の予測ロジックを実行
-        return run_prediction_logic(df, "カスタムレース", "入力データによる予測")
+        return run_prediction_logic(df, "カスタムレース", "入力データによる予測", race_id=race_id, budget=budget)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -325,7 +329,10 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
         
         reasoning = explanations_list[i] if i < len(explanations_list) else {'positive': [], 'negative': []}
         
-        results.append({
+        # Use all row data (features) for strategy reason generation
+        item = row.to_dict()
+        # Explicitly update with prediction results
+        item.update({
             'horse_number': int(row.get('馬番', i + 1)),
             'horse_name': str(row.get('馬名', f'馬{i+1}')),
             'probability': float(probs[i]),
@@ -334,6 +341,7 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
             'expected_value': float(probs[i] * float(odds)),
             'reasoning': reasoning
         })
+        results.append(item)
     
     results.sort(key=lambda x: x['probability'], reverse=True)
     for rank, res in enumerate(results, 1):

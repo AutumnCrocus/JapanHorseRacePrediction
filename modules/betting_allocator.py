@@ -5,7 +5,10 @@
 
 import pandas as pd
 import numpy as np
+import pandas as pd
+import numpy as np
 from .strategy_composite import CompositeBettingStrategy
+from .strategy import BettingStrategy
 
 class BettingAllocator:
     """
@@ -32,7 +35,10 @@ class BettingAllocator:
         df_sorted = df_preds.sort_values('probability', ascending=False).copy()
         top_horses = df_sorted['horse_number'].tolist()
         
+        print(f"DEBUG: Budget={budget}, TopHorses={top_horses}, Columns={df_preds.columns}")
+        
         if not top_horses:
+            print("DEBUG: No horses found.")
             return []
 
         # --- Single Type Constraint Logic ---
@@ -122,7 +128,7 @@ class BettingAllocator:
                 recommendations.append(rec)
                 
             # フォーマット変換して返却
-            return BettingAllocator._format_recommendations(recommendations)
+            return BettingAllocator._format_recommendations(recommendations, df_preds)
 
 
         # --- Default Portfolio Logic (Mixed) ---
@@ -185,7 +191,7 @@ class BettingAllocator:
             }
             recommendations.append(rec)
 
-        return BettingAllocator._format_recommendations(recommendations)
+        return BettingAllocator._format_recommendations(recommendations, df_preds)
 
     @staticmethod
     def _create_box_rec(bet_type, horses, amount):
@@ -208,10 +214,48 @@ class BettingAllocator:
         }
 
     @staticmethod
-    def _format_recommendations(recommendations):
+    def _format_recommendations(recommendations, df_preds):
         final_list = []
+        
+        type_map = {
+            '単勝': 'tan', '複勝': 'fuku',
+            '馬連': 'umaren', 'ワイド': 'wide',
+            '馬単': 'umatan', '枠連': 'wakuren',
+            '3連複': 'sanrenpuku', '3連単': 'sanrentan'
+        }
+        
         for r in recommendations:
             combo_str = "-".join(map(str, r['horses']))
+            
+            # 理由生成
+            reason = '予算最適化'
+            try:
+                # 軸馬（リストの先頭）の特徴を取得
+                if r['horses']:
+                    head_horse = int(r['horses'][0])
+                    # df_predsから馬情報を検索
+                    # df_predsは辞書リストではなくDataFrame
+                    target_row = df_preds[df_preds['horse_number'] == head_horse]
+                    
+                    if not target_row.empty:
+                        row = target_row.iloc[0]
+                        feature_dict = row.to_dict()
+                        
+                        bet_code = type_map.get(r['type'], 'tan')
+                        
+                        # BettingStrategyを使って理由を生成
+                        reason = BettingStrategy.generate_reason(
+                            bet_code,
+                            [str(h) for h in r['horses']],
+                            row.get('probability', 0.1),
+                            row.get('expected_value', 1.0),
+                            row.get('odds', 0.0),
+                            [feature_dict]
+                        )
+            except Exception as e:
+                print(f"Reason generation error: {e}")
+                reason = "予算最適化（詳細生成エラー）"
+
             final_list.append({
                 'bet_type': r['type'],
                 'method': r['method'],
@@ -221,6 +265,6 @@ class BettingAllocator:
                 'unit_amount': 100,
                 'total_amount': r['amount'],
                 'horse_numbers': r['horses'],
-                'reason': '予算最適化'
+                'reason': reason
             })
         return final_list
