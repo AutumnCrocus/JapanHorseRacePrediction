@@ -95,54 +95,116 @@ class BettingStrategy:
         return f"期待値{ev:.2f}倍" if ev > 0.1 else "推奨"
 
     @staticmethod
-    def generate_box_reason(bet_type: str, horse_indices: list, df_preds: pd.DataFrame) -> str:
+    def generate_box_reason(bet_type: str, horse_indices: list, df_preds: pd.DataFrame, odds_data: dict = None) -> str:
         """
-        BOX買い用の理由生成
+        BOX買い用の理由生成 (実際の組み合わせ期待値を算出)
         """
         # 対象馬のデータを抽出
-        target_rows = df_preds[df_preds['horse_number'].isin([int(h) for h in horse_indices])]
+        target_indices = [int(h) for h in horse_indices]
+        target_rows = df_preds[df_preds['horse_number'].isin(target_indices)]
         
         if target_rows.empty:
             return "ボックス推奨"
 
-        # 集合的な指標を計算
-        avg_ev = target_rows['expected_value'].mean()
-        avg_prob = target_rows['probability'].mean()
-        max_odds = target_rows['odds'].max()
-        min_odds = target_rows['odds'].min()
+        # 馬番 -> 確率マップ
+        prob_map = dict(zip(target_rows['horse_number'], target_rows['probability']))
         
-        # 特徴的な馬がいるか
-        has_ana = any((target_rows['odds'] > 20) & (target_rows['probability'] > 0.05)) # 穴馬
-        is_solid = all(target_rows['probability'] > 0.15) # 堅実
+        # 期待回収率 (Return Rate) の計算
+        total_ev_sum = 0.0
+        combo_count = 0
         
+        if odds_data:
+            import itertools
+            
+            # 券種に応じたキーとオッズ辞書
+            odds_dict = {}
+            combos = []
+            prob_factor = 1.0
+            type_key = ''
+            
+            if bet_type == '馬連':
+                type_key = 'umaren'
+                odds_dict = odds_data.get('umaren', {})
+                combos = list(itertools.combinations(target_indices, 2))
+                prob_factor = 0.5 # 簡易補正
+            elif bet_type == 'ワイド':
+                type_key = 'wide'
+                odds_dict = odds_data.get('wide', {})
+                combos = list(itertools.combinations(target_indices, 2))
+                prob_factor = 0.8
+            elif bet_type == '3連複':
+                type_key = 'sanrenpuku'
+                odds_dict = odds_data.get('sanrenpuku', {})
+                combos = list(itertools.combinations(target_indices, 3))
+                prob_factor = 0.3
+            elif bet_type == '3連単':
+                type_key = 'sanrentan'
+                odds_dict = odds_data.get('sanrentan', {})
+                combos = list(itertools.permutations(target_indices, 3))
+                prob_factor = 0.15
+            
+            combo_count = len(combos)
+            
+            for c in combos:
+                # Key作成 (ソート済みタプルまたはそのまま)
+                key = c
+                if bet_type in ['馬連', 'ワイド', '3連複']:
+                    key = tuple(sorted(c))
+                
+                # オッズ取得
+                odds = 0
+                if key in odds_dict:
+                    val = odds_dict[key]
+                    # ワイドの場合は[min, max]なので平均をとるかminをとる
+                    if isinstance(val, list):
+                        odds = val[0]
+                    else:
+                        odds = val
+                
+                # 確率推定
+                combo_prob = 1.0
+                for h in c:
+                    combo_prob *= prob_map.get(h, 0.0)
+                combo_prob *= prob_factor
+                
+                # 組み合わせ期待値
+                total_ev_sum += (combo_prob * odds)
+
+        # 集合的な指標
+        avg_ev = target_rows['expected_value'].mean() # 旧指標（バックアップ）
+        
+        # 最終的なBOX期待値 (Return Rate)
+        # points = combo_count
+        # BoxEV = (Sum(P * Odds)) / 1 (Cost per point is uniform) ? 
+        # No, Expected Return of the Ticket / Cost of the Ticket
+        # Cost = combo_count * unit
+        # Return = Sum (P * Odds * unit)
+        # Ratio = Sum(P*Odds) / combo_count
+        
+        box_return_rate = 0
+        if combo_count > 0:
+            box_return_rate = total_ev_sum / combo_count
+        else:
+            # オッズデータがない場合は旧ロジック(単勝EV平均)で代用
+             box_return_rate = avg_ev
+        
+        # メッセージ生成
         reason_parts = []
         
-        # 1. 平均的な質への言及
-        if avg_ev > 1.5:
-            reason_parts.append(f"平均期待値{avg_ev:.2f}倍")
-        elif avg_prob > 0.3: # かなり高い
-            reason_parts.append(f"平均勝率{avg_prob*100:.0f}%")
+        # 1. 期待値
+        if box_return_rate > 0:
+             reason_parts.append(f"平均期待値{box_return_rate:.2f}倍")
             
-        # 2. 構成の性質
-        if bet_type == '3連単':
-            if has_ana:
-                reason_parts.append("高配当狙いの波乱含みBOX")
-            elif is_solid:
-                reason_parts.append("上位拮抗の堅実BOX")
-            else:
-                reason_parts.append("一撃高配当狙い")
-        elif bet_type == '3連複':
-            if is_solid:
-                reason_parts.append("3頭の好走に期待")
-            else:
-                reason_parts.append("広角に流して高配当狙い")
-        elif bet_type in ['馬連', 'ワイド']:
-            if is_solid:
-                reason_parts.append("的中率重視の安定構成")
-            else:
-                reason_parts.append("好配当狙いのBOX")
+        # 2. 定性評価
+        has_ana = any((target_rows['odds'] > 20) & (target_rows['probability'] > 0.05))
+        is_solid = all(target_rows['probability'] > 0.15)
+        
+        if has_ana:
+            reason_parts.append("高配当狙い")
+        elif is_solid:
+            reason_parts.append("堅実構成")
         else:
-            reason_parts.append("最適化された分散投資")
+            reason_parts.append("バランス型")
             
         return "。".join(reason_parts)
     

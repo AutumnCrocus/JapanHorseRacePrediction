@@ -128,7 +128,7 @@ class BettingAllocator:
                 recommendations.append(rec)
                 
             # フォーマット変換して返却
-            return BettingAllocator._format_recommendations(recommendations, df_preds)
+            return BettingAllocator._format_recommendations(recommendations, df_preds, odds_data)
 
 
         # --- Default Portfolio Logic (Mixed) ---
@@ -191,7 +191,7 @@ class BettingAllocator:
             }
             recommendations.append(rec)
 
-        return BettingAllocator._format_recommendations(recommendations, df_preds)
+        return BettingAllocator._format_recommendations(recommendations, df_preds, odds_data)
 
     @staticmethod
     def _create_box_rec(bet_type, horses, amount):
@@ -214,7 +214,7 @@ class BettingAllocator:
         }
 
     @staticmethod
-    def _format_recommendations(recommendations, df_preds):
+    def _format_recommendations(recommendations, df_preds, odds_data=None):
         final_list = []
         
         type_map = {
@@ -248,7 +248,8 @@ class BettingAllocator:
                             reason = BettingStrategy.generate_box_reason(
                                 r['type'],
                                 r['horses'],
-                                df_preds
+                                df_preds,
+                                odds_data
                             )
                         else:
                             reason = BettingStrategy.generate_reason(

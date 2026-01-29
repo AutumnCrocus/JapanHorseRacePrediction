@@ -397,7 +397,14 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
              df_preds_alloc = pd.DataFrame(results)
              
              # Call Allocator
-             recommendations = BettingAllocator.allocate_budget(df_preds_alloc, budget)
+             # Fetch Odds Data for Allocator explicitly to support BOX EV calculation
+             odds_data = None
+             try:
+                 odds_data = Odds.scrape(race_id)
+             except Exception as oe:
+                 print(f"Failed to fetch detailed odds data: {oe}")
+             
+             recommendations = BettingAllocator.allocate_budget(df_preds_alloc, budget, odds_data=odds_data)
              
              if not recommendations:
                  odds_warning = "推奨条件を満たす組み合わせが見つかりませんでした (予算不足または確度不足)"
