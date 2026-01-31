@@ -674,11 +674,16 @@ def load_ipat_credentials():
     )
 
 
+# IPAT自動化インスタンスをグローバル保持 (セッション維持のため)
+ipat_automator = None
+
 @app.route('/api/ipat/launch_browser', methods=['POST'])
 def launch_ipat_browser():
     """
     Seleniumでブラウザを起動し、IPAT投票画面に直接アクセスして買い目を入力する
     """
+    global ipat_automator
+    
     try:
         data = request.json
         race_id = data.get('race_id')
@@ -693,8 +698,51 @@ def launch_ipat_browser():
         # 推奨データをbets形式に変換
         bets = convert_recommendations_to_bets(recommendations)
         
+        # 認証情報を取得 (JSONファイル優先、環境変数フォールバック)
+        inetid, subscriber_no, pin, pars_no = load_ipat_credentials()
+        
+        # 認証情報チェック
+        if not all([subscriber_no, pin, pars_no]):
+            return jsonify({
+                'success': False, 
+                'error': 'IPAT認証情報が設定されていません。scripts/debug/ipat_secrets.json または環境変数を設定してください。'
+            }), 400
+            
+        print(f"Launching IPAT for Race {race_id}, Bets: {len(bets)}")
+        print(f"Converted bets: {bets}")
+        
+        # IPAT自動化インスタンスの管理
+        # 既存のインスタンスがあり、かつドライバが生存しているかチェック
+        is_active = False
+        if ipat_automator is not None:
+            try:
+                # ドライバが生きているか確認 (タイトル取得などで)
+                _ = ipat_automator.driver.title
+                is_active = True
+                print("Existing IPAT automator instance found and active.")
+            except:
+                print("Existing IPAT automator instance found but driver is dead.")
+                ipat_automator = None
+        
+        if not is_active:
+            print("Creating new IPAT automator instance...")
+            # 本番用にdebug_mode=Falseで高速化
+            ipat_automator = IpatDirectAutomator(debug_mode=False)
+        
+        # 1. ログイン (既存セッションがある場合は内部でスキップされる)
+        # ログイン処理は毎回呼び出すが、クラス内部で「既にログイン済み」ならスキップする実装になっている
+        login_success, login_msg = ipat_automator.login(inetid, subscriber_no, pin, pars_no)
+        
+        if not login_success:
+            # ログイン失敗時はインスタンスをリセットした方が安全かも
+            # ipat_automator.close() # 失敗理由によるが、閉じた方が無難
+            return jsonify({
+                'success': False, 
+                'error': f'IPATログインに失敗しました: {login_msg}'
+            }), 400
+        
         # 2. 投票実行 (確認画面で停止)
-        vote_success, vote_msg = automator.vote(race_id, bets, stop_at_confirmation=True)
+        vote_success, vote_msg = ipat_automator.vote(race_id, bets, stop_at_confirmation=True)
         
         if vote_success:
             return jsonify({
@@ -702,7 +750,9 @@ def launch_ipat_browser():
                 'message': f'{vote_msg}\n\n⚠️ 合計金額を確認し、「入力終了」→「投票」ボタンを手動で押してください。'
             })
         else:
-            automator.close()
+            # 投票失敗時はブラウザを閉じる
+            ipat_automator.close()
+            ipat_automator = None # インスタンスもリセット
             return jsonify({
                 'success': False, 
                 'error': f'投票処理に失敗しました: {vote_msg}'
@@ -711,6 +761,10 @@ def launch_ipat_browser():
     except Exception as e:
         import traceback
         traceback.print_exc()
+        # エラー発生時はブラウザを閉じる
+        if ipat_automator:
+            ipat_automator.close()
+            ipat_automator = None # インスタンスもリセット
         return jsonify({'success': False, 'error': f'システムエラー: {str(e)}'}), 500
 
 

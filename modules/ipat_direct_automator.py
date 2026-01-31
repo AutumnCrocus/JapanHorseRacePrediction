@@ -109,6 +109,29 @@ class IpatDirectAutomator:
         except Exception as e:
             print(f"Failed to save snapshot {name}: {e}")
 
+    def _setup_driver(self):
+        """WebDriverをセットアップする"""
+        options = Options()
+        # ヘッドレスモード設定 (デバッグモードでない場合)
+        if not self.debug_mode:
+            options.add_argument("--headless")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+        
+        # スマートフォンエミュレーション
+        mobile_emulation = { "deviceName": "iPhone X" } # 例: iPhone X
+        options.add_experimental_option("mobileEmulation", mobile_emulation)
+        
+        # その他のオプション
+        options.add_argument("--window-size=375,812") # iPhone Xの解像度
+        options.add_argument("--lang=ja")
+        
+        # WebDriverの初期化
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver.set_page_load_timeout(self.wait_timeout)
+
     def login(self, inetid: str, subscriber_no: str, pin: str, pars_no: str) -> tuple[bool, str]:
         """
         IPATログイン画面で認証を実行（スマホ版）
@@ -120,15 +143,25 @@ class IpatDirectAutomator:
             pars_no: P-ARS番号
         """
         try:
-            # Chromeオプション設定
-            options = Options()
-            # options.add_argument("-headless") # デバッグ時はHeadless無効
-            options.add_argument('--start-maximized')
-            options.add_argument('--disable-blink-features=AutomationControlled')
+            # ブラウザが起動していなければ起動
+            if not self.driver:
+                self._setup_driver()
             
-            # ドライバ起動
-            service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=options)
+            # 既にログイン済みかチェック (トップメニューが表示されているか)
+            try:
+                current_url = self.driver.current_url
+                if "pw_100_i.cgi" in current_url or "pw_110_i.cgi" in current_url:
+                    print("Already logged in (URL match). Skipping login sequence.")
+                    return True, "ログイン済み"
+                    
+                # 要素でのチェックも追加
+                # "通常投票" リンクがあるか
+                top_menu = self.driver.find_elements(By.XPATH, "//a[contains(text(), '通常投票')]")
+                if top_menu and top_menu[0].is_displayed():
+                    print("Already logged in (Menu found). Skipping login sequence.")
+                    return True, "ログイン済み"
+            except:
+                pass
             
             print(f"IPAT(SP)へアクセス中: {self.JRA_IPAT_URL}")
             self.driver.get(self.JRA_IPAT_URL)
