@@ -1,0 +1,682 @@
+<html lang="ja" class="ui-mobile"><!-- Lastupdate 2025/02/07 17:34 --><head><base href="https://www.ipat.jra.go.jp/sp/pw_740_i.cgi?w=1">
+<meta charset="euc-jp">
+<title>JRAネット投票</title>
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon-precomposed" href="tmpl/images/sp_ipat_icon.png">
+<script language="JavaScript" type="text/javascript" src="tmpl/import_241129.js"></script><link rel="stylesheet" href="tmpl/jquery.mobile.structure-1.2.0.min.css">
+<link rel="stylesheet" href="tmpl/jqm_overwrite_131129.css">
+<script language="JavaScript" type="text/javascript" src="tmpl/jquery-1.8.2.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmpl/jqm.extend_241129.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmpl/jquery.mobile-1.2.0.min.js"></script>
+
+<script language="JavaScript" type="text/javascript" src="tmpl/001_241129.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmpl/740_250328.js"></script>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+
+var g740_nUMACAFlag = 0;
+
+document.open();
+if(g740_nUMACAFlag == 1){
+	WriteCSSUSP();
+}else{
+	WriteCSSSP();
+}
+document.close();
+
+var hmsg1 = "ﾌｫｰﾒｰｼｮﾝ";
+var hmsg2 = "ボックス";
+
+var hmsg12 = "馬";
+var hmsg13 = "枠";
+var hmsg14 = "組";
+var hmsg15 = "00円";
+var hmsg16 = "各";
+var hmsg17 = "合計金額";
+var hmsg18 = "修正";
+var hmsg19 = "投票内容修正";
+var hmsg20 = "確認";
+var hmsg21 = "投票";
+var hmsg22 = "フォーメーション";
+var hmsg23 = "ボックス";
+var hmsg24 = "ながし";
+var hmsg25 = "1着ながし";
+var hmsg26 = "2着ながし";
+var hmsg27 = "3着ながし";
+var hmsg28 = "1･2着ながし";
+var hmsg29 = "1･3着ながし";
+var hmsg30 = "2･3着ながし";
+var hmsg31 = "軸1頭ながし";
+var hmsg32 = "軸2頭ながし";
+var hmsg33 = "単勝オッズ";
+var hmsg34 = "馬名";
+var hmsg35 = "馬番";
+var hmsg36 = "枠番";
+var hmsg37 = "軸枠";
+var hmsg38 = "相手";
+var hmsg39 = "1枠目";
+var hmsg40 = "2枠目";
+var hmsg41 = "軸馬";
+var hmsg42 = "1頭目";
+var hmsg43 = "2頭目";
+var hmsg44 = "3頭目";
+var hmsg45 = "1着";
+var hmsg46 = "2着";
+var hmsg47 = "3着";
+var hmsg48 = "合計";
+var hmsg49 = "軸";
+var hmsg50 = "1着軸";
+var hmsg51 = "2着軸";
+var hmsg52 = "3着軸";
+var hmsg53 = "通常"
+var hmsg54 = "ボックス";
+var hmsg55 = "R";
+var hmsg56 = "枠数";
+var hmsg57 = "頭";
+var hmsg58 = "全レース";
+var hmsg59 = "マルチ";
+
+var hmsg61 = "馬番を１頭選択してください。";
+var hmsg62 = "馬番を２頭選択してください。";
+var hmsg63 = "馬番を３頭選択してください。";
+var hmsg64 = "軸馬番を１頭選択してください。";
+var hmsg65 = "軸馬番を２頭選択してください。";
+var hmsg66 = "枠番を２つ選択してください。ゾロ目の時は、枠番１つとゾロ目を選択してください。";
+var hmsg67 = "軸枠番を１つ選択してください。";
+
+var hmsg70 = "投票がセットされていません";
+
+var hmsg81 = '<DIV CLASS="btnWrap"><UL><LI CLASS="btnColor"><A>次へ</A></LI></UL></DIV>';
+var hmsg82 = '<DIV CLASS="btnWrap"><UL><LI CLASS="btnColor"><A>次へ</A></LI></UL></DIV><DIV CLASS="btnWrap"><UL><LI CLASS="btnSoftColor"><A DATA-ROLE="selectall">全選択</A></LI><LI CLASS="btnSoftColor"><A DATA-ROLE="clearall">クリア</A></LI></UL></DIV>';
+var hmsg83 = "&nbsp;&gt;&nbsp;";
+var hmsg84 = '<UL><LI CLASS="btnSoftColor"><A><SPAN CLASS="ico_plus"></SPAN>馬（枠）番から続けて入力</A></LI></UL>';
+var hmsg85 = '<UL><LI CLASS="btnSoftColor"><A><SPAN CLASS="ico_plus"></SPAN>場名から続けて入力</A></LI></UL>';
+var hmsg86 = '<span class="wakubox_message">※枠連ボックスにゾロ目は含まれません。</span>';
+var hmsg87 = '※複勝は2着までの払戻となっております。';
+var hmsg88 = '※「マルチ」は「金額入力」の画面で選択できます。';
+var hmsg89 = '<span class="deadLine1">締切時刻</span>';
+
+var msg1 = "コードが不正です。";
+var msg2 = "３枠以上は選択できません";
+var msg3 = "ゾロ目は有りません！\nもう一度、枠番を選択して下さい。";
+var msg4 = "３頭以上は選択できません";
+var msg5 = "軸は２頭です";
+var msg6 = "４頭以上は選択できません";
+var msg7 = "枠番を２つ選択してください";
+var msg8 = "馬番を２頭選択してください";
+var msg9 = "馬番を３頭選択してください";
+var msg10 = "削除してよろしいですか？";
+var msg11 = "削除する項目がありません！";
+var msg12 = "削除する行を選択してください";
+var msg13 = "数字以外の文字が入力されています！\n半角数字のみ入力してください。";
+var msg14 = "金額が多すぎます。";
+var msg15 = "金額を入力してください。";
+var msg16 = "必要な情報が選ばれていません。";
+var msg17 = "枠番が選択されていません！！";
+var msg18 = "馬番が選択されていません！！";
+var msg19 = "有効な組み合わせが存在しません！！";
+var msg20 = "投票件数が２５５件に成りました。\n";
+var msg21 = "投票件数が２５５件に成りました。";
+var msg22 = "投票可能レースが有りませんでした。";
+var msg23 = "発売中のレースがありません。"
+var msg24 = "投票件数が２５５件を超えるため追加できません。";
+var msg25 = "投票内容を全て破棄して、トップメニュー画面に戻ります。よろしいですか？";
+var msg26 = "設定をローカルストレージに保存できませんでした。\nお使いのブラウザがローカルストレージに対応しているか、また、「Cookie」の設定を変更するなどして、ローカルストレージが使用可能な設定になっているかご確認ください。";
+var msg27 = "投票件数が２５５件を超えるため展開できません。";
+var msg28 = "選択したレースの発売はありません。";
+
+if(g740_nUMACAFlag == 1){
+    var g740_cURL="https://"+location.hostname+"/sp/umaca/pw_743_i.cgi";
+}else{
+    var g740_cURL="https://"+location.hostname+"/sp/pw_743_i.cgi";
+}
+
+TMPL = {
+	jyo: "<div data-role='page' id='jyo' data-url='jyo'><header class='header'><h1>競馬場名</h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'><a><span>トップメニュー</span></a></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><ul class='selectList' data-role='singlechoice'></ul></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	race:"<div data-role='page' id='race' data-url='race'><header class='header'><h1>レース</h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'><a><span>競馬場名</span></a></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><h2 class='contentHeading'></h2><ul class='selectList' data-role='singlechoice'></ul></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	siki:"<div data-role='page' id='siki' data-url='siki'><header class='header'><h1>式別</h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'><a><span>レース</span></a></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><h2 class='contentHeading'></h2><ul class='selectList' data-role='singlechoice'></ul></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	multi_info: "<div data-role='page' id='multi_info' data-url='multi_info'><header class='header'><h1>マルチについて</h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'><a><span>式別</span></a></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><h2 class='contentHeading'></h2><p class='noteRadiusWrap'>（ながしの場合）<br>マルチで購入される際は、最後の「金額入力」の画面において、「マルチ」を選択してください。</p><div class='multiInfoCheckbox'><input type='checkbox' id='multi_info_checkbox'/><label for='multi_info_checkbox'>今後この画面を表示しない</label></div><div class='btnWrap'><ul><li class='btnColor'><a>ＯＫ</a></li></ul></div></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	hou: "<div data-role='page' id='hou' data-url='hou'><header class='header'><h1>方式</h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'><a><span>式別</span></a></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><h2 class='contentHeading'></h2><ul class='selectList' data-role='singlechoice'></ul><p class='multiGuideMessage'></p></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	uma: "<div data-role='page'><header class='header'><h1></h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><h2 class='contentHeading'></h2><div class='noteWrap'><p></p></div><p class='placePayMessage'></p><ul class='selectHorse'></ul><p class='placePayMessage'></p></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	waku:"<div data-role='page'><header class='header'><h1></h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'></li><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'><h2 class='contentHeading'></h2><div class='noteWrap'><p></p></div><ul class='selectHorseBracketQuinella'></ul></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	kin: "<div data-role='page' id='kin' data-url='kin'><header class='header'><h1>金額入力</h1><nav class='headerNav'><ul><li class='headerNavRight'><a><span>取消</span></a></li></ul></nav></header><div class='content' data-role='content'></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>",
+	tous:"<div data-role='page' id='tous'><header class='header'><h1>投票詳細</h1><nav class='headerNav'><ul><li class='headerNavLeftArrow'><a><span>戻る</span></a></li></ul></nav></header><div class='content' data-role='content'><div class='detailContentHeading'><h2></h2><ul class='btn'><li class='modified'><a>修正</a></li><li class='delete'><a>削除</a></li></ul></div><table class='voteDetailTable'></table><ul class='amountDisplay'></ul></div><footer class='footer'><nav class='footerNav'><ul><li><a>トップメニュー</a></li></ul></nav><p class='copyright'><small>&copy; Japan Racing Association.</small></p></footer></div>"
+};
+// -->
+</script><link rel="stylesheet" type="text/css" href="tmpl/ipat_s1_241129.css">
+</head>
+<body class="ui-mobile-viewport ui-overlay-c"><div data-role="page" id="kin" data-url="kin" tabindex="0" class="ui-page ui-body-c ui-page-active" style="min-height: 678px;"><header class="header"><h1 class="ui-title">金額入力</h1><nav class="headerNav"><ul><li class="headerNavRight"><a class="ui-link"><span>取消</span></a></li></ul></nav></header><div class="content ui-content" data-role="content" role="main"><ul class="inputPriceList"><li class="alignR"><a title="競馬場名" data-to="#jyo" data-value="0" class="ui-link">東京(土)</a></li><li class="alignR"><a title="レース" data-to="#race" data-value="10" class="ui-link">11R</a></li><li class="alignR"><a title="式別" data-to="#siki" data-value="4" class="ui-link">馬連</a></li><li class="alignR"><a title="方式" data-to="#hou" data-value="0" class="ui-link">通常</a></li><li><a data-to="#uma1" title="馬番" data-value="2-3" class="ui-link"><span class="innerWrap"><span class="waku2">2</span><span class="waku3">3</span></span></a></li></ul><div class="inputPriceForm"><ul class="inputPriceList"><li class="amount">金額<input maxlength="4" type="tel" class="ui-input-text ui-body-c ui-corner-all ui-shadow-inset ui-focus">00円</li></ul><div class="btnWrap"><ul><li class="btnColor"><a class="ui-link disabled">展開セット</a></li><li class="btnColor"><a class="ui-link">セット</a></li></ul></div></div></div><footer class="footer"><nav class="footerNav"><ul><li><a class="ui-link">トップメニュー</a></li></ul></nav><p class="copyright"><small>© Japan Racing Association.</small></p></footer></div><div data-role="page" id="uma1" data-url="uma1" tabindex="0" class="ui-page ui-body-c" style="min-height: 678px;"><header class="header"><h1 class="ui-title">馬連</h1><nav class="headerNav"><ul><li class="headerNavLeftArrow"><a class="ui-link"><span>方式</span></a></li><li class="headerNavRight"><a class="ui-link"><span>取消</span></a></li></ul></nav></header><div class="content ui-content" data-role="content" role="main"><h2 class="contentHeading">東京(土)&nbsp;&gt;&nbsp;11R&nbsp;&gt;&nbsp;馬連&nbsp;&gt;&nbsp;通常</h2><div class="noteWrap"><p>馬番を２頭選択してください。</p></div><p class="placePayMessage"></p><div class="btnWrap"><ul><li class="btnColor"><a class="ui-link">金額入力画面へ</a></li></ul></div><ul class="selectHorse" data-role="multichoice"><li><h3><span>馬番</span><span>馬名</span><span>単勝オッズ</span></h3></li><li><a data-value="1" class="ui-link"><span class="waku1">1</span>ヴィレム　　　　　<span class="ods red">8.7</span></a></li><li><a data-value="2" class="ui-link selected"><span class="waku2">2</span>レディネス　　　　<span class="ods red">6.6</span></a></li><li><a data-value="3" class="ui-link selected"><span class="waku3">3</span>シンハナーダ　　　<span class="ods red">7.2</span></a></li><li><a data-value="4" class="ui-link"><span class="waku4">4</span>ダノンシーマ　　　<span class="ods red">8.1</span></a></li><li><a data-value="5" class="ui-link"><span class="waku5">5</span>キングズパレス　　<span class="ods blue">37.2</span></a></li><li><a data-value="6" class="ui-link"><span class="waku6">6</span>ウィクトルウェルス<span class="ods red">1.9</span></a></li><li><a data-value="7" class="ui-link"><span class="waku7">7</span>マイネルモーント　<span class="ods blue">58.9</span></a></li><li><a data-value="8" class="ui-link"><span class="waku7">8</span>ピースワンデュック<span class="ods blue">15.2</span></a></li><li><a data-value="9" class="ui-link"><span class="waku8">9</span>オーロラエックス　<span class="ods blue">26.5</span></a></li><li><a data-value="10" class="ui-link"><span class="waku8">10</span>セレシオン　　　　<span class="ods blue">16.8</span></a></li></ul><div class="btnWrap"><ul><li class="btnColor"><a class="ui-link">金額入力画面へ</a></li></ul></div><p class="placePayMessage"></p></div><footer class="footer"><nav class="footerNav"><ul><li><a class="ui-link">トップメニュー</a></li></ul></nav><p class="copyright"><small>© Japan Racing Association.</small></p></footer></div><div data-role="page" id="hou" data-url="hou" tabindex="0" class="ui-page ui-body-c" style="min-height: 678px;"><header class="header"><h1 class="ui-title">方式</h1><nav class="headerNav"><ul><li class="headerNavLeftArrow"><a class="ui-link"><span>式別</span></a></li><li class="headerNavRight"><a class="ui-link"><span>取消</span></a></li></ul></nav></header><div class="content ui-content" data-role="content" role="main"><h2 class="contentHeading">東京(土)&nbsp;&gt;&nbsp;11R&nbsp;&gt;&nbsp;馬連</h2><ul class="selectList" data-role="singlechoice"><li><a data-value="0" class="ui-link selected">通常</a></li><li><a data-value="3" class="ui-link">ながし</a></li><li><a data-value="2" class="ui-link">ボックス</a></li><li><a data-value="1" class="ui-link">フォーメーション</a></li></ul><p class="multiGuideMessage"></p></div><footer class="footer"><nav class="footerNav"><ul><li><a class="ui-link">トップメニュー</a></li></ul></nav><p class="copyright"><small>© Japan Racing Association.</small></p></footer></div><div data-role="page" id="siki" data-url="siki" tabindex="0" class="ui-page ui-body-c" style="min-height: 678px;"><header class="header"><h1 class="ui-title">式別</h1><nav class="headerNav"><ul><li class="headerNavLeftArrow"><a class="ui-link"><span>レース</span></a></li><li class="headerNavRight"><a class="ui-link"><span>取消</span></a></li></ul></nav></header><div class="content ui-content" data-role="content" role="main"><h2 class="contentHeading">東京(土)&nbsp;&gt;&nbsp;11R</h2><ul class="selectList" data-role="singlechoice"><li><a data-value="1" class="ui-link">単勝</a></li><li><a data-value="2" class="ui-link">複勝</a></li><li><a data-value="3" class="ui-link">枠連</a></li><li><a data-value="4" class="ui-link selected">馬連</a></li><li><a data-value="5" class="ui-link">ワイド</a></li><li><a data-value="6" class="ui-link">馬単</a></li><li><a data-value="7" class="ui-link">３連複</a></li><li><a data-value="8" class="ui-link">３連単</a></li></ul></div><footer class="footer"><nav class="footerNav"><ul><li><a class="ui-link">トップメニュー</a></li></ul></nav><p class="copyright"><small>© Japan Racing Association.</small></p></footer></div><div data-role="page" id="race" data-url="race"><header class="header"><h1>レース</h1><nav class="headerNav"><ul><li class="headerNavLeftArrow"><a><span>競馬場名</span></a></li><li class="headerNavRight"><a><span>取消</span></a></li></ul></nav></header><div class="content" data-role="content"><h2 class="contentHeading">東京(土)<span class="deadLine1">締切時刻</span></h2><ul class="selectList" data-role="singlechoice"><li><a class="raceList" data-value="7"><span class="raceNum">8R</span><span class="raceName"></span><span class="deadLine2">14:00</span></a></li><li><a class="raceList" data-value="8"><span class="raceNum">9R</span><span class="raceName">白嶺ステークス</span><span class="deadLine2">14:30</span></a></li><li><a class="raceList" data-value="9"><span class="raceNum">10R</span><span class="raceName">クロッカスステークス(L)</span><span class="deadLine2">15:04</span></a></li><li><a class="raceList selected" data-value="10"><span class="raceNum">11R</span><span class="raceName">白富士ステークス(L)</span><span class="deadLine2">15:44</span></a></li><li><a class="raceList" data-value="11"><span class="raceNum">12R</span><span class="raceName"></span><span class="deadLine2">16:24</span></a></li><li><a data-value="15"><span>全レース</span></a></li></ul></div><footer class="footer"><nav class="footerNav"><ul><li><a>トップメニュー</a></li></ul></nav><p class="copyright"><small>© Japan Racing Association.</small></p></footer></div><div data-role="page" id="jyo" data-url="jyo"><header class="header"><h1>競馬場名</h1><nav class="headerNav"><ul><li class="headerNavLeftArrow"><a><span>トップメニュー</span></a></li><li class="headerNavRight"><a><span>取消</span></a></li></ul></nav></header><div class="content" data-role="content"><ul class="selectList" data-role="singlechoice"><li><a data-value="0" class="selected">東京(土)</a></li><li><a data-value="1">京都(土)</a></li><li><a data-value="2">小倉(土)</a></li><li><a data-value="3"><span class="fontRed">東京(日)</span></a></li><li><a data-value="4"><span class="fontRed">京都(日)</span></a></li></ul></div><footer class="footer"><nav class="footerNav"><ul><li><a>トップメニュー</a></li></ul></nav><p class="copyright"><small>© Japan Racing Association.</small></p></footer></div>
+<div id="noscript" style="margin: 15px 10px; padding: 10px; border: 1px solid rgb(70, 70, 70); border-radius: 10px; color: rgb(255, 0, 0); display: none;">
+	<p>JRA ネット投票ではJavaScriptを使用しています。<br>
+		JavaScriptに対応したブラウザをご利用いただくか、JavaScriptを使用するように設定してからご利用願います。</p>
+</div>
+<script type="text/javascript">
+	document.getElementById('noscript').style.display="none";
+</script>
+<form action="pw_743_i.cgi" name="FORM0" method="POST">
+<input type="HIDDEN" name="uh" value="04vq1m"><input type="HIDDEN" name="inetid" value="4NSDPLKD"><input type="HIDDEN" name="g" value="740"><input type="HIDDEN" name="u" value="0oC1bm4a4oM8"><input type="HIDDEN" name="nm" value="112900"><input type="HIDDEN" name="zj" value="090000000000000"><input type="HIDDEN" name="mli" value="0000000000000000000000000000000"><input type="HIDDEN" name="uk" value="0">
+</form>
+<form action="pw_732_i.cgi" name="FORM1" method="POST">
+<input type="HIDDEN" name="uh" value="04vq1m"><input type="HIDDEN" name="inetid" value="4NSDPLKD"><input type="HIDDEN" name="g" value="740"><input type="HIDDEN" name="u" value="0oC1bm4a4oM8"><input type="HIDDEN" name="nm" value="112900"><input type="HIDDEN" name="zj" value="090000000000000"><input type="HIDDEN" name="mli" value="0000000000000000000000000000000"><input type="HIDDEN" name="uk" value="0">
+</form>
+<form action="pw_741_i.cgi" name="s" method="POST">
+<input type="hidden" value="0" name="001">	<input type="hidden" value="0" name="002">	<input type="hidden" value="0" name="003">	<input type="hidden" value="0" name="004">
+<input type="hidden" value="0" name="005">	<input type="hidden" value="0" name="006">	<input type="hidden" value="0" name="007">	<input type="hidden" value="0" name="008">
+<input type="hidden" value="0" name="009">	<input type="hidden" value="0" name="010">	<input type="hidden" value="0" name="011">	<input type="hidden" value="0" name="012">
+<input type="hidden" value="0" name="013">	<input type="hidden" value="0" name="014">	<input type="hidden" value="0" name="015">	<input type="hidden" value="0" name="016">
+<input type="hidden" value="0" name="017">	<input type="hidden" value="0" name="018">	<input type="hidden" value="0" name="019">	<input type="hidden" value="0" name="020">
+<input type="hidden" value="0" name="021">	<input type="hidden" value="0" name="022">	<input type="hidden" value="0" name="023">	<input type="hidden" value="0" name="024">
+<input type="hidden" value="0" name="025">	<input type="hidden" value="0" name="026">	<input type="hidden" value="0" name="027">	<input type="hidden" value="0" name="028">
+<input type="hidden" value="0" name="029">	<input type="hidden" value="0" name="030">	<input type="hidden" value="0" name="031">	<input type="hidden" value="0" name="032">
+<input type="hidden" value="0" name="033">	<input type="hidden" value="0" name="034">	<input type="hidden" value="0" name="035">	<input type="hidden" value="0" name="036">
+<input type="hidden" value="0" name="037">	<input type="hidden" value="0" name="038">	<input type="hidden" value="0" name="039">	<input type="hidden" value="0" name="040">
+<input type="hidden" value="0" name="041">	<input type="hidden" value="0" name="042">	<input type="hidden" value="0" name="043">	<input type="hidden" value="0" name="044">
+<input type="hidden" value="0" name="045">	<input type="hidden" value="0" name="046">	<input type="hidden" value="0" name="047">	<input type="hidden" value="0" name="048">
+<input type="hidden" value="0" name="049">	<input type="hidden" value="0" name="050">	<input type="hidden" value="0" name="051">	<input type="hidden" value="0" name="052">
+<input type="hidden" value="0" name="053">	<input type="hidden" value="0" name="054">	<input type="hidden" value="0" name="055">	<input type="hidden" value="0" name="056">
+<input type="hidden" value="0" name="057">	<input type="hidden" value="0" name="058">	<input type="hidden" value="0" name="059">	<input type="hidden" value="0" name="060">
+<input type="hidden" value="0" name="061">	<input type="hidden" value="0" name="062">	<input type="hidden" value="0" name="063">	<input type="hidden" value="0" name="064">
+<input type="hidden" value="0" name="065">	<input type="hidden" value="0" name="066">	<input type="hidden" value="0" name="067">	<input type="hidden" value="0" name="068">
+<input type="hidden" value="0" name="069">	<input type="hidden" value="0" name="070">	<input type="hidden" value="0" name="071">	<input type="hidden" value="0" name="072">
+<input type="hidden" value="0" name="073">	<input type="hidden" value="0" name="074">	<input type="hidden" value="0" name="075">	<input type="hidden" value="0" name="076">
+<input type="hidden" value="0" name="077">	<input type="hidden" value="0" name="078">	<input type="hidden" value="0" name="079">	<input type="hidden" value="0" name="080">
+<input type="hidden" value="0" name="081">	<input type="hidden" value="0" name="082">	<input type="hidden" value="0" name="083">	<input type="hidden" value="0" name="084">
+<input type="hidden" value="0" name="085">	<input type="hidden" value="0" name="086">	<input type="hidden" value="0" name="087">	<input type="hidden" value="0" name="088">
+<input type="hidden" value="0" name="089">	<input type="hidden" value="0" name="090">	<input type="hidden" value="0" name="091">	<input type="hidden" value="0" name="092">
+<input type="hidden" value="0" name="093">	<input type="hidden" value="0" name="094">	<input type="hidden" value="0" name="095">	<input type="hidden" value="0" name="096">
+<input type="hidden" value="0" name="097">	<input type="hidden" value="0" name="098">	<input type="hidden" value="0" name="099">	<input type="hidden" value="0" name="100">
+<input type="hidden" value="0" name="101">	<input type="hidden" value="0" name="102">	<input type="hidden" value="0" name="103">	<input type="hidden" value="0" name="104">
+<input type="hidden" value="0" name="105">	<input type="hidden" value="0" name="106">	<input type="hidden" value="0" name="107">	<input type="hidden" value="0" name="108">
+<input type="hidden" value="0" name="109">	<input type="hidden" value="0" name="110">	<input type="hidden" value="0" name="111">	<input type="hidden" value="0" name="112">
+<input type="hidden" value="0" name="113">	<input type="hidden" value="0" name="114">	<input type="hidden" value="0" name="115">	<input type="hidden" value="0" name="116">
+<input type="hidden" value="0" name="117">	<input type="hidden" value="0" name="118">	<input type="hidden" value="0" name="119">	<input type="hidden" value="0" name="120">
+<input type="hidden" value="0" name="121">	<input type="hidden" value="0" name="122">	<input type="hidden" value="0" name="123">	<input type="hidden" value="0" name="124">
+<input type="hidden" value="0" name="125">	<input type="hidden" value="0" name="126">	<input type="hidden" value="0" name="127">	<input type="hidden" value="0" name="128">
+<input type="hidden" value="0" name="129">	<input type="hidden" value="0" name="130">	<input type="hidden" value="0" name="131">	<input type="hidden" value="0" name="132">
+<input type="hidden" value="0" name="133">	<input type="hidden" value="0" name="134">	<input type="hidden" value="0" name="135">	<input type="hidden" value="0" name="136">
+<input type="hidden" value="0" name="137">	<input type="hidden" value="0" name="138">	<input type="hidden" value="0" name="139">	<input type="hidden" value="0" name="140">
+<input type="hidden" value="0" name="141">	<input type="hidden" value="0" name="142">	<input type="hidden" value="0" name="143">	<input type="hidden" value="0" name="144">
+<input type="hidden" value="0" name="145">	<input type="hidden" value="0" name="146">	<input type="hidden" value="0" name="147">	<input type="hidden" value="0" name="148">
+<input type="hidden" value="0" name="149">	<input type="hidden" value="0" name="150">	<input type="hidden" value="0" name="151">	<input type="hidden" value="0" name="152">
+<input type="hidden" value="0" name="153">	<input type="hidden" value="0" name="154">	<input type="hidden" value="0" name="155">	<input type="hidden" value="0" name="156">
+<input type="hidden" value="0" name="157">	<input type="hidden" value="0" name="158">	<input type="hidden" value="0" name="159">	<input type="hidden" value="0" name="160">
+<input type="hidden" value="0" name="161">	<input type="hidden" value="0" name="162">	<input type="hidden" value="0" name="163">	<input type="hidden" value="0" name="164">
+<input type="hidden" value="0" name="165">	<input type="hidden" value="0" name="166">	<input type="hidden" value="0" name="167">	<input type="hidden" value="0" name="168">
+<input type="hidden" value="0" name="169">	<input type="hidden" value="0" name="170">	<input type="hidden" value="0" name="171">	<input type="hidden" value="0" name="172">
+<input type="hidden" value="0" name="173">	<input type="hidden" value="0" name="174">	<input type="hidden" value="0" name="175">	<input type="hidden" value="0" name="176">
+<input type="hidden" value="0" name="177">	<input type="hidden" value="0" name="178">	<input type="hidden" value="0" name="179">	<input type="hidden" value="0" name="180">
+<input type="hidden" value="0" name="181">	<input type="hidden" value="0" name="182">	<input type="hidden" value="0" name="183">	<input type="hidden" value="0" name="184">
+<input type="hidden" value="0" name="185">	<input type="hidden" value="0" name="186">	<input type="hidden" value="0" name="187">	<input type="hidden" value="0" name="188">
+<input type="hidden" value="0" name="189">	<input type="hidden" value="0" name="190">	<input type="hidden" value="0" name="191">	<input type="hidden" value="0" name="192">
+<input type="hidden" value="0" name="193">	<input type="hidden" value="0" name="194">	<input type="hidden" value="0" name="195">	<input type="hidden" value="0" name="196">
+<input type="hidden" value="0" name="197">	<input type="hidden" value="0" name="198">	<input type="hidden" value="0" name="199">	<input type="hidden" value="0" name="200">
+<input type="hidden" value="0" name="201">	<input type="hidden" value="0" name="202">	<input type="hidden" value="0" name="203">	<input type="hidden" value="0" name="204">
+<input type="hidden" value="0" name="205">	<input type="hidden" value="0" name="206">	<input type="hidden" value="0" name="207">	<input type="hidden" value="0" name="208">
+<input type="hidden" value="0" name="209">	<input type="hidden" value="0" name="210">	<input type="hidden" value="0" name="211">	<input type="hidden" value="0" name="212">
+<input type="hidden" value="0" name="213">	<input type="hidden" value="0" name="214">	<input type="hidden" value="0" name="215">	<input type="hidden" value="0" name="216">
+<input type="hidden" value="0" name="217">	<input type="hidden" value="0" name="218">	<input type="hidden" value="0" name="219">	<input type="hidden" value="0" name="220">
+<input type="hidden" value="0" name="221">	<input type="hidden" value="0" name="222">	<input type="hidden" value="0" name="223">	<input type="hidden" value="0" name="224">
+<input type="hidden" value="0" name="225">	<input type="hidden" value="0" name="226">	<input type="hidden" value="0" name="227">	<input type="hidden" value="0" name="228">
+<input type="hidden" value="0" name="229">	<input type="hidden" value="0" name="230">	<input type="hidden" value="0" name="231">	<input type="hidden" value="0" name="232">
+<input type="hidden" value="0" name="233">	<input type="hidden" value="0" name="234">	<input type="hidden" value="0" name="235">	<input type="hidden" value="0" name="236">
+<input type="hidden" value="0" name="237">	<input type="hidden" value="0" name="238">	<input type="hidden" value="0" name="239">	<input type="hidden" value="0" name="240">
+<input type="hidden" value="0" name="241">	<input type="hidden" value="0" name="242">	<input type="hidden" value="0" name="243">	<input type="hidden" value="0" name="244">
+<input type="hidden" value="0" name="245">	<input type="hidden" value="0" name="246">	<input type="hidden" value="0" name="247">	<input type="hidden" value="0" name="248">
+<input type="hidden" value="0" name="249">	<input type="hidden" value="0" name="250">	<input type="hidden" value="0" name="251">	<input type="hidden" value="0" name="252">
+<input type="hidden" value="0" name="253">	<input type="hidden" value="0" name="254">	<input type="hidden" value="0" name="255">
+<input type="HIDDEN" name="uh" value="04vq1m"><input type="HIDDEN" name="inetid" value="4NSDPLKD"><input type="HIDDEN" name="g" value="740"><input type="HIDDEN" name="u" value="0oC1bm4a4oM8"><input type="HIDDEN" name="nm" value="112900"><input type="HIDDEN" name="zj" value="090000000000000"><input type="HIDDEN" name="mli" value="0000000000000000000000000000000"><input type="HIDDEN" name="uk" value="0">
+</form>
+
+<div data-role="page" id="toui" data-url="toui" tabindex="0" class="ui-page ui-body-c" style="min-height: 678px;">
+	<header class="header">
+		<h1 class="ui-title">投票一覧</h1>
+		<nav class="headerNav"><ul><li class="headerNavLeftArrow"></li><li class="headerNavRight"><a class="ui-link"><span>全削除</span></a></li></ul></nav>
+	</header>
+	<div class="content ui-content" data-role="content" role="main">
+		<div class="btnWrap" id="fromuma_top"><ul><li class="btnSoftColor"><a class="ui-link"><span class="ico_plus"></span>馬（枠）番から続けて入力</a></li></ul></div>
+		<div class="btnWrap" id="fromjyo_top"><ul><li class="btnSoftColor"><a class="ui-link"><span class="ico_plus"></span>場名から続けて入力</a></li></ul></div>
+		<div class="btnWrap">
+			<ul>
+				<li class="btnColor"><a class="ui-link">入力終了</a></li>
+			</ul>
+		</div>
+		<h2 class="contentHeading">
+			<div class="choicePageDispBtnRow choicePageDispBtnRow_top">
+				<span class="betHeader">投票内容</span>
+				<div class="choicePageDispBtn" id="choicePageDispBtn_top" style="display: none;">
+					<a data-value="1" class="disabled ui-link">全件表示</a>
+					<a data-value="2" class="ui-link">ページ表示</a>
+				</div>
+			</div>
+		</h2>
+		<ul class="directPagenation directPagenation_top" style="display: none;"></ul>
+		<ul class="pagenation pagenation_top" style="display: none;"></ul>
+		<ul class="voteList" id="noCircle"><li><a data-value="0" class="ui-link"><span class="orderNum">(1)</span><span class="courseRace">東京(土)11R</span><span class="horseCombi">01</span><span class="style">単勝</span><span class="amount">100円</span></a></li></ul>
+		<ul class="directPagenation directPagenation_bottom" style="display: none;"></ul>
+		<ul class="pagenation pagenation_bottom" style="display: none;"></ul>
+		<h2 class="contentHeading" id="h2_bottom" style="display: none;">
+			<div class="choicePageDispBtnRow">
+				<div class="choicePageDispBtn" id="choicePageDispBtn_bottom">
+					<a data-value="1" class="disabled ui-link">全件表示</a>
+					<a data-value="2" class="ui-link">ページ表示</a>
+				</div>
+			</div>
+		</h2>
+		<ul class="amountDisplay"><li class="gray">合計金額</li><li>100円</li></ul>
+		<div class="btnWrap" id="fromuma_under"><ul><li class="btnSoftColor"><a class="ui-link"><span class="ico_plus"></span>馬（枠）番から続けて入力</a></li></ul></div>
+		<div class="btnWrap" id="fromjyo_under"><ul><li class="btnSoftColor"><a class="ui-link"><span class="ico_plus"></span>場名から続けて入力</a></li></ul></div>
+		<div class="btnWrap">
+			<ul>
+				<li class="btnColor"><a class="ui-link">入力終了</a></li>
+			</ul>
+		</div>
+	</div>
+	<footer class="footer">
+		<nav class="footerNav">
+			<ul>
+				<li><a class="ui-link">トップメニュー</a></li>
+			</ul>
+		</nav>
+		<p class="copyright"><small>© Japan Racing Association.</small></p>
+	</footer>
+</div>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+Nb = new Array(255);
+Nb[0] = "0";
+Nb[1] = "0";
+Nb[2] = "0";
+Nb[3] = "0";
+Nb[4] = "0";
+Nb[5] = "0";
+Nb[6] = "0";
+Nb[7] = "0";
+Nb[8] = "0";
+Nb[9] = "0";
+Nb[10] = "0";
+Nb[11] = "0";
+Nb[12] = "0";
+Nb[13] = "0";
+Nb[14] = "0";
+Nb[15] = "0";
+Nb[16] = "0";
+Nb[17] = "0";
+Nb[18] = "0";
+Nb[19] = "0";
+Nb[20] = "0";
+Nb[21] = "0";
+Nb[22] = "0";
+Nb[23] = "0";
+Nb[24] = "0";
+Nb[25] = "0";
+Nb[26] = "0";
+Nb[27] = "0";
+Nb[28] = "0";
+Nb[29] = "0";
+Nb[30] = "0";
+Nb[31] = "0";
+Nb[32] = "0";
+Nb[33] = "0";
+Nb[34] = "0";
+Nb[35] = "0";
+Nb[36] = "0";
+Nb[37] = "0";
+Nb[38] = "0";
+Nb[39] = "0";
+Nb[40] = "0";
+Nb[41] = "0";
+Nb[42] = "0";
+Nb[43] = "0";
+Nb[44] = "0";
+Nb[45] = "0";
+Nb[46] = "0";
+Nb[47] = "0";
+Nb[48] = "0";
+Nb[49] = "0";
+Nb[50] = "0";
+Nb[51] = "0";
+Nb[52] = "0";
+Nb[53] = "0";
+Nb[54] = "0";
+Nb[55] = "0";
+Nb[56] = "0";
+Nb[57] = "0";
+Nb[58] = "0";
+Nb[59] = "0";
+Nb[60] = "0";
+Nb[61] = "0";
+Nb[62] = "0";
+Nb[63] = "0";
+Nb[64] = "0";
+Nb[65] = "0";
+Nb[66] = "0";
+Nb[67] = "0";
+Nb[68] = "0";
+Nb[69] = "0";
+Nb[70] = "0";
+Nb[71] = "0";
+Nb[72] = "0";
+Nb[73] = "0";
+Nb[74] = "0";
+Nb[75] = "0";
+Nb[76] = "0";
+Nb[77] = "0";
+Nb[78] = "0";
+Nb[79] = "0";
+Nb[80] = "0";
+Nb[81] = "0";
+Nb[82] = "0";
+Nb[83] = "0";
+Nb[84] = "0";
+Nb[85] = "0";
+Nb[86] = "0";
+Nb[87] = "0";
+Nb[88] = "0";
+Nb[89] = "0";
+Nb[90] = "0";
+Nb[91] = "0";
+Nb[92] = "0";
+Nb[93] = "0";
+Nb[94] = "0";
+Nb[95] = "0";
+Nb[96] = "0";
+Nb[97] = "0";
+Nb[98] = "0";
+Nb[99] = "0";
+Nb[100] = "0";
+Nb[101] = "0";
+Nb[102] = "0";
+Nb[103] = "0";
+Nb[104] = "0";
+Nb[105] = "0";
+Nb[106] = "0";
+Nb[107] = "0";
+Nb[108] = "0";
+Nb[109] = "0";
+Nb[110] = "0";
+Nb[111] = "0";
+Nb[112] = "0";
+Nb[113] = "0";
+Nb[114] = "0";
+Nb[115] = "0";
+Nb[116] = "0";
+Nb[117] = "0";
+Nb[118] = "0";
+Nb[119] = "0";
+Nb[120] = "0";
+Nb[121] = "0";
+Nb[122] = "0";
+Nb[123] = "0";
+Nb[124] = "0";
+Nb[125] = "0";
+Nb[126] = "0";
+Nb[127] = "0";
+Nb[128] = "0";
+Nb[129] = "0";
+Nb[130] = "0";
+Nb[131] = "0";
+Nb[132] = "0";
+Nb[133] = "0";
+Nb[134] = "0";
+Nb[135] = "0";
+Nb[136] = "0";
+Nb[137] = "0";
+Nb[138] = "0";
+Nb[139] = "0";
+Nb[140] = "0";
+Nb[141] = "0";
+Nb[142] = "0";
+Nb[143] = "0";
+Nb[144] = "0";
+Nb[145] = "0";
+Nb[146] = "0";
+Nb[147] = "0";
+Nb[148] = "0";
+Nb[149] = "0";
+Nb[150] = "0";
+Nb[151] = "0";
+Nb[152] = "0";
+Nb[153] = "0";
+Nb[154] = "0";
+Nb[155] = "0";
+Nb[156] = "0";
+Nb[157] = "0";
+Nb[158] = "0";
+Nb[159] = "0";
+Nb[160] = "0";
+Nb[161] = "0";
+Nb[162] = "0";
+Nb[163] = "0";
+Nb[164] = "0";
+Nb[165] = "0";
+Nb[166] = "0";
+Nb[167] = "0";
+Nb[168] = "0";
+Nb[169] = "0";
+Nb[170] = "0";
+Nb[171] = "0";
+Nb[172] = "0";
+Nb[173] = "0";
+Nb[174] = "0";
+Nb[175] = "0";
+Nb[176] = "0";
+Nb[177] = "0";
+Nb[178] = "0";
+Nb[179] = "0";
+Nb[180] = "0";
+Nb[181] = "0";
+Nb[182] = "0";
+Nb[183] = "0";
+Nb[184] = "0";
+Nb[185] = "0";
+Nb[186] = "0";
+Nb[187] = "0";
+Nb[188] = "0";
+Nb[189] = "0";
+Nb[190] = "0";
+Nb[191] = "0";
+Nb[192] = "0";
+Nb[193] = "0";
+Nb[194] = "0";
+Nb[195] = "0";
+Nb[196] = "0";
+Nb[197] = "0";
+Nb[198] = "0";
+Nb[199] = "0";
+Nb[200] = "0";
+Nb[201] = "0";
+Nb[202] = "0";
+Nb[203] = "0";
+Nb[204] = "0";
+Nb[205] = "0";
+Nb[206] = "0";
+Nb[207] = "0";
+Nb[208] = "0";
+Nb[209] = "0";
+Nb[210] = "0";
+Nb[211] = "0";
+Nb[212] = "0";
+Nb[213] = "0";
+Nb[214] = "0";
+Nb[215] = "0";
+Nb[216] = "0";
+Nb[217] = "0";
+Nb[218] = "0";
+Nb[219] = "0";
+Nb[220] = "0";
+Nb[221] = "0";
+Nb[222] = "0";
+Nb[223] = "0";
+Nb[224] = "0";
+Nb[225] = "0";
+Nb[226] = "0";
+Nb[227] = "0";
+Nb[228] = "0";
+Nb[229] = "0";
+Nb[230] = "0";
+Nb[231] = "0";
+Nb[232] = "0";
+Nb[233] = "0";
+Nb[234] = "0";
+Nb[235] = "0";
+Nb[236] = "0";
+Nb[237] = "0";
+Nb[238] = "0";
+Nb[239] = "0";
+Nb[240] = "0";
+Nb[241] = "0";
+Nb[242] = "0";
+Nb[243] = "0";
+Nb[244] = "0";
+Nb[245] = "0";
+Nb[246] = "0";
+Nb[247] = "0";
+Nb[248] = "0";
+Nb[249] = "0";
+Nb[250] = "0";
+Nb[251] = "0";
+Nb[252] = "0";
+Nb[253] = "0";
+Nb[254] = "0";
+
+
+Mg = new Array("A570101111","B870201211","CA70103111","D510102000","E810202000");
+
+Jg = new Array(Mg.length);
+for(h1=0;h1<Mg.length;h1++){
+Jg[h1] = new Array();}
+Jg[0][0] = "1004161FFFFFFFFFFFFFFFFFF0";
+Jg[0][1] = "1034161FFFFFFFFFFFFFFFFFF0";
+Jg[0][2] = "1104151FFFFFF3FFFFFFFFFFC0";
+Jg[0][3] = "1134161FFFFFFFFFFFFFFFFFF0";
+Jg[0][4] = "1224161FFFFFFFFFFFFFFFFFF0";
+Jg[0][5] = "1259161FFFFFFFFFFFFFFFFFF0";
+Jg[0][6] = "1329161FFFFFFFFFFFFFFFFFF0";
+Jg[0][7] = "1400160FFFFFFFFFFFFFFFFFF0";
+Jg[0][8] = "1430160FFFFFFFFFFFFFFFFFF0";
+Jg[0][9] = "1504150FFFFFF3FFFFFFFFFFC0";
+Jg[0][10] = "1544100FFFFFF000FFFFFF0000";
+Jg[0][11] = "1624120FFFFFF00FFFFFFFF000";
+Jg[1][0] = "0954161FFFFFFFFFFFFFFFFFF0";
+Jg[1][1] = "1024091FFFFFF0003FFFFC0000";
+Jg[1][2] = "1054131FFFFFF03FFFFFFFFC00";
+Jg[1][3] = "1124111FFFFFF003FFFFFFC000";
+Jg[1][4] = "1214151FFFFFF3FFFFFFFFFFC0";
+Jg[1][5] = "1249161FFFFFFFFFFFFFFFFFF0";
+Jg[1][6] = "1319111FFFFFF003FFFFFFC000";
+Jg[1][7] = "1349101FFFFFF000FFFFFF0000";
+Jg[1][8] = "1419130FFFFFF03FFFFFFFFC00";
+Jg[1][9] = "1454080DF00000000FFFF00000";
+Jg[1][10] = "1529130FFFFFF03FFFFFFFFC00";
+Jg[1][11] = "1609170FFFFFFFFFFFFFFFFFFC";
+Jg[2][0] = "0944141FFFFFF0FFFFFFFFFF00";
+Jg[2][1] = "1014181FFFFFFFFFFFFFFFFFFF";
+Jg[2][2] = "1044161FFFFFFFFFFFFFFFFFF0";
+Jg[2][3] = "1114121FFFFFF00FFFFFFFF000";
+Jg[2][4] = "1204111FFDFFF003FDFFFFC000";
+Jg[2][5] = "1239181FFFFFFFFFFFFFFFFFFF";
+Jg[2][6] = "1309161FFFFFFFFFFFFFFFFFF0";
+Jg[2][7] = "1339181FFFFFFFFFFFFFFFFFFF";
+Jg[2][8] = "1409140FFFFFF0FFFFFFFFFF00";
+Jg[2][9] = "1444160FFFFFFFFFFFFFFFFFF0";
+Jg[2][10] = "1519180FFFFFFFFFFFFFFFFFFF";
+Jg[2][11] = "1600160FFFFFFFFFFFFFFFFFF0";
+Jg[3][0] = "00000000000000000000000000";
+Jg[3][1] = "00000000000000000000000000";
+Jg[3][2] = "00000000000000000000000000";
+Jg[3][3] = "00000000000000000000000000";
+Jg[3][4] = "00000000000000000000000000";
+Jg[3][5] = "00000000000000000000000000";
+Jg[3][6] = "00000000000000000000000000";
+Jg[3][7] = "00000000000000000000000000";
+Jg[3][8] = "00000000000000000000000000";
+Jg[3][9] = "00000000000000000000000000";
+Jg[3][10] = "1730160FFFFFFFFFFFFFFFFFF0";
+Jg[4][0] = "00000000000000000000000000";
+Jg[4][1] = "00000000000000000000000000";
+Jg[4][2] = "00000000000000000000000000";
+Jg[4][3] = "00000000000000000000000000";
+Jg[4][4] = "00000000000000000000000000";
+Jg[4][5] = "00000000000000000000000000";
+Jg[4][6] = "00000000000000000000000000";
+Jg[4][7] = "00000000000000000000000000";
+Jg[4][8] = "00000000000000000000000000";
+Jg[4][9] = "00000000000000000000000000";
+Jg[4][10] = "1730180FFFFFFFFFFFFFFFFFFF";
+
+
+Rn = new Array(Mg.length);
+for(h1=0;h1<Mg.length;h1++){
+Rn[h1] = new Array();}
+Rn[0][0] = "";
+Rn[0][1] = "";
+Rn[0][2] = "";
+Rn[0][3] = "新馬";
+Rn[0][4] = "新馬";
+Rn[0][5] = "";
+Rn[0][6] = "";
+Rn[0][7] = "";
+Rn[0][8] = "白嶺ステークス";
+Rn[0][9] = "クロッカスステークス(L)";
+Rn[0][10] = "白富士ステークス(L)";
+Rn[0][11] = "";
+Rn[1][0] = "";
+Rn[1][1] = "";
+Rn[1][2] = "";
+Rn[1][3] = "";
+Rn[1][4] = "新馬";
+Rn[1][5] = "";
+Rn[1][6] = "";
+Rn[1][7] = "";
+Rn[1][8] = "長浜特別";
+Rn[1][9] = "許波多特別";
+Rn[1][10] = "舞鶴ステークス";
+Rn[1][11] = "";
+Rn[2][0] = "";
+Rn[2][1] = "";
+Rn[2][2] = "";
+Rn[2][3] = "";
+Rn[2][4] = "";
+Rn[2][5] = "";
+Rn[2][6] = "";
+Rn[2][7] = "";
+Rn[2][8] = "有田特別";
+Rn[2][9] = "平尾台特別";
+Rn[2][10] = "巌流島ステークス";
+Rn[2][11] = "";
+Rn[3][0] = "";
+Rn[3][1] = "";
+Rn[3][2] = "";
+Rn[3][3] = "";
+Rn[3][4] = "";
+Rn[3][5] = "";
+Rn[3][6] = "";
+Rn[3][7] = "";
+Rn[3][8] = "";
+Rn[3][9] = "";
+Rn[3][10] = "根岸ステークス(GIII)";
+Rn[4][0] = "";
+Rn[4][1] = "";
+Rn[4][2] = "";
+Rn[4][3] = "";
+Rn[4][4] = "";
+Rn[4][5] = "";
+Rn[4][6] = "";
+Rn[4][7] = "";
+Rn[4][8] = "";
+Rn[4][9] = "";
+Rn[4][10] = "シルクロードＳ(GIII)";
+
+
+Grn = new Array ();
+
+Init();
+// -->
+</script>
+
+
+<div class="ui-loader ui-corner-all ui-body-a ui-loader-verbose"><span class="ui-icon ui-icon-loading"></span><h1>お待ちください...</h1></div></body></html>

@@ -1,27 +1,40 @@
 """
-IPAT直接連携モジュール（Selenium版）
-JRA IPATに直接アクセスして投票画面を自動操作するモジュール
+IPAT直接連携モジュール（Selenium版 - Smartphone Site）
+JRA IPAT (スマートフォン版) にアクセスして投票画面を自動操作するモジュール
+Reference: https://zenn.dev/_lambda314/articles/e4ceaa81b045c5
 """
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.alert import Alert
 import time
 from typing import List, Dict, Any, Optional
 import os
 import datetime
+import traceback
+import sys
 
 class IpatDirectAutomator:
-    """IPAT直接連携クラス（Selenium版）"""
+    """IPAT直接連携クラス（Selenium版 - Smartphone Site）"""
+    
+    # 定数
+    JRA_IPAT_URL = "https://www.ipat.jra.go.jp/sp/"
+    WAIT_SEC = 2
+    
+    # 曜日リスト (記事準拠)
+    DOW_LST = ["月", "火", "水", "木", "金", "土", "日"]
+    # レース会場リスト (記事準拠)
+    PLACE_LST = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"]
     
     def __init__(self):
         """初期化"""
         self.driver = None
-        self.wait_timeout = 10  # デフォルトの待機時間（秒）
+        self.wait_timeout = 10
         
     def _save_debug_screenshot(self, driver, name: str):
         """デバッグ用スクリーンショットを保存"""
@@ -34,489 +47,881 @@ class IpatDirectAutomator:
             print(f"Screenshot saved: {filepath}")
         except Exception as e:
             print(f"Failed to save screenshot: {e}")
-    
-    def login(self, inetid: str, subscriber_no: str, pin: str, pars_no: str) -> tuple[bool, str]:
-        """
-        IPATログイン画面で認証を実行（PC版、2段階認証）
-        
-        Args:
-            inetid: INET-ID（第1段階、オプション、8桁の半角英数字）
-            subscriber_no: 加入者番号（8桁の半角数字）
-            pin: 暗証番号（4桁の半角数字）
-            pars_no: P-ARS番号（4桁の半角数字）
-            
-        Returns:
-            (成功フラグ, メッセージ)
-        """
-        # 入力値のバリデーション
-        print("認証情報のバリデーション中...")
-        
-        # INET-ID: 8桁の半角英数字（オプション）
-        if inetid and (len(inetid) != 8 or not inetid.isalnum()):
-            return False, f"INET-IDエラー: 8桁の半角英数字で入力してください（現在: {len(inetid)}桁）"
-        
-        # 加入者番号: 8桁の半角数字
-        if len(subscriber_no) != 8 or not subscriber_no.isdigit():
-            return False, f"加入者番号エラー: 8桁の半角数字で入力してください（現在: {len(subscriber_no)}桁）"
-        
-        # 暗証番号: 4桁の半角数字
-        if len(pin) != 4 or not pin.isdigit():
-            return False, f"暗証番号エラー: 4桁の半角数字で入力してください（現在: {len(pin)}桁）"
-        
-        # P-ARS番号: 4桁の半角数字
-        if len(pars_no) != 4 or not pars_no.isdigit():
-            return False, f"P-ARS番号エラー: 4桁の半角数字で入力してください（現在: {len(pars_no)}桁）"
-        
-        print(f"バリデーション成功: INET-ID={inetid or '(未設定)'}, 加入者番号={subscriber_no}, 暗証番号=****, P-ARS番号={pars_no}")
+
+    def _judge_day_of_week(self, date_nm: str) -> str:
+        """日付文字列(YYYYMMDD)から曜日文字を取得"""
+        try:
+            date_dt = datetime.datetime.strptime(str(date_nm), "%Y%m%d")
+            # isoweekday: 月曜=1 ... 日曜=7
+            nm = date_dt.isoweekday()
+            return self.DOW_LST[nm - 1]
+        except ValueError:
+            return ""
+
+    def _click_css_selector(self, selector: str, index: int = 0):
+        """指定したCSSセレクタの要素をクリックする"""
+        try:
+            elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+            if len(elements) > index:
+                element = elements[index]
+                # 記事同様、JavaScriptでのクリックも併用検討だが、まずは標準クリック
+                # self.driver.execute_script("arguments[0].click();", element) 
+                element.click()
+                time.sleep(self.WAIT_SEC)
+                return True
+            else:
+                print(f"Warning: Element not found or index out of range: {selector}[{index}]")
+                return False
+        except Exception as e:
+            print(f"Click Error ({selector}): {e}")
+            return False
+
+    def _save_snapshot(self, name):
+        """Save screenshot and page source for debugging."""
+        if not self.driver: return
         
         try:
+            timestamp = datetime.datetime.now().strftime("%H%M%S")
+            filename_base = f"debug_{timestamp}_{name}"
+            
+            # Screenshot
+            self.driver.save_screenshot(f"{filename_base}.png")
+            
+            # Page Source
+            with open(f"{filename_base}.html", "w", encoding="utf-8") as f:
+                f.write(self.driver.page_source)
+                
+            print(f"[Snapshot] Saved {filename_base} (.png, .html)")
+            
+            # Print current active page ID
+            try:
+                active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                print(f"[Snapshot] Active Page ID: {active.get_attribute('id')}")
+            except:
+                print("[Snapshot] No active page found.")
+                
+        except Exception as e:
+            print(f"Failed to save snapshot {name}: {e}")
+
+    def login(self, inetid: str, subscriber_no: str, pin: str, pars_no: str) -> tuple[bool, str]:
+        """
+        IPATログイン画面で認証を実行（スマホ版）
+        
+        Args:
+            inetid: INET-ID
+            subscriber_no: 加入者番号
+            pin: 暗証番号
+            pars_no: P-ARS番号
+        """
+        try:
             # Chromeオプション設定
-            options = webdriver.ChromeOptions()
+            options = Options()
+            # options.add_argument("-headless") # デバッグ時はHeadless無効
             options.add_argument('--start-maximized')
             options.add_argument('--disable-blink-features=AutomationControlled')
             
             # ドライバ起動
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=options)
-            wait = WebDriverWait(self.driver, self.wait_timeout)
             
-            print("IPATログインページにアクセス中...")
-            # PC版URLに変更
-            self.driver.get("https://www.ipat.jra.go.jp/")
-            time.sleep(2)
+            print(f"IPAT(SP)へアクセス中: {self.JRA_IPAT_URL}")
+            self.driver.get(self.JRA_IPAT_URL)
+            time.sleep(self.WAIT_SEC)
             
-            # 第1段階: INET-ID入力（オプション）
-            if inetid:
-                print("第1段階: INET-ID入力中...")
+            # Helper: 安全な入力関数
+            def safe_send_keys(element, value, name="unknown"):
                 try:
-                    inetid_field = wait.until(EC.presence_of_element_located((By.NAME, "inetid")))
-                    inetid_field.clear()
-                    inetid_field.send_keys(inetid)
-                    
-                    # ログインボタンクリック
-                    login_btn = self.driver.find_element(By.CSS_SELECTOR, "a[title='ログイン']")
-                    login_btn.click()
-                    
-                    # ページ遷移完了を待つ（より長い待機時間）
-                    print("ページ遷移を待機中...")
-                    time.sleep(5)  # 2秒→5秒に延長
-                    
-                    # ページ完全ロード待機
-                    wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
-                    
-                    print("INET-ID認証完了、メインログイン画面へ")
-                    self._save_debug_screenshot(self.driver, "after_inetid_login")
-                except Exception as e:
-                    print(f"INET-ID入力エラー（スキップ）: {e}")
-            
-            # 第2段階: メイン認証情報を入力
-            print("第2段階: 認証情報を入力中...")
-            print(f"現在のURL: {self.driver.current_url}")
-            
-            # 加入者番号（実際のHTMLでは name="i"）
-            try:
-                print("加入者番号フィールドを探しています...")
-                
-                # HTMLソース確認結果: フィールド名は "i" (スマホ版と同じ)
-                # ただし、FORM1, FORM2, FORM3 と複数フォームに分散している
-                selectors = [
-                    (By.NAME, "i"),
-                    (By.CSS_SELECTOR, "input[name='i']"),
-                    (By.XPATH, "//input[@name='i' and @type='text']"),
-                ]
-                
-                subscriber_field = None
-                for by_type, selector_value in selectors:
+                    print(f"Inputting to {name}...")
+                    # まずクリックしてフォーカス
                     try:
-                        print(f"  試行中: {by_type} = {selector_value}")
-                        subscriber_field = wait.until(EC.presence_of_element_located((by_type, selector_value)))
-                        print(f"  ✓ 見つかりました: {by_type} = {selector_value}")
-                        break
+                        element.click()
                     except:
-                        print(f"  ✗ 見つかりませんでした")
-                        continue
-                
-                if not subscriber_field:
-                    raise Exception("全てのセレクタパターンで加入者番号フィールドが見つかりませんでした")
-                
-                subscriber_field.clear()
-                subscriber_field.send_keys(subscriber_no)
-                print("加入者番号を入力しました")
-            except Exception as e:
-                print(f"加入者番号入力エラー: {e}")
-                print(f"ページソース（最初の500文字）: {self.driver.page_source[:500]}")
-                self._save_debug_screenshot(self.driver, "subscriber_error")
-                return False, f"加入者番号フィールドが見つかりません: {str(e)}"
-            
-            # 暗証番号（実際のHTMLでは name="p"）
-            try:
-                pin_field = self.driver.find_element(By.NAME, "p")
-                pin_field.clear()
-                pin_field.send_keys(pin)
-                print("暗証番号を入力しました")
-            except Exception as e:
-                print(f"暗証番号入力エラー: {e}")
-                return False, f"暗証番号フィールドが見つかりません: {str(e)}"
-            
-            # P-ARS番号（実際のHTMLでは name="r"）
-            try:
-                pars_field = self.driver.find_element(By.NAME, "r")
-                pars_field.clear()
-                pars_field.send_keys(pars_no)
-                print("P-ARS番号を入力しました")
-            except Exception as e:
-                print(f"P-ARS番号入力エラー: {e}")
-                return False, f"P-ARS番号フィールドが見つかりません: {str(e)}"
-            
-            self._save_debug_screenshot(self.driver, "before_login")
-            
-            # ログインボタンをクリック
-            print("ログインボタンをクリック中...")
-            try:
-                login_button = self.driver.find_element(By.CSS_SELECTOR, "a[title='ログイン']")
-                login_button.click()
-            except:
-                # フォールバック: submit入力を試す
-                login_button = self.driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
-                login_button.click()
-            
-            time.sleep(3)
-            self._save_debug_screenshot(self.driver, "after_login")
-            
-            # ログイン成功確認（メニュー画面に到達したか）
-            try:
-                # メニュー画面の特徴的な要素を探す
-                wait.until(lambda d: "メニュー" in d.page_source or "トップメニュー" in d.page_source or "IPAT-A-PAT" in d.page_source)
-                print("IPATログイン成功")
-                return True, "ログイン成功"
-            except:
-                # エラーメッセージを確認
-                page_text = self.driver.page_source
-                if "誤り" in page_text or "エラー" in page_text:
-                    self._save_debug_screenshot(self.driver, "login_error")
-                    return False, "認証エラー: 入力された内容に誤りがあります"
-                elif "混雑" in page_text:
-                    return False, "JRAサーバーエラー: 混雑のため接続できません"
-                else:
-                    return False, "ログイン失敗: メニュー画面に到達できませんでした"
+                        pass
                     
-        except Exception as e:
-            print(f"IPATログインエラー: {e}")
-            if self.driver:
-                self._save_debug_screenshot(self.driver, "login_exception")
-            return False, f"システムエラー: {str(e)}"
-    
-    def navigate_to_race_bet_page(self, race_id: str) -> tuple[bool, str]:
-        """
-        レースIDから投票画面へ遷移
-        
-        Args:
-            race_id: レースID（例: 202601310101）
-            
-        Returns:
-            (成功フラグ, メッセージ)
-        """
-        if not self.driver:
-            return False, "ドライバが初期化されていません"
-            
-        try:
-            print(f"レース {race_id} の投票画面へ遷移中...")
-            
-            # レースIDから会場、レース番号を解析
-            # race_id形式: YYYYMMDDKKRR (YYYY=年, MM=月, DD=日, KK=会場+回次+日次, RR=レース番号)
-            year = race_id[0:4]
-            month = race_id[4:6]
-            day = race_id[6:8]
-            race_info = race_id[8:10]  # 会場コード等
-            race_num = race_id[10:12]
-            
-            # IPAT投票画面へのURL構築（推測）
-            # 注: 実際のIPATのURL構造は非公開のため、ログイン後の画面から手動で確認する必要がある
-            bet_url = f"https://www.ipat.jra.go.jp/sp/bet/?date={year}{month}{day}&race_info={race_info}&race_num={race_num}"
-            
-            print(f"投票画面URL: {bet_url}")
-            self.driver.get(bet_url)
-            time.sleep(2)
-            
-            self._save_debug_screenshot(self.driver, "bet_page")
-            
-            # 投票画面が表示されたか確認
-            wait = WebDriverWait(self.driver, self.wait_timeout)
-            try:
-                # 投票画面の特徴的な要素（券種タブなど）を探す
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='type'], button[class*='bet'], input[name*='umaban']")))
-                print("投票画面に到達しました")
-                return True, "投票画面表示成功"
-            except:
-                # エラーの場合、手動でレース選択画面へ誘導するメッセージを返す
-                return False, "投票画面への自動遷移に失敗しました。手動でレースを選択してください。"
-                
-        except Exception as e:
-            print(f"投票画面遷移エラー: {e}")
-            if self.driver:
-                self._save_debug_screenshot(self.driver, "navigate_error")
-            return False, f"システムエラー: {str(e)}"
-    
-    def fill_bet_form(self, bets: List[Dict[str, Any]]) -> tuple[bool, str]:
-        """
-        買い目を自動入力（券種、馬番、金額）
-        
-        Args:
-            bets: 買い目リスト
-                [
-                    {
-                        'type': '単勝',
-                        'horses': [1],
-                        'amount': 100
-                    },
-                    {
-                        'type': '馬連',
-                        'horses': [1, 2],
-                        'amount': 100,
-                        'method': 'box'  # 'normal', 'box', 'formation'
-                    }
-                ]
-                
-        Returns:
-            (成功フラグ, メッセージ)
-        """
-        if not self.driver:
-            return False, "ドライバが初期化されていません"
-            
-        try:
-            success_count = 0
-            
-            for i, bet in enumerate(bets):
-                print(f"買い目 {i+1}/{len(bets)} を入力中: {bet}")
-                
-                # 券種を選択
-                bet_type = bet.get('type', '単勝')
-                if not self._select_bet_type(bet_type):
-                    print(f"Warning: 券種 '{bet_type}' の選択に失敗しました")
-                    continue
-                
-                # 投票方式を選択（ボックス、フォーメーション等）
-                method = bet.get('method', 'normal')
-                if method != 'normal':
-                    self._select_betting_method(method)
-                
-                # 馬番を入力
-                horses = bet.get('horses', [])
-                if not self._enter_horse_numbers(horses, method):
-                    print(f"Warning: 馬番の入力に失敗しました")
-                    continue
-                
-                # 金額を入力
-                amount = bet.get('amount', 100)
-                if not self._enter_amount(amount):
-                    print(f"Warning: 金額の入力に失敗しました")
-                    continue
-                
-                # 追加ボタンをクリック（投票リストに追加）
-                if self._click_add_button():
-                    success_count += 1
-                    print(f"買い目 {i+1} を投票リストに追加しました")
-                else:
-                    print(f"Warning: 買い目 {i+1} の追加に失敗しました")
-                
-                time.sleep(1)  # 次の買い目入力前に少し待機
-            
-            self._save_debug_screenshot(self.driver, "after_fill_all")
-            
-            if success_count > 0:
-                return True, f"{success_count}/{len(bets)} 件の買い目を入力しました。投票確定は手動で行ってください。"
-            else:
-                return False, "買い目の入力に失敗しました"
-                
-        except Exception as e:
-            print(f"買い目入力エラー: {e}")
-            if self.driver:
-                self._save_debug_screenshot(self.driver, "fill_error")
-            return False, f"システムエラー: {str(e)}"
-    
-    def _select_bet_type(self, bet_type: str) -> bool:
-        """券種タブを選択"""
-        try:
-            # 券種マッピング
-            type_map = {
-                '単勝': 'tan',
-                '複勝': 'fuku',
-                '枠連': 'waku',
-                '馬連': 'umaren',
-                'ワイド': 'wide',
-                '馬単': 'umatan',
-                '3連複': 'sanrenpuku',
-                '3連単': 'sanrentan'
-            }
-            
-            type_code = type_map.get(bet_type, 'tan')
-            
-            # セレクタのパターンを試す
-            selectors = [
-                f"a[href*='{type_code}']",
-                f"button[data-type='{type_code}']",
-                f"input[value='{type_code}']",
-                f"//a[contains(text(), '{bet_type}')]",
-                f"//button[contains(text(), '{bet_type}')]"
-            ]
-            
-            for selector in selectors:
-                try:
-                    if selector.startswith('//'):
-                        # XPath
-                        element = self.driver.find_element(By.XPATH, selector)
-                    else:
-                        # CSS Selector
-                        element = self.driver.find_element(By.CSS_SELECTOR, selector)
-                    
-                    element.click()
-                    time.sleep(0.5)
-                    print(f"券種 '{bet_type}' を選択しました")
-                    return True
-                except:
-                    continue
-            
-            print(f"Warning: 券種 '{bet_type}' のタブが見つかりませんでした")
-            return False
-            
-        except Exception as e:
-            print(f"券種選択エラー: {e}")
-            return False
-    
-    def _select_betting_method(self, method: str) -> bool:
-        """投票方式を選択（ボックス、フォーメーション等）"""
-        try:
-            method_map = {
-                'box': 'ボックス',
-                'formation': 'フォーメーション',
-                'nagashi': 'ながし'
-            }
-            
-            method_text = method_map.get(method, method)
-            
-            # ラジオボタンまたはタブを探す
-            selectors = [
-                f"//input[@type='radio' and contains(@value, '{method}')]",
-                f"//label[contains(text(), '{method_text}')]",
-                f"//a[contains(text(), '{method_text}')]"
-            ]
-            
-            for selector in selectors:
-                try:
-                    element = self.driver.find_element(By.XPATH, selector)
-                    element.click()
-                    time.sleep(0.5)
-                    print(f"投票方式 '{method_text}' を選択しました")
-                    return True
-                except:
-                    continue
-            
-            return False
-            
-        except Exception as e:
-            print(f"投票方式選択エラー: {e}")
-            return False
-    
-    def _enter_horse_numbers(self, horses: List[int], method: str = 'normal') -> bool:
-        """馬番を入力"""
-        try:
-            # チェックボックス方式
-            for horse_num in horses:
-                selectors = [
-                    f"input[type='checkbox'][value='{horse_num}']",
-                    f"input[type='checkbox'][name*='umaban'][value='{horse_num}']",
-                    f"//label[contains(text(), '{horse_num}')]//input[@type='checkbox']",
-                    f"//td[text()='{horse_num}']//input[@type='checkbox']"
-                ]
-                
-                found = False
-                for selector in selectors:
-                    try:
-                        if selector.startswith('//'):
-                            element = self.driver.find_element(By.XPATH, selector)
-                        else:
-                            element = self.driver.find_element(By.CSS_SELECTOR, selector)
-                        
-                        if not element.is_selected():
-                            element.click()
-                        found = True
-                        print(f"馬番 {horse_num} を選択しました")
-                        break
-                    except:
-                        continue
-                
-                if not found:
-                    print(f"Warning: 馬番 {horse_num} のチェックボックスが見つかりませんでした")
-            
-            return True
-            
-        except Exception as e:
-            print(f"馬番入力エラー: {e}")
-            return False
-    
-    def _enter_amount(self, amount: int) -> bool:
-        """金額を入力"""
-        try:
-            # 金額入力フィールドを探す
-            selectors = [
-                "input[name*='amount']",
-                "input[name*='kingaku']",
-                "input[type='number']",
-                "input[type='text'][placeholder*='金額']"
-            ]
-            
-            for selector in selectors:
-                try:
-                    element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                    # 標準的なclear/send_keysを試す
                     element.clear()
-                    element.send_keys(str(amount))
-                    print(f"金額 {amount}円 を入力しました")
-                    return True
-                except:
-                    continue
-            
-            print("Warning: 金額入力フィールドが見つかりませんでした")
-            return False
-            
-        except Exception as e:
-            print(f"金額入力エラー: {e}")
-            return False
-    
-    def _click_add_button(self) -> bool:
-        """追加ボタンをクリック"""
-        try:
-            # 追加ボタンを探す
-            selectors = [
-                "input[type='submit'][value*='追加']",
-                "button[type='submit']",
-                "input[type='button'][value*='追加']",
-                "//button[contains(text(), '追加')]",
-                "//input[@type='submit' and contains(@value, '追加')]"
-            ]
-            
-            for selector in selectors:
-                try:
-                    if selector.startswith('//'):
-                        element = self.driver.find_element(By.XPATH, selector)
+                    element.send_keys(value)
+                except Exception as e:
+                    print(f"Standard input failed for {name}: {e}. Trying JS...")
+                    # 失敗したらJSで直接値をセット
+                    self.driver.execute_script("arguments[0].value = arguments[1];", element, value)
+                    # イベント発火 (input, change, blur)
+                    # JQuery Mobileなどでは input/change イベントでモデル更新することが多い
+                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", element)
+                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", element)
+                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('blur', { bubbles: true }));", element)
+
+            # 1. INET-ID入力画面かどうかのチェック
+            # 別画面、もしくは同じ画面の別stateの可能性がある
+            try:
+                # 入力欄があるか (id="inetid" または name="inetid" で visibleなもの)
+                inetid_inputs = self.driver.find_elements(By.CSS_SELECTOR, "#inetid, input[name='inetid']")
+                visible_inetid = [el for el in inetid_inputs if el.is_displayed()]
+                
+                if visible_inetid:
+                    print("INET-ID入力画面を検出")
+                    if inetid:
+                        safe_send_keys(visible_inetid[0], inetid, "inetid")
+                        # ログイン/次へボタン (汎用的)
+                        if not self._click_css_selector("a[onclick^='javascript']", 0):
+                            self._click_css_selector("a", 0)
+                        time.sleep(self.WAIT_SEC)
                     else:
-                        element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                        print("Warning: INET-ID screen detected but no INET-ID provided.")
+                else:
+                    print("INET-ID入力フィールド（表示）なし。加入者情報入力へ進みます。")
+            except Exception as e:
+                print(f"INET-ID check warning: {e}")
+
+            # 2. 加入者情報入力画面
+            # JQuery Mobile Source:
+            # id="userid" (加入者番号)
+            # id="password" (暗証番号)
+            # id="pars" (P-ARS番号)
+            
+            try:
+                time.sleep(1)
+                
+                # 加入者番号 (id="userid")
+                try:
+                    user_inputs = self.driver.find_elements(By.ID, "userid")
+                    visible_inputs = [el for el in user_inputs if el.is_displayed()]
                     
-                    element.click()
-                    time.sleep(1)
-                    print("追加ボタンをクリックしました")
-                    return True
+                    if visible_inputs:
+                        safe_send_keys(visible_inputs[0], subscriber_no, "subscriber_no")
+                    else:
+                        # まだ画面遷移していない？あるいは hidden inputsしかない？
+                        print("Subscriber input 'userid' not found (visible). Checking raw source dump if stuck.")
+                        # 念のため name='i' の visible も探すが、JQM版では id="userid" が正
+                        raise Exception("Subscriber input 'userid' not found")
+                        
+                except Exception as e:
+                    print(f"Error processing 'userid': {e}")
+                    raise e
+
+                # 暗証番号 (id="password")
+                try:
+                    pass_inputs = self.driver.find_elements(By.ID, "password")
+                    visible_pass = [el for el in pass_inputs if el.is_displayed()]
+                    
+                    if visible_pass:
+                        safe_send_keys(visible_pass[0], pin, "pin")
+                    else:
+                        raise Exception("PIN input 'password' not found")
+                except Exception as e:
+                    print(f"Error processing 'password': {e}")
+                    raise e
+                    
+                # P-ARS番号 (id="pars")
+                try:
+                    pars_inputs = self.driver.find_elements(By.ID, "pars")
+                    visible_pars = [el for el in pars_inputs if el.is_displayed()]
+                    
+                    if visible_pars:
+                        safe_send_keys(visible_pars[0], pars_no, "pars_no")
+                    else:
+                        print("Warning: P-ARS input 'pars' not found")
+                except Exception as e:
+                    print(f"Error processing 'pars': {e}")
+
+                # ログインボタン
+                # <a onclick="JavaScript:ToSPMenu();return false;" class="ui-link">ログイン</a>
+                btn_found = False
+                
+                # Text content "ログイン"
+                try:
+                    xpath = "//a[contains(text(), 'ログイン')]"
+                    btns = self.driver.find_elements(By.XPATH, xpath)
+                    for btn in btns:
+                        if btn.is_displayed():
+                            self.driver.execute_script("arguments[0].click();", btn)
+                            btn_found = True
+                            print("Login button clicked (text match)")
+                            break
                 except:
-                    continue
+                    pass
+                
+                if not btn_found:
+                    # onclick="JavaScript:ToSPMenu();"
+                    try:
+                        btn = self.driver.find_element(By.CSS_SELECTOR, "a[onclick*='ToSPMenu']")
+                        self.driver.execute_script("arguments[0].click();", btn)
+                        btn_found = True
+                        print("Login button clicked (ToSPMenu)")
+                    except:
+                        pass
+                
+                if not btn_found:
+                    print("Login button specific methods failed. Trying generic...")
+                    # ui-btn-active or similar JQM class?
+                    # Fallback to any button-like link
+                    pass
+
+            except Exception as e:
+                print(f"Login input critical error: {e}")
+                self._save_debug_screenshot(self.driver, "login_input_error")
+                return False, f"ログイン入力エラー: {e}"
+
+            time.sleep(self.WAIT_SEC)
             
-            print("Warning: 追加ボタンが見つかりませんでした")
-            return False
+            # 同意画面対応
+            try:
+                if self.driver.find_elements(By.ID, "contract_area"):
+                    if self.driver.find_element(By.ID, "contract_area").is_displayed():
+                        print("同意画面を検出")
+                        # 全文表示
+                        try:
+                            self.driver.execute_script("DispAllContract();") # JS関数直接呼び出し
+                            time.sleep(1)
+                        except:
+                            pass
+                        
+                        # Check if we need to click "To Amount" or "Set" to proceed from Horse Page
+                        # Typically for multi-horse bets (like Umaren), there is a button "金額入力画面へ"
+                        try:
+                            time.sleep(1)
+                            # Check if we are still on Horse/Method page
+                            active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                            aid = active.get_attribute("id")
+                            
+                            # If we are NOT on Amount page (Amount page usually has input[name='sum'] or similar, or ID 'kin')
+                            # Let's look for "金額入力画面へ" button
+                            next_btns = self.driver.find_elements(By.XPATH, "//a[contains(text(), '金額入力画面へ')]")
+                            for btn in next_btns:
+                                if btn.is_displayed():
+                                    print("Clicking 'To Amount Input' button...")
+                                    self.driver.execute_script("arguments[0].scrollIntoView(true);", btn)
+                                    btn.click()
+                                    time.sleep(2)
+                                    break
+                        except Exception as e:
+                            print(f"Next button error: {e}")
+
+                        # 購入枚数・金額入力
+                        try:
+                            print("Setting amount: 100 (Qty: 1)")
+                            
+                            # Wait for input
+                            WebDriverWait(self.driver, 5).until(
+                                lambda d: d.find_elements(By.CSS_SELECTOR, "input[type='number'], input[type='tel']")
+                            )
+                        except Exception as e:
+                             print(f"Wait for amount input warning: {e}")
+
+                        # 同意ボタン
+                        btns = self.driver.find_elements(By.CSS_SELECTOR, ".agreeBtn")
+                        if btns:
+                            self.driver.execute_script("arguments[0].click();", btns[0])
+                            time.sleep(self.WAIT_SEC)
+            except Exception as e:
+                print(f"Agreement check warning: {e}")
+
+            # お知らせ画面スキップ
+            if "announce" in self.driver.current_url or self.driver.find_elements(By.CSS_SELECTOR, "div.announce"):
+                print("お知らせ画面を検出、スキップします...")
+                if not self._click_css_selector("button[href^='#!/']", 0):
+                    self._click_css_selector("a.button", 0)
             
+            time.sleep(self.WAIT_SEC)
+            
+            # ログイン成功判定
+            if self.driver.find_elements(By.CSS_SELECTOR, "button[href^='#!/bet/basic']") or \
+               "top" in self.driver.current_url or \
+               "メニュー" in self.driver.page_source or \
+               (self.driver.title and "ネット投票メニュー" in self.driver.title):
+                print("IPAT Login Successful")
+                return True, "ログイン成功"
+            else:
+                self._save_debug_screenshot(self.driver, "login_failed")
+                return False, "ログインに失敗しました（メニュー画面未到達）"
+
         except Exception as e:
-            print(f"追加ボタンクリックエラー: {e}")
-            return False
-    
+            print(f"System Error: {e}")
+            traceback.print_exc()
+            return False, f"システムエラー: {e}"
+
+    def vote(self, race_id: str, bets: List[Dict[str, Any]]) -> tuple[bool, str]:
+        """
+        投票を実行する
+        
+        Args:
+            race_id: レースID (YYYYMMDDKKRR)
+            bets: 買い目リスト
+        """
+        if not self.driver:
+            return False, "ドライバが初期化されていません"
+            
+        try:
+            # 1. 通常投票メニューへ遷移
+            print("通常投票メニューへ遷移...")
+            
+            # JQuery Mobile: <a class="ico_regular ui-link">通常投票</a>
+            # Text match or Class match
+            nav_success = False
+            try:
+                # Classで探す
+                btn = self.driver.find_element(By.CLASS_NAME, "ico_regular")
+                if btn.is_displayed():
+                    btn.click()
+                    nav_success = True
+                else:
+                    # Textで探す
+                    xpath = "//a[contains(text(), '通常投票')]"
+                    self.driver.find_element(By.XPATH, xpath).click()
+                    nav_success = True
+            except Exception as e:
+                print(f"Navigation to Normal Vote failed: {e}")
+            
+            if not nav_success:
+                 return False, "通常投票メニューへの遷移失敗"
+            
+            time.sleep(self.WAIT_SEC)
+
+            # Check for Warning Page (Deposit Instruction)
+            # id="warning" class="ui-page-active"
+            try:
+                warning_page = self.driver.find_elements(By.CSS_SELECTOR, "div#warning.ui-page-active")
+                if warning_page:
+                    print("Warning Page (Deposit Info) detected.")
+                    go_vote_btn = self.driver.find_elements(By.ID, "GoVote")
+                    if go_vote_btn and go_vote_btn[0].is_displayed():
+                        print("Clicking 'GoVote' to proceed...")
+                        go_vote_btn[0].click()
+                        time.sleep(self.WAIT_SEC)
+            except Exception as e:
+                print(f"Warning page check failed: {e}")
+
+            time.sleep(1)
+
+            # Wait for #voteRace OR #jyo page to be active
+            print("Waiting for Place Selection page (#voteRace or #jyo)...")
+            active_page_id = None
+            try:
+                WebDriverWait(self.driver, 10).until(
+                    lambda d: d.find_elements(By.CSS_SELECTOR, "#voteRace.ui-page-active, #jyo.ui-page-active")
+                )
+                print("Place Selection page is active.")
+                
+                # Identify which one is active
+                if self.driver.find_elements(By.CSS_SELECTOR, "#voteRace.ui-page-active"):
+                    active_page_id = "voteRace"
+                else:
+                    active_page_id = "jyo"
+                print(f"Active Page ID: {active_page_id}")
+                
+            except Exception as e:
+                print(f"Wait for Place Selection page failed: {e}")
+                # Log current active page
+                try:
+                    active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                    print(f"Current Active Page (Fallback): {active.get_attribute('id')}")
+                    active_page_id = active.get_attribute('id')
+                except:
+                    pass
+
+            # 2. レース会場を選択
+            # 2. レース会場を選択
+            # race_id: YYYYMMDDKKRR
+            jra_place_map = {
+                "01": "札幌", "02": "函館", "03": "福島", "04": "新潟", "05": "東京", 
+                "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉"
+            }
+            place_code = race_id[8:10]
+            target_place_name = jra_place_map.get(place_code, "")
+            
+            # 日付から曜日を判定して補強 (例: "東京" -> "東京(土)")
+            # race_id: 20240101...
+            try:
+                date_str = race_id[0:8]
+                dt = datetime.datetime.strptime(date_str, "%Y%m%d")
+                w_list = ["(月)", "(火)", "(水)", "(木)", "(金)", "(土)", "(日)"]
+                target_dow = w_list[dt.weekday()]
+            except:
+                target_dow = ""
+                
+            print(f"Target Race: {target_place_name} {target_dow} (Code: {place_code})")
+            
+            place_found = False
+            
+            def attempt_click_place(place_name, dow):
+                # #voteRace uses ul.raceInfoList, #jyo uses ul.selectList
+                # Combine selectors
+                css_selectors = ["ul.selectList li a", "ul.raceInfoList li a"]
+                
+                for selector in css_selectors:
+                    links = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    if not links: continue
+                    
+                    print(f"Checking selector {selector}: {len(links)} links found.")
+                    for link in links:
+                        txt = link.text.strip()
+                        # 空文字ならスキップ (非表示要素など)
+                        if not txt: continue
+                        
+                        # Match Logic: Place Name MUST match. DOW SHOULD match if present in text.
+                        # "東京(土)" vs "東京" + "(土)"
+                        if place_name in txt:
+                            # If text contains a DOW like (土), verify it matches target_dow
+                            # If text is just "東京", assume it's correct?
+                            
+                            # Simple strict match: if target_dow is known, check if it's in text
+                            if dow and dow not in txt:
+                                print(f"Skipping {txt} (Matches place but not DOW {dow})")
+                                continue
+                            
+                            print(f"Found Place Element: {txt}")
+                            self.driver.execute_script("arguments[0].scrollIntoView(true);", link)
+                            try:
+                                link.click()
+                            except:
+                                self.driver.execute_script("arguments[0].click();", link)
+                            return True
+                return False
+
+            # 実行
+            if attempt_click_place(target_place_name, target_dow):
+                place_found = True
+                time.sleep(self.WAIT_SEC)
+            
+            # タブ切り替え (#voteRace の場合のみ有効だが、汎用的に残すか、#jyoなら不要)
+            # #jyo does not seem to have tabs. #voteRace does.
+            # Only try tabs if we failed and we see tabs.
+            if not place_found:
+                tabs = self.driver.find_elements(By.CSS_SELECTOR, "ul.tabNav li a")
+                if tabs:
+                    print("Place not found in current view. Trying tabs (if any)...")
+                    for tab in tabs:
+                        if "selected" not in tab.get_attribute("class"):
+                            print(f"Switching to tab: {tab.text}")
+                            try:
+                                tab.click()
+                            except:
+                                self.driver.execute_script("arguments[0].click();", tab)
+                            time.sleep(1)
+                            
+                            if attempt_click_place(target_place_name, target_dow):
+                                place_found = True
+                                time.sleep(self.WAIT_SEC)
+                                break
+
+            if not place_found:
+                 print(f"Failed to find place: {target_place_name} {target_dow}")
+                 with open("debug_place_fail_source.html", "w", encoding="utf-8") as f:
+                     f.write(self.driver.page_source)
+                 return False, f"開催場ボタンが見つかりません: {target_place_name} {target_dow}"
+
+            # 3. レース番号を選択
+            # Wait for #race page?
+            # Based on TMPL, id='race' is likely
+            print("Waiting for Race Selection page (#race)...")
+            try:
+                WebDriverWait(self.driver, 10).until(
+                    lambda d: d.find_elements(By.CSS_SELECTOR, "#race.ui-page-active") or \
+                              d.find_elements(By.CSS_SELECTOR, "#voteRaceTable.ui-page-active")
+                )
+                print("Race Selection page is active.")
+                try:
+                    active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                    print(f"Active Page ID for Race: {active.get_attribute('id')}")
+                except: pass
+            except:
+                print("Wait for #race timed out. Proceeding anyway.")
+            
+            self._save_snapshot("after_place_selection_before_race")
+
+            # 2. レース選択
+            race_num_str = str(int(race_id[10:12])) # "01" -> "1"
+            target_race_text = f"{race_num_str}R"
+            print(f"レース選択: {target_race_text}")
+            
+            race_found = False
+            
+            # Strict Selector logic
+            race_nums = self.driver.find_elements(By.CSS_SELECTOR, "a .raceNum")
+            print(f"Found {len(race_nums)} race number spans.")
+            
+            for rn in race_nums:
+                # Exact match
+                if rn.text.strip() == target_race_text:
+                    link = rn.find_element(By.XPATH, "./..") # parent <a>
+                    print(f"Found Race Element (Strict): {rn.text}")
+                    print(f"DEBUG: Link Classes: {link.get_attribute('class')}")
+                    print(f"DEBUG: Link Href: {link.get_attribute('href')}")
+                    
+                    # Capture current page ID before click
+                    old_id = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id")
+                    
+                    # Click Logic
+                    self.driver.execute_script("arguments[0].scrollIntoView(true);", link)
+                    time.sleep(0.5)
+                    try:
+                        print("Attempting Native Click...")
+                        link.click()
+                    except Exception as e:
+                        print(f"Native Click failed: {e}. Trying JS Click...")
+                        self.driver.execute_script("arguments[0].click();", link)
+                        
+                    race_found = True
+                    
+                    # Wait for Page Transition
+                    print("Waiting for page transition after race click...")
+                    try:
+                        WebDriverWait(self.driver, 5).until(
+                            lambda d: d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id") != old_id
+                        )
+                        new_id = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id")
+                        print(f"Page transitioned from #{old_id} to #{new_id}")
+                    except:
+                        print("Page transition timed out (ID did not change).")
+                    
+                    break
+            
+            if not race_found:
+                 print(f"Error: Race {target_race_text} not found.")
+                 self._save_snapshot("race_not_found")
+                 return False, "指定されたレースが見つかりません"
+
+            # Check where we are
+            self._save_snapshot("after_race_selection_attempt")
+            
+            # Wait for Bet Type Selection Page (#siki) specifically
+            print("Waiting for Bet Type Selection page (#siki)...")
+            try:
+                WebDriverWait(self.driver, 5).until(
+                    lambda d: d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id") == "siki"
+                )
+                print("Bet Type Selection page (#siki) is active.")
+            except:
+                print("Wait for #siki timed out.")
+
+            # 3. 投票ループ
+
+            # 3. 投票ループ
+            for i, bet in enumerate(bets):
+                print(f"Processing Bet: {bet['type']} {bet.get('horses')}")
+                
+                # Check Page State
+                self._save_snapshot(f"start_loop_{i}")
+
+                # Ensure we are on Type Selection (#siki) or able to select type
+                # If we are on Horse Page (from previous 'Continue'?), go back
+                try:
+                    time.sleep(1)
+                    active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                    aid = active.get_attribute("id")
+                    print(f"Active Page at start of bet loop: {aid}")
+                    
+                    if aid.startswith("uma") or aid.startswith("waku"):
+                       # We are on Horse selection, need to go back to Bet Type
+                       print("Currently on Horse page, returning to Bet Type...")
+                       headers = active.find_elements(By.CSS_SELECTOR, "header .headerNavLeftArrow a")
+                       if headers:
+                           # Ensure visible / interactable
+                           headers[0].click()
+                           time.sleep(1)
+                           self._save_snapshot(f"after_back_click_{i}")
+                except: pass
+
+                # 4. 式別選択 (Bet Type)
+                try:
+                    # Wait for list
+                    status_text = "Wait for Bet Type Buttons"
+                    WebDriverWait(self.driver, 5).until(
+                         lambda d: d.find_elements(By.CSS_SELECTOR, ".ui-page-active ul.selectList li a")
+                    )
+                    
+                    btype_text = bet['type']
+                    found_type = False
+                    
+                    # Scope to active page
+                    active_page = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                    types = active_page.find_elements(By.CSS_SELECTOR, "ul.selectList li a")
+                    
+                    for t in types:
+                        if not t.is_displayed(): continue
+                        clean_text = t.text.strip().split("\n")[0]
+                        if btype_text in t.text:
+                            print(f"Found Bet Type button: {btype_text}")
+                            try:
+                                t.click()
+                            except:
+                                self.driver.execute_script("arguments[0].click();", t)
+                            found_type = True
+                            break
+                    
+                    if not found_type:
+                        print(f"Warning: Bet Type button '{btype_text}' not found.")
+                        self._save_snapshot(f"bet_type_not_found_{i}")
+                
+                except Exception as e:
+                    print(f"Bet Type selection error: {e}")
+                    self._save_snapshot(f"bet_type_error_{i}")
+
+                # Wait for Horse Selection Page (#uma... or #waku...)
+                print("Waiting for Horse Selection page...")
+                try:
+                    WebDriverWait(self.driver, 5).until(
+                        lambda d: d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id").startswith("uma") or \
+                                  d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id").startswith("waku") or \
+                                  d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id") == "hou"
+                    )
+                    active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                    aid = active.get_attribute("id")
+                    print(f"Horse Selection page is active. ID: {aid}")
+                    
+                    # If we are on Method Selection (#hou), select "Normal" (通常)
+                    if aid == "hou":
+                        print("On Method Selection (#hou). Selecting 'Normal' (通常)...")
+                        try:
+                            # Try to find "通常" button
+                            normal_btn = self.driver.find_element(By.XPATH, "//a[contains(text(), '通常')]")
+                            self.driver.execute_script("arguments[0].scrollIntoView(true);", normal_btn)
+                            normal_btn.click()
+                            time.sleep(1)
+                            # Update active page
+                            active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                            aid = active.get_attribute("id")
+                            print(f"Moved to: {aid}")
+                        except Exception as e:
+                            print(f"Failed to select Normal vote method: {e}")
+                            
+                except:
+                    print("Wait for Horse Selection page timed out.")
+                
+                time.sleep(1)
+
+                # 馬番選択 (#uma... / #waku...)
+                for horse in bet.get('horses', []):
+                    try:
+                        h_code = str(int(horse)) # "1"
+                        
+                        # Use simple robust selector: a[data-value='1']
+                        # Backup: label for checkboxes
+                        selector = f"a[data-value='{h_code}']"
+                        
+                        try:
+                             # Find Element WITHIN Active Page
+                             active_page = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                             els = active_page.find_elements(By.CSS_SELECTOR, selector)
+                             
+                             clicked = False
+                             for el in els:
+                                 if el.is_displayed():
+                                     print(f"Selecting Horse {h_code}...")
+                                     try:
+                                         el.click()
+                                     except:
+                                         self.driver.execute_script("arguments[0].click();", el)
+                                     clicked = True
+                                     break
+                             
+                             if not clicked:
+                                 print(f"Horse element {selector} found but not displayed.")
+                                 
+                        except Exception as e:
+                             print(f"Primary horse selector failed: {e}. Trying backups...")
+                             pass
+                        
+                    except Exception as e:
+                         print(f"Horse number {horse} selection failed: {e}")
+                
+                time.sleep(1)
+
+                # Check if we need to click "To Amount" to proceed from Horse Page
+                # Typically for multi-horse bets (like Umaren), there is a button "金額入力画面へ"
+                try:
+                    # Check if we are still on Horse/Method page (and not Amount page)
+                    # Amount page usually has input fields. Horse page might not?
+                    # Or check for the button explicitly.
+                    next_btns = self.driver.find_elements(By.XPATH, "//a[contains(text(), '金額入力画面へ')]")
+                    for btn in next_btns:
+                        if btn.is_displayed():
+                            print("Clicking 'To Amount Input' button...")
+                            self.driver.execute_script("arguments[0].scrollIntoView(true);", btn)
+                            btn.click()
+                            time.sleep(2)
+                            break
+                except Exception as e:
+                    print(f"Next button error: {e}")
+                
+                # 購入枚数・金額入力
+                try:
+                    amount = bet.get('amount', 100)
+                    qty = amount // 100
+                    print(f"Setting amount: {amount} (Qty: {qty})")
+                    
+                    # 記事: input[ng-model^='vm.nUnit'] => JQM: input type='tel' or 'number'?
+                    # Only visible inputs
+                    inputs = self.driver.find_elements(By.CSS_SELECTOR, "input[type='number'], input[type='tel']")
+                    input_set = False
+                    for inp in inputs:
+                        if inp.is_displayed():
+                             inp.clear()
+                             inp.send_keys(str(qty))
+                             input_set = True
+                             break
+                    
+                    if not input_set:
+                        print("Warning: Could not find amount input field.")
+
+                    # セットボタン (Set/Add)
+                    # Look for button "セット" or "追加"
+                    # Prioritize exact or simple matches
+                    self._save_snapshot(f"before_set_click_{i}")
+                    
+                    set_btns = self.driver.find_elements(By.CSS_SELECTOR, "a.ui-btn")
+                    
+                    # DEBUG: Print all visible buttons AND links
+                    print("DEBUG: All visible links/buttons on #kin:")
+                    all_links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for b in all_links:
+                        if b.is_displayed():
+                            print(f" - Text: '{b.text}', ID: {b.get_attribute('id')}, Class: {b.get_attribute('class')}")
+                    
+                    target_btn = None
+                    
+                    # 1. Exact "セット" or "追加" or "全セット"(All Set)
+                    for btn in all_links: # Check ALL links, not just ui-btn
+                        if not btn.is_displayed(): continue
+                        txt = btn.text.strip()
+                        if txt == "セット" or txt == "追加" or txt == "全セット":
+                            target_btn = btn
+                            break
+                    
+                    # 2. Contains
+                    if not target_btn:
+                         for btn in all_links:
+                             if not btn.is_displayed(): continue
+                             txt = btn.text.strip()
+                             if ("セット" in txt or "追加" in txt) and "展開" not in txt:
+                                 target_btn = btn
+                                 break
+                    
+                    # 3. Fallback (allow 展開 only if nothing else)
+                    if not target_btn:
+                         for btn in all_links:
+                             if not btn.is_displayed(): continue
+                             if "展開セット" in btn.text:
+                                 target_btn = btn
+                                 print("Fallback: Using 展開セット")
+                                 break
+
+                    if target_btn:
+                        print(f"Clicking Set button: {target_btn.text}")
+                        self.driver.execute_script("arguments[0].scrollIntoView(true);", target_btn)
+                        time.sleep(0.5)
+                        try:
+                            print("Attempting Native Click on Set...")
+                            target_btn.click()
+                        except Exception as e:
+                            print(f"Native Set Click failed: {e}. Using JS Click...")
+                            self.driver.execute_script("arguments[0].click();", target_btn)
+                    else:
+                        print("Error: Set button not found. Trying ENTER key on input...")
+                        inputs[0].send_keys(Keys.ENTER)
+                        
+                except Exception as e:
+                    print(f"Amount/Set error: {e}")
+                
+                time.sleep(2)
+                
+                # End of Cycle for this bet confirmed by presence of #toui (Vote List)
+                try:
+                    print("Waiting for Vote List (#toui)...")
+                    WebDriverWait(self.driver, 10).until(
+                        lambda d: d.find_element(By.CSS_SELECTOR, "#toui.ui-page-active")
+                    )
+                    print("Vote List (#toui) is active.")
+                    self._save_snapshot(f"at_vote_list_{i}")
+                except:
+                    print("Warning: Did not reach Vote List. Set might have failed.")
+                    # Fallback: Try ENTER key if we are still on #kin
+                    try:
+                        aid = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id")
+                        if aid.startswith("kin"):
+                             print("Stuck on #kin. Trying ENTER key...")
+                             # Re-find input
+                             inp = self.driver.find_element(By.CSS_SELECTOR, "input[type='number'], input[type='tel']")
+                             inp.send_keys(Keys.ENTER)
+                             time.sleep(2)
+                    except: pass
+                    
+                    self._save_snapshot(f"set_failed_stuck_{i}")
+
+                # If there are more bets, click "Continue Input"
+                if i < len(bets) - 1:
+                    try:
+                         print("More bets to process. Clicking 'Continue Input'...")
+                         # "馬（枠）番から続けて入力" -> Usually returns to Horse/Bet Type
+                         cont_btn = self.driver.find_element(By.XPATH, "//a[contains(text(), '続けて入力')]")
+                         cont_btn.click()
+                         # Wait for transition away from #toui
+                         WebDriverWait(self.driver, 10).until_not(
+                            lambda d: d.find_element(By.CSS_SELECTOR, "#toui.ui-page-active")
+                         )
+                         time.sleep(2) # Extra stability wait
+                    except Exception as e:
+                        print(f"Failed to click Continue: {e}")
+
+                # End of betting loop
+            
+            # 5. 購入完了 (Input Finish)
+            print("All bets processed. (Should be on Vote List)")
+            try:
+                # If we are NOT on Vote List (e.g. last bet failed), try to recover?
+                # Or assume we are there.
+                pass
+            except: pass
+            
+            try:
+                # Click "Input Finish" (入力終了)
+                # Should be on #toui (Vote List) page
+                finish_btn = WebDriverWait(self.driver, 10).until(
+                    lambda d: d.find_element(By.XPATH, "//a[contains(text(), '入力終了')]")
+                )
+                print("Clicking 'Input Finish'...")
+                finish_btn.click()
+            except Exception as e:
+                print(f"Failed to click Input Finish: {e}")
+            
+            time.sleep(2)
+
+            # 6. 合計金額入力 (Total Amount)
+            print("Waiting for Total Amount Input page...")
+            try:
+                # Wait for Total Amount page
+                # Based on screenshot, header contains "合計金額入力"
+                WebDriverWait(self.driver, 10).until(
+                    lambda d: "合計金額入力" in d.page_source
+                )
+                
+                # Recalculate based on bets list
+                total_amount = sum(b.get('amount', 100) for b in bets)
+                print(f"Inputting Total Amount: {total_amount}")
+                
+                # Check for input
+                total_input = self.driver.find_element(By.CSS_SELECTOR, "input[type='number'], input[type='tel']")
+                total_input.clear()
+                total_input.send_keys(str(total_amount))
+                
+                # 7. 最終投票 (Final Vote)
+                vote_btn = self.driver.find_element(By.XPATH, "//a[contains(text(), '投票')]")
+                print("Clicking Final Vote button...")
+                vote_btn.click()
+                
+                return True, "投票完了（シミュレーション）"
+
+            except Exception as e:
+                print(f"Final Vote sequence failed: {e}")
+                with open("debug_final_vote_fail.html", "w", encoding="utf-8") as f:
+                    f.write(self.driver.page_source)
+                return False, f"最終投票処理エラー: {e}"
+
+        except Exception as e:
+            print(f"Vote Error: {e}")
+            self._save_debug_screenshot(self.driver, "vote_error")
+            return False, f"投票処理エラー: {e}"
+
     def close(self):
-        """ブラウザを閉じる（手動操作完了後）"""
         if self.driver:
-            print("注意: ブラウザは手動で閉じてください（投票確定後）")
-            # self.driver.quit()  # 自動では閉じない
+            self.driver.quit()

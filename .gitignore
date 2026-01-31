@@ -54,3 +54,7 @@ prediction_*.md
 prediction_*.csv
 reports/
 !reports/*.md
+
+# Debug Secrets
+scripts/debug/ipat_secrets.json
+debug_screenshots/

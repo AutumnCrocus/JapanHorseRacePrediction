@@ -1,0 +1,488 @@
+<html lang="ja" class="ui-mobile"><!-- Lastupdate 2024/10/10 16:14 --><head><base href="https://www.ipat.jra.go.jp/sp/pw_741_i.cgi">
+<meta charset="euc-jp">
+<title>JRAネット投票</title>
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon-precomposed" href="tmpl/images/sp_ipat_icon.png">
+<script language="JavaScript" type="text/javascript" src="tmpl/import_241129.js"></script><link rel="stylesheet" href="tmpl/jquery.mobile.structure-1.2.0.min.css">
+<link rel="stylesheet" href="tmpl/jqm_overwrite_131129.css">
+<script language="JavaScript" type="text/javascript" src="tmpl/jquery-1.8.2.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmpl/jqm.extend_241129.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmpl/jquery.mobile-1.2.0.min.js"></script>
+
+<script language="JavaScript" type="text/javascript" src="tmpl/001_241129.js"></script>
+<script language="JavaScript" type="text/javascript" src="tmpl/741_231027.js"></script>
+<script language="JavaScript" type="text/javascript">
+<!--
+
+var g741_nUMACAFlag = 0;
+
+document.open();
+if(g741_nUMACAFlag == 1){
+	WriteCSSUSP();
+}else{
+	WriteCSSSP();
+}
+document.close();
+
+var hmsg1 = "ﾌｫｰﾒｰｼｮﾝ";
+var hmsg2 = "ボックス";
+var hmsg14 = "組";
+var hmsg15 = "00円";
+var hmsg16 = "各";
+var hmsg17 = "合計金額";
+var hmsg18 = "修正";
+var hmsg19 = "投票内容修正";
+var hmsg20 = "確認";
+var hmsg21 = "投票";
+var hmsg22 = "フォーメーション";
+var hmsg23 = "ボックス";
+var hmsg24 = "ながし";
+var hmsg25 = "1着ながし";
+var hmsg26 = "2着ながし";
+var hmsg27 = "3着ながし";
+var hmsg28 = "1･2着ながし";
+var hmsg29 = "1･3着ながし";
+var hmsg30 = "2･3着ながし";
+var hmsg31 = "軸1頭ながし";
+var hmsg32 = "軸2頭ながし";
+var hmsg33 = "軸1頭ながしマルチ";
+var hmsg34 = "軸2頭ながしマルチ";
+var hmsg35 = "馬番：";
+var hmsg36 = "枠番：";
+var hmsg37 = "軸枠：";
+var hmsg38 = "相手：";
+var hmsg39 = "1枠目：";
+var hmsg40 = "2枠目：";
+var hmsg41 = "軸馬：";
+var hmsg42 = "1頭目：";
+var hmsg43 = "2頭目：";
+var hmsg44 = "3頭目：";
+var hmsg45 = "1着：";
+var hmsg46 = "2着：";
+var hmsg47 = "3着：";
+var hmsg48 = "合計";
+var hmsg49 = "投票できる内容がありません。投票内容を全て確認の上、「投票内容修正」ボタンを押して、投票内容を修正してください。";
+var hmsg50 = "投票できない内容があります。投票内容を全て確認の上、確認ボタンを押して、投票できない内容を削除してください。";
+var hmsg51 = "投票内容を確認後、合計金額を入力し、「投票」を押すと投票が完了します。";
+var hmsg52 = "締切";
+var hmsg53 = "取消";
+var hmsg54 = "同枠取消";
+var hmsg55 = "一部取消";
+var hmsg56 = "判定不能";
+var hmsg57 = "中止";
+var hmsg58 = "下記の投票内容を全て確認の上、合計金額を入力して投票してください。";
+var hmsg59 = "「投票内容修正」ボタンを押して、投票内容を修正してください。";
+var hmsg60 = "確認ボタンを押して、投票できない内容を削除してください。(一部取消・同枠取消は削除されません。)";
+
+var msg1 = "コードが不正です。";
+var msg2 = "入力された金額が間違っています。\n再度入力し直してください。";
+var msg3 = "投票内容と金額を送信してもよろしいですか？";
+
+Nb = new Array(255);
+Nb[0] = "10005B701040000000000000005";
+Nb[1] = "0";
+Nb[2] = "0";
+Nb[3] = "0";
+Nb[4] = "0";
+Nb[5] = "0";
+Nb[6] = "0";
+Nb[7] = "0";
+Nb[8] = "0";
+Nb[9] = "0";
+Nb[10] = "0";
+Nb[11] = "0";
+Nb[12] = "0";
+Nb[13] = "0";
+Nb[14] = "0";
+Nb[15] = "0";
+Nb[16] = "0";
+Nb[17] = "0";
+Nb[18] = "0";
+Nb[19] = "0";
+Nb[20] = "0";
+Nb[21] = "0";
+Nb[22] = "0";
+Nb[23] = "0";
+Nb[24] = "0";
+Nb[25] = "0";
+Nb[26] = "0";
+Nb[27] = "0";
+Nb[28] = "0";
+Nb[29] = "0";
+Nb[30] = "0";
+Nb[31] = "0";
+Nb[32] = "0";
+Nb[33] = "0";
+Nb[34] = "0";
+Nb[35] = "0";
+Nb[36] = "0";
+Nb[37] = "0";
+Nb[38] = "0";
+Nb[39] = "0";
+Nb[40] = "0";
+Nb[41] = "0";
+Nb[42] = "0";
+Nb[43] = "0";
+Nb[44] = "0";
+Nb[45] = "0";
+Nb[46] = "0";
+Nb[47] = "0";
+Nb[48] = "0";
+Nb[49] = "0";
+Nb[50] = "0";
+Nb[51] = "0";
+Nb[52] = "0";
+Nb[53] = "0";
+Nb[54] = "0";
+Nb[55] = "0";
+Nb[56] = "0";
+Nb[57] = "0";
+Nb[58] = "0";
+Nb[59] = "0";
+Nb[60] = "0";
+Nb[61] = "0";
+Nb[62] = "0";
+Nb[63] = "0";
+Nb[64] = "0";
+Nb[65] = "0";
+Nb[66] = "0";
+Nb[67] = "0";
+Nb[68] = "0";
+Nb[69] = "0";
+Nb[70] = "0";
+Nb[71] = "0";
+Nb[72] = "0";
+Nb[73] = "0";
+Nb[74] = "0";
+Nb[75] = "0";
+Nb[76] = "0";
+Nb[77] = "0";
+Nb[78] = "0";
+Nb[79] = "0";
+Nb[80] = "0";
+Nb[81] = "0";
+Nb[82] = "0";
+Nb[83] = "0";
+Nb[84] = "0";
+Nb[85] = "0";
+Nb[86] = "0";
+Nb[87] = "0";
+Nb[88] = "0";
+Nb[89] = "0";
+Nb[90] = "0";
+Nb[91] = "0";
+Nb[92] = "0";
+Nb[93] = "0";
+Nb[94] = "0";
+Nb[95] = "0";
+Nb[96] = "0";
+Nb[97] = "0";
+Nb[98] = "0";
+Nb[99] = "0";
+Nb[100] = "0";
+Nb[101] = "0";
+Nb[102] = "0";
+Nb[103] = "0";
+Nb[104] = "0";
+Nb[105] = "0";
+Nb[106] = "0";
+Nb[107] = "0";
+Nb[108] = "0";
+Nb[109] = "0";
+Nb[110] = "0";
+Nb[111] = "0";
+Nb[112] = "0";
+Nb[113] = "0";
+Nb[114] = "0";
+Nb[115] = "0";
+Nb[116] = "0";
+Nb[117] = "0";
+Nb[118] = "0";
+Nb[119] = "0";
+Nb[120] = "0";
+Nb[121] = "0";
+Nb[122] = "0";
+Nb[123] = "0";
+Nb[124] = "0";
+Nb[125] = "0";
+Nb[126] = "0";
+Nb[127] = "0";
+Nb[128] = "0";
+Nb[129] = "0";
+Nb[130] = "0";
+Nb[131] = "0";
+Nb[132] = "0";
+Nb[133] = "0";
+Nb[134] = "0";
+Nb[135] = "0";
+Nb[136] = "0";
+Nb[137] = "0";
+Nb[138] = "0";
+Nb[139] = "0";
+Nb[140] = "0";
+Nb[141] = "0";
+Nb[142] = "0";
+Nb[143] = "0";
+Nb[144] = "0";
+Nb[145] = "0";
+Nb[146] = "0";
+Nb[147] = "0";
+Nb[148] = "0";
+Nb[149] = "0";
+Nb[150] = "0";
+Nb[151] = "0";
+Nb[152] = "0";
+Nb[153] = "0";
+Nb[154] = "0";
+Nb[155] = "0";
+Nb[156] = "0";
+Nb[157] = "0";
+Nb[158] = "0";
+Nb[159] = "0";
+Nb[160] = "0";
+Nb[161] = "0";
+Nb[162] = "0";
+Nb[163] = "0";
+Nb[164] = "0";
+Nb[165] = "0";
+Nb[166] = "0";
+Nb[167] = "0";
+Nb[168] = "0";
+Nb[169] = "0";
+Nb[170] = "0";
+Nb[171] = "0";
+Nb[172] = "0";
+Nb[173] = "0";
+Nb[174] = "0";
+Nb[175] = "0";
+Nb[176] = "0";
+Nb[177] = "0";
+Nb[178] = "0";
+Nb[179] = "0";
+Nb[180] = "0";
+Nb[181] = "0";
+Nb[182] = "0";
+Nb[183] = "0";
+Nb[184] = "0";
+Nb[185] = "0";
+Nb[186] = "0";
+Nb[187] = "0";
+Nb[188] = "0";
+Nb[189] = "0";
+Nb[190] = "0";
+Nb[191] = "0";
+Nb[192] = "0";
+Nb[193] = "0";
+Nb[194] = "0";
+Nb[195] = "0";
+Nb[196] = "0";
+Nb[197] = "0";
+Nb[198] = "0";
+Nb[199] = "0";
+Nb[200] = "0";
+Nb[201] = "0";
+Nb[202] = "0";
+Nb[203] = "0";
+Nb[204] = "0";
+Nb[205] = "0";
+Nb[206] = "0";
+Nb[207] = "0";
+Nb[208] = "0";
+Nb[209] = "0";
+Nb[210] = "0";
+Nb[211] = "0";
+Nb[212] = "0";
+Nb[213] = "0";
+Nb[214] = "0";
+Nb[215] = "0";
+Nb[216] = "0";
+Nb[217] = "0";
+Nb[218] = "0";
+Nb[219] = "0";
+Nb[220] = "0";
+Nb[221] = "0";
+Nb[222] = "0";
+Nb[223] = "0";
+Nb[224] = "0";
+Nb[225] = "0";
+Nb[226] = "0";
+Nb[227] = "0";
+Nb[228] = "0";
+Nb[229] = "0";
+Nb[230] = "0";
+Nb[231] = "0";
+Nb[232] = "0";
+Nb[233] = "0";
+Nb[234] = "0";
+Nb[235] = "0";
+Nb[236] = "0";
+Nb[237] = "0";
+Nb[238] = "0";
+Nb[239] = "0";
+Nb[240] = "0";
+Nb[241] = "0";
+Nb[242] = "0";
+Nb[243] = "0";
+Nb[244] = "0";
+Nb[245] = "0";
+Nb[246] = "0";
+Nb[247] = "0";
+Nb[248] = "0";
+Nb[249] = "0";
+Nb[250] = "0";
+Nb[251] = "0";
+Nb[252] = "0";
+Nb[253] = "0";
+Nb[254] = "0";
+
+
+// -->
+</script><link rel="stylesheet" type="text/css" href="tmpl/ipat_s1_241129.css">
+</head>
+<body class="ui-mobile-viewport ui-overlay-c">
+<div id="noscript" style="margin: 15px 10px; padding: 10px; border: 1px solid rgb(70, 70, 70); border-radius: 10px; color: rgb(255, 0, 0); display: none;">
+	<p>JRA ネット投票ではJavaScriptを使用しています。<br>
+		JavaScriptに対応したブラウザをご利用いただくか、JavaScriptを使用するように設定してからご利用願います。</p>
+</div>
+<script type="text/javascript">
+	document.getElementById('noscript').style.display="none";
+</script>
+<form action="" name="FORM0" method="POST">
+	<input type="hidden" name="001" value="10005B701040000000000000005">	<input type="hidden" name="002" value="0">	<input type="hidden" name="003" value="0">	<input type="hidden" name="004" value="0">	<input type="hidden" name="005" value="0">
+	<input type="hidden" name="006" value="0">	<input type="hidden" name="007" value="0">	<input type="hidden" name="008" value="0">	<input type="hidden" name="009" value="0">	<input type="hidden" name="010" value="0">
+	<input type="hidden" name="011" value="0">	<input type="hidden" name="012" value="0">	<input type="hidden" name="013" value="0">	<input type="hidden" name="014" value="0">	<input type="hidden" name="015" value="0">
+	<input type="hidden" name="016" value="0">	<input type="hidden" name="017" value="0">	<input type="hidden" name="018" value="0">	<input type="hidden" name="019" value="0">	<input type="hidden" name="020" value="0">
+	<input type="hidden" name="021" value="0">	<input type="hidden" name="022" value="0">	<input type="hidden" name="023" value="0">	<input type="hidden" name="024" value="0">	<input type="hidden" name="025" value="0">
+	<input type="hidden" name="026" value="0">	<input type="hidden" name="027" value="0">	<input type="hidden" name="028" value="0">	<input type="hidden" name="029" value="0">	<input type="hidden" name="030" value="0">
+	<input type="hidden" name="031" value="0">	<input type="hidden" name="032" value="0">	<input type="hidden" name="033" value="0">	<input type="hidden" name="034" value="0">	<input type="hidden" name="035" value="0">
+	<input type="hidden" name="036" value="0">	<input type="hidden" name="037" value="0">	<input type="hidden" name="038" value="0">	<input type="hidden" name="039" value="0">	<input type="hidden" name="040" value="0">
+	<input type="hidden" name="041" value="0">	<input type="hidden" name="042" value="0">	<input type="hidden" name="043" value="0">	<input type="hidden" name="044" value="0">	<input type="hidden" name="045" value="0">
+	<input type="hidden" name="046" value="0">	<input type="hidden" name="047" value="0">	<input type="hidden" name="048" value="0">	<input type="hidden" name="049" value="0">	<input type="hidden" name="050" value="0">
+	<input type="hidden" name="051" value="0">	<input type="hidden" name="052" value="0">	<input type="hidden" name="053" value="0">	<input type="hidden" name="054" value="0">	<input type="hidden" name="055" value="0">
+	<input type="hidden" name="056" value="0">	<input type="hidden" name="057" value="0">	<input type="hidden" name="058" value="0">	<input type="hidden" name="059" value="0">	<input type="hidden" name="060" value="0">
+	<input type="hidden" name="061" value="0">	<input type="hidden" name="062" value="0">	<input type="hidden" name="063" value="0">	<input type="hidden" name="064" value="0">	<input type="hidden" name="065" value="0">
+	<input type="hidden" name="066" value="0">	<input type="hidden" name="067" value="0">	<input type="hidden" name="068" value="0">	<input type="hidden" name="069" value="0">	<input type="hidden" name="070" value="0">
+	<input type="hidden" name="071" value="0">	<input type="hidden" name="072" value="0">	<input type="hidden" name="073" value="0">	<input type="hidden" name="074" value="0">	<input type="hidden" name="075" value="0">
+	<input type="hidden" name="076" value="0">	<input type="hidden" name="077" value="0">	<input type="hidden" name="078" value="0">	<input type="hidden" name="079" value="0">	<input type="hidden" name="080" value="0">
+	<input type="hidden" name="081" value="0">	<input type="hidden" name="082" value="0">	<input type="hidden" name="083" value="0">	<input type="hidden" name="084" value="0">	<input type="hidden" name="085" value="0">
+	<input type="hidden" name="086" value="0">	<input type="hidden" name="087" value="0">	<input type="hidden" name="088" value="0">	<input type="hidden" name="089" value="0">	<input type="hidden" name="090" value="0">
+	<input type="hidden" name="091" value="0">	<input type="hidden" name="092" value="0">	<input type="hidden" name="093" value="0">	<input type="hidden" name="094" value="0">	<input type="hidden" name="095" value="0">
+	<input type="hidden" name="096" value="0">	<input type="hidden" name="097" value="0">	<input type="hidden" name="098" value="0">	<input type="hidden" name="099" value="0">	<input type="hidden" name="100" value="0">
+	<input type="hidden" name="101" value="0">	<input type="hidden" name="102" value="0">	<input type="hidden" name="103" value="0">	<input type="hidden" name="104" value="0">	<input type="hidden" name="105" value="0">
+	<input type="hidden" name="106" value="0">	<input type="hidden" name="107" value="0">	<input type="hidden" name="108" value="0">	<input type="hidden" name="109" value="0">	<input type="hidden" name="110" value="0">
+	<input type="hidden" name="111" value="0">	<input type="hidden" name="112" value="0">	<input type="hidden" name="113" value="0">	<input type="hidden" name="114" value="0">	<input type="hidden" name="115" value="0">
+	<input type="hidden" name="116" value="0">	<input type="hidden" name="117" value="0">	<input type="hidden" name="118" value="0">	<input type="hidden" name="119" value="0">	<input type="hidden" name="120" value="0">
+	<input type="hidden" name="121" value="0">	<input type="hidden" name="122" value="0">	<input type="hidden" name="123" value="0">	<input type="hidden" name="124" value="0">	<input type="hidden" name="125" value="0">
+	<input type="hidden" name="126" value="0">	<input type="hidden" name="127" value="0">	<input type="hidden" name="128" value="0">	<input type="hidden" name="129" value="0">	<input type="hidden" name="130" value="0">
+	<input type="hidden" name="131" value="0">	<input type="hidden" name="132" value="0">	<input type="hidden" name="133" value="0">	<input type="hidden" name="134" value="0">	<input type="hidden" name="135" value="0">
+	<input type="hidden" name="136" value="0">	<input type="hidden" name="137" value="0">	<input type="hidden" name="138" value="0">	<input type="hidden" name="139" value="0">	<input type="hidden" name="140" value="0">
+	<input type="hidden" name="141" value="0">	<input type="hidden" name="142" value="0">	<input type="hidden" name="143" value="0">	<input type="hidden" name="144" value="0">	<input type="hidden" name="145" value="0">
+	<input type="hidden" name="146" value="0">	<input type="hidden" name="147" value="0">	<input type="hidden" name="148" value="0">	<input type="hidden" name="149" value="0">	<input type="hidden" name="150" value="0">
+	<input type="hidden" name="151" value="0">	<input type="hidden" name="152" value="0">	<input type="hidden" name="153" value="0">	<input type="hidden" name="154" value="0">	<input type="hidden" name="155" value="0">
+	<input type="hidden" name="156" value="0">	<input type="hidden" name="157" value="0">	<input type="hidden" name="158" value="0">	<input type="hidden" name="159" value="0">	<input type="hidden" name="160" value="0">
+	<input type="hidden" name="161" value="0">	<input type="hidden" name="162" value="0">	<input type="hidden" name="163" value="0">	<input type="hidden" name="164" value="0">	<input type="hidden" name="165" value="0">
+	<input type="hidden" name="166" value="0">	<input type="hidden" name="167" value="0">	<input type="hidden" name="168" value="0">	<input type="hidden" name="169" value="0">	<input type="hidden" name="170" value="0">
+	<input type="hidden" name="171" value="0">	<input type="hidden" name="172" value="0">	<input type="hidden" name="173" value="0">	<input type="hidden" name="174" value="0">	<input type="hidden" name="175" value="0">
+	<input type="hidden" name="176" value="0">	<input type="hidden" name="177" value="0">	<input type="hidden" name="178" value="0">	<input type="hidden" name="179" value="0">	<input type="hidden" name="180" value="0">
+	<input type="hidden" name="181" value="0">	<input type="hidden" name="182" value="0">	<input type="hidden" name="183" value="0">	<input type="hidden" name="184" value="0">	<input type="hidden" name="185" value="0">
+	<input type="hidden" name="186" value="0">	<input type="hidden" name="187" value="0">	<input type="hidden" name="188" value="0">	<input type="hidden" name="189" value="0">	<input type="hidden" name="190" value="0">
+	<input type="hidden" name="191" value="0">	<input type="hidden" name="192" value="0">	<input type="hidden" name="193" value="0">	<input type="hidden" name="194" value="0">	<input type="hidden" name="195" value="0">
+	<input type="hidden" name="196" value="0">	<input type="hidden" name="197" value="0">	<input type="hidden" name="198" value="0">	<input type="hidden" name="199" value="0">	<input type="hidden" name="200" value="0">
+	<input type="hidden" name="201" value="0">	<input type="hidden" name="202" value="0">	<input type="hidden" name="203" value="0">	<input type="hidden" name="204" value="0">	<input type="hidden" name="205" value="0">
+	<input type="hidden" name="206" value="0">	<input type="hidden" name="207" value="0">	<input type="hidden" name="208" value="0">	<input type="hidden" name="209" value="0">	<input type="hidden" name="210" value="0">
+	<input type="hidden" name="211" value="0">	<input type="hidden" name="212" value="0">	<input type="hidden" name="213" value="0">	<input type="hidden" name="214" value="0">	<input type="hidden" name="215" value="0">
+	<input type="hidden" name="216" value="0">	<input type="hidden" name="217" value="0">	<input type="hidden" name="218" value="0">	<input type="hidden" name="219" value="0">	<input type="hidden" name="220" value="0">
+	<input type="hidden" name="221" value="0">	<input type="hidden" name="222" value="0">	<input type="hidden" name="223" value="0">	<input type="hidden" name="224" value="0">	<input type="hidden" name="225" value="0">
+	<input type="hidden" name="226" value="0">	<input type="hidden" name="227" value="0">	<input type="hidden" name="228" value="0">	<input type="hidden" name="229" value="0">	<input type="hidden" name="230" value="0">
+	<input type="hidden" name="231" value="0">	<input type="hidden" name="232" value="0">	<input type="hidden" name="233" value="0">	<input type="hidden" name="234" value="0">	<input type="hidden" name="235" value="0">
+	<input type="hidden" name="236" value="0">	<input type="hidden" name="237" value="0">	<input type="hidden" name="238" value="0">	<input type="hidden" name="239" value="0">	<input type="hidden" name="240" value="0">
+	<input type="hidden" name="241" value="0">	<input type="hidden" name="242" value="0">	<input type="hidden" name="243" value="0">	<input type="hidden" name="244" value="0">	<input type="hidden" name="245" value="0">
+	<input type="hidden" name="246" value="0">	<input type="hidden" name="247" value="0">	<input type="hidden" name="248" value="0">	<input type="hidden" name="249" value="0">	<input type="hidden" name="250" value="0">
+	<input type="hidden" name="251" value="0">	<input type="hidden" name="252" value="0">	<input type="hidden" name="253" value="0">	<input type="hidden" name="254" value="0">	<input type="hidden" name="255" value="0">
+	<input type="HIDDEN" name="uh" value="04vq1m"><input type="HIDDEN" name="inetid" value="4NSDPLKD"><input type="HIDDEN" name="g" value="741"><input type="HIDDEN" name="t" value="121024"><input type="HIDDEN" name="u" value="1M9NuO3w2UFy"><input type="HIDDEN" name="nm" value="112900"><input type="HIDDEN" name="zj" value="090000000000000"><input type="HIDDEN" name="mli" value="0000000000000000000000000000000"><input type="HIDDEN" name="uk" value="0">
+	<input type="HIDDEN" name="l">
+	<input type="HIDDEN" name="s">
+</form>
+<div data-role="page" id="LIST" data-url="LIST" tabindex="0" class="ui-page ui-body-c ui-page-active" style="min-height: 695px;">
+	<header class="header">
+		<h1 class="ui-title">合計金額入力</h1>
+	</header>
+	<div class="content ui-content" data-role="content" role="main">
+		<div class="noteWrap" id="msg_top">
+		<p>下記の投票内容を全て確認の上、合計金額を入力して投票してください。</p></div>
+		<h2 class="contentHeading">
+			<div class="choicePageDispBtnRow choicePageDispBtnRow_top">
+				<span class="betHeader">投票内容</span>
+				<div class="choicePageDispBtn" id="choicePageDispBtn_top" style="display: none;">
+					<a data-value="1" class="disabled ui-link">全件表示</a>
+					<a data-value="2" class="ui-link">ページ表示</a>
+				</div>
+			</div>
+		</h2>
+		<ul class="directPagenation directPagenation_top" style="display: none;"></ul>
+		<ul class="pagenation pagenation_top" style="display: none;"></ul>
+
+		<ul class="voteList"><li><a data-value="0" class="ui-link"><span class="orderNum">(1)</span><span class="courseRace">東京（土）11R</span><span class="horseCombi">06</span><span class="style">単勝</span><span class="amount">500円</span></a></li></ul>
+
+		<ul class="directPagenation directPagenation_bottom" style="display: none;"></ul>
+		<ul class="pagenation pagenation_bottom" style="display: none;"></ul>
+		<h2 class="contentHeading" id="h2_bottom" style="display: none;">
+			<div class="choicePageDispBtnRow">
+				<div class="choicePageDispBtn" id="choicePageDispBtn_bottom">
+					<a data-value="1" class="disabled ui-link">全件表示</a>
+					<a data-value="2" class="ui-link">ページ表示</a>
+				</div>
+			</div>
+		</h2>
+		<ul class="amountDisplay"><li class="gray">合計金額</li><li>500円</li></ul>
+		
+		<div class="inputTotalPriceForm">
+			<dl class="inputAmount">
+			<dt>合計金額</dt><dd><input type="tel" maxlength="13" id="sum" class="ui-input-text ui-body-c ui-corner-all ui-shadow-inset">円</dd></dl>
+			
+			<div class="noteRadiusWrap">
+			<p>投票内容を確認後、合計金額を入力し、「投票」を押すと投票が完了します。</p></div>
+			<div class="btnWrap">
+				<ul>
+				<li class="btnOrange"><a class="ui-link">修正</a></li><li class="btnColor"><a class="ui-link">投票</a></li></ul>
+			</div>
+		</div>
+	</div>
+	<footer class="footer">
+		<p class="copyright"><small>© Japan Racing Association.</small></p>
+	</footer>
+</div>
+
+<div data-role="page" id="DETAIL" data-url="DETAIL">
+	<header class="header">
+		<h1>投票詳細</h1>
+		<nav class="headerNav">
+			<ul>
+				<li class="headerNavLeftArrow"><a><span>戻る</span></a></li>
+			</ul>
+		</nav>
+	</header>
+	<div class="content" data-role="content">
+	
+		<div class="detailContentHeading">
+		</div>
+		<table class="voteDetailTable">
+		</table>
+		<ul class="amountDisplay">
+		</ul>
+	</div>
+	<footer class="footer">
+		<p class="copyright"><small>© Japan Racing Association.</small></p>
+	</footer>
+</div>
+<script language="JavaScript" type="text/javascript">
+<!--
+	Init();
+// -->
+</script>
+
+
+
+<div class="ui-loader ui-corner-all ui-body-a ui-loader-verbose"><span class="ui-icon ui-icon-loading"></span><h1>お待ちください...</h1></div></body></html>
