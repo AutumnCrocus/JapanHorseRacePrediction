@@ -871,28 +871,15 @@ async function handleConfirmVote() {
     confirmBtn.disabled = true;
 
     try {
-        // Betsデータ整形（BettingAllocatorフォーマットに対応）
-        const bets = currentRecommendations.map(rec => {
-            // BettingAllocatorのデータ構造に対応
-            const betType = rec.bet_type || rec.type || '単勝';
-            const horseNo = rec.combination || rec.combo || rec.umaban || rec.horse_no;
-            const amount = rec.total_amount || rec.amount || 100;
-
-            return {
-                type: betType,
-                horses: horseNo,
-                amount: amount
-            };
-        });
-
-        console.log('Sending bets to backend:', bets);
+        // 推奨データをそのまま送信（サーバー側で変換）
+        console.log('Sending recommendations to backend:', currentRecommendations);
 
         const response = await fetch(`${API_BASE}/api/ipat/launch_browser`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 race_id: currentRaceId,
-                bets: bets
+                recommendations: currentRecommendations  // 推奨データをそのまま送信
             })
         });
 
