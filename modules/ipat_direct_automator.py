@@ -37,10 +37,10 @@ class IpatDirectAutomator:
     
     def login(self, inetid: str, subscriber_no: str, pin: str, pars_no: str) -> tuple[bool, str]:
         """
-        IPATログイン画面で認証を実行
+        IPATログイン画面で認証を実行（PC版、2段階認証）
         
         Args:
-            inetid: INET-ID
+            inetid: INET-ID（第1段階、オプション）
             subscriber_no: 加入者番号
             pin: 暗証番号
             pars_no: P-ARS番号
@@ -60,41 +60,71 @@ class IpatDirectAutomator:
             wait = WebDriverWait(self.driver, self.wait_timeout)
             
             print("IPATログインページにアクセス中...")
-            self.driver.get("https://www.ipat.jra.go.jp/sp/")
+            # PC版URLに変更
+            self.driver.get("https://www.ipat.jra.go.jp/")
             time.sleep(2)
             
-            # ログインフォームの入力
-            print("認証情報を入力中...")
+            # 第1段階: INET-ID入力（オプション）
+            if inetid:
+                print("第1段階: INET-ID入力中...")
+                try:
+                    inetid_field = wait.until(EC.presence_of_element_located((By.NAME, "inetid")))
+                    inetid_field.clear()
+                    inetid_field.send_keys(inetid)
+                    
+                    # ログインボタンクリック
+                    login_btn = self.driver.find_element(By.CSS_SELECTOR, "a[title='ログイン']")
+                    login_btn.click()
+                    time.sleep(2)
+                    print("INET-ID認証完了、メインログイン画面へ")
+                except Exception as e:
+                    print(f"INET-ID入力エラー（スキップ）: {e}")
             
-            # INET-ID入力（フィールドが存在する場合）
+            # 第2段階: メイン認証情報を入力
+            print("第2段階: 認証情報を入力中...")
+            
+            # 加入者番号（PC版セレクタ: name="kanyu"）
             try:
-                inetid_field = wait.until(EC.presence_of_element_located((By.NAME, "inetid")))
-                inetid_field.clear()
-                inetid_field.send_keys(inetid)
-            except:
-                print("Warning: INET-ID field not found (may be optional)")
+                subscriber_field = wait.until(EC.presence_of_element_located((By.NAME, "kanyu")))
+                subscriber_field.clear()
+                subscriber_field.send_keys(subscriber_no)
+                print("加入者番号を入力しました")
+            except Exception as e:
+                print(f"加入者番号入力エラー: {e}")
+                self._save_debug_screenshot(self.driver, "subscriber_error")
+                return False, f"加入者番号フィールドが見つかりません: {str(e)}"
             
-            # 加入者番号
-            subscriber_field = wait.until(EC.presence_of_element_located((By.NAME, "i")))
-            subscriber_field.clear()
-            subscriber_field.send_keys(subscriber_no)
+            # 暗証番号（PC版セレクタ: name="pin"）
+            try:
+                pin_field = self.driver.find_element(By.NAME, "pin")
+                pin_field.clear()
+                pin_field.send_keys(pin)
+                print("暗証番号を入力しました")
+            except Exception as e:
+                print(f"暗証番号入力エラー: {e}")
+                return False, f"暗証番号フィールドが見つかりません: {str(e)}"
             
-            # 暗証番号
-            pin_field = self.driver.find_element(By.NAME, "p")
-            pin_field.clear()
-            pin_field.send_keys(pin)
-            
-            # P-ARS番号
-            pars_field = self.driver.find_element(By.NAME, "r")
-            pars_field.clear()
-            pars_field.send_keys(pars_no)
+            # P-ARS番号（PC版セレクタ: name="pars"）
+            try:
+                pars_field = self.driver.find_element(By.NAME, "pars")
+                pars_field.clear()
+                pars_field.send_keys(pars_no)
+                print("P-ARS番号を入力しました")
+            except Exception as e:
+                print(f"P-ARS番号入力エラー: {e}")
+                return False, f"P-ARS番号フィールドが見つかりません: {str(e)}"
             
             self._save_debug_screenshot(self.driver, "before_login")
             
             # ログインボタンをクリック
             print("ログインボタンをクリック中...")
-            login_button = self.driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
-            login_button.click()
+            try:
+                login_button = self.driver.find_element(By.CSS_SELECTOR, "a[title='ログイン']")
+                login_button.click()
+            except:
+                # フォールバック: submit入力を試す
+                login_button = self.driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
+                login_button.click()
             
             time.sleep(3)
             self._save_debug_screenshot(self.driver, "after_login")
@@ -102,7 +132,7 @@ class IpatDirectAutomator:
             # ログイン成功確認（メニュー画面に到達したか）
             try:
                 # メニュー画面の特徴的な要素を探す
-                wait.until(lambda d: "メニュー" in d.page_source or "トップメニュー" in d.page_source)
+                wait.until(lambda d: "メニュー" in d.page_source or "トップメニュー" in d.page_source or "IPAT-A-PAT" in d.page_source)
                 print("IPATログイン成功")
                 return True, "ログイン成功"
             except:
