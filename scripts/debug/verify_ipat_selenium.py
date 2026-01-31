@@ -62,16 +62,15 @@ def main():
         # 例: 2026年1月31日(土) 東京(05) 1R ※適当
         
         bets = [
-            {'type': '単勝', 'horses': [1], 'amount': 100},
-            # Add Complex Bet: Quinella (馬連) with 2 horses
-            {'type': '馬連', 'horses': [2, 3], 'amount': 100}
+            {'type': '単勝', 'horses': [1], 'amount': 100, 'method': '通常'},
+            {'type': '馬連', 'horses': [2, 3, 4], 'amount': 100, 'method': 'ボックス'}
         ]
         
-        print(f"Attempting to vote for {test_race_id} (Dry Run)...")
         print(f"Bets: {bets}")
         
-        v_success, v_msg = automator.vote(test_race_id, bets)
-        print(f"Vote Result: {v_success}, {v_msg}")
+        # 投票実行 (Stop at confirmation)
+        success, msg = automator.vote(test_race_id, bets, stop_at_confirmation=True) # Changed test_race_id to race_id in instruction, but keeping test_race_id as it's defined.
+        print(f"Vote Result: {success}, {msg}")
 
     except Exception as e:
         print(f"An error occurred: {e}")

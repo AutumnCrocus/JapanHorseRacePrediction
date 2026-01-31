@@ -340,13 +340,11 @@ class IpatDirectAutomator:
             traceback.print_exc()
             return False, f"システムエラー: {e}"
 
-    def vote(self, race_id: str, bets: List[Dict[str, Any]]) -> tuple[bool, str]:
+    def vote(self, race_id: str, bets: list[dict], stop_at_confirmation: bool = False) -> tuple[bool, str]:
         """
-        投票を実行する
-        
-        Args:
-            race_id: レースID (YYYYMMDDKKRR)
-            bets: 買い目リスト
+        指定レースに投票を実行する（拡張版）
+        bets: [{ 'type': '単勝', 'horses': [1], 'amount': 100, 'method': '通常'|'ボックス' }, ...]
+        stop_at_confirmation: Trueの場合、合計金額入力画面で停止し、投票ボタンを押さずに終了する
         """
         if not self.driver:
             return False, "ドライバが初期化されていません"
@@ -669,21 +667,53 @@ class IpatDirectAutomator:
                     aid = active.get_attribute("id")
                     print(f"Horse Selection page is active. ID: {aid}")
                     
-                    # If we are on Method Selection (#hou), select "Normal" (通常)
-                    if aid == "hou":
-                        print("On Method Selection (#hou). Selecting 'Normal' (通常)...")
+                    # Check for "Multi Info" (マルチについて)
+                    if aid == "multi_info" or "multi_info" in self.driver.current_url:
+                        print("Multi Info screen detected. Clicking OK...")
                         try:
-                            # Try to find "通常" button
-                            normal_btn = self.driver.find_element(By.XPATH, "//a[contains(text(), '通常')]")
-                            self.driver.execute_script("arguments[0].scrollIntoView(true);", normal_btn)
-                            normal_btn.click()
+                            ok_btn = self.driver.find_element(By.CSS_SELECTOR, "a.ui-btn") # Usually OK is the main button
+                            self.driver.execute_script("arguments[0].scrollIntoView(true);", ok_btn)
+                            self.driver.execute_script("arguments[0].click();", ok_btn)
+                            time.sleep(1)
+                            # Update active
+                            active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                            aid = active.get_attribute("id")
+                            print(f"After Multi Info: {aid}")
+                        except Exception as e:
+                            print(f"Failed to close Multi Info: {e}")
+
+                    # If we are on Method Selection (#hou), select Method
+                    if aid == "hou":
+                        method = bet.get('method', '通常') # Default Normal
+                        print(f"On Method Selection (#hou). Selecting '{method}'...")
+                        
+                        target_text = method
+                        if method == 'Box' or method == 'box' or method == 'ボックス': target_text = "ボックス"
+                        if method == 'Normal' or method == 'normal' or method == '通常': target_text = "通常"
+                        
+                        try:
+                            # Search for button by text
+                            method_btn = None
+                            btns = self.driver.find_elements(By.CSS_SELECTOR, "ul.selectList li a")
+                            for b in btns:
+                                if target_text in b.text:
+                                    method_btn = b
+                                    break
+                            
+                            if method_btn:
+                                self.driver.execute_script("arguments[0].scrollIntoView(true);", method_btn)
+                                method_btn.click()
+                            else:
+                                print(f"Method button '{target_text}' not found. Clicking first available (Fall back).")
+                                btns[0].click()
+
                             time.sleep(1)
                             # Update active page
                             active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
                             aid = active.get_attribute("id")
                             print(f"Moved to: {aid}")
                         except Exception as e:
-                            print(f"Failed to select Normal vote method: {e}")
+                            print(f"Failed to select vote method: {e}")
                             
                 except:
                     print("Wait for Horse Selection page timed out.")
@@ -886,11 +916,10 @@ class IpatDirectAutomator:
             
             time.sleep(2)
 
-            # 6. 合計金額入力 (Total Amount)
+                # 6. 合計金額入力 (Total Amount)
             print("Waiting for Total Amount Input page...")
             try:
                 # Wait for Total Amount page
-                # Based on screenshot, header contains "合計金額入力"
                 WebDriverWait(self.driver, 10).until(
                     lambda d: "合計金額入力" in d.page_source
                 )
@@ -903,6 +932,12 @@ class IpatDirectAutomator:
                 total_input = self.driver.find_element(By.CSS_SELECTOR, "input[type='number'], input[type='tel']")
                 total_input.clear()
                 total_input.send_keys(str(total_amount))
+                
+                # STOP HERE if requested
+                if stop_at_confirmation:
+                    print("Stopping at Total Amount Input screen as requested.")
+                    self._save_snapshot("stopped_at_confirmation")
+                    return True, "確認画面で停止しました（シミュレーション成功）"
                 
                 # 7. 最終投票 (Final Vote)
                 vote_btn = self.driver.find_element(By.XPATH, "//a[contains(text(), '投票')]")
