@@ -507,17 +507,9 @@ class IpatDirectAutomator:
                         # 空文字ならスキップ (非表示要素など)
                         if not txt: continue
                         
-                        # Match Logic: Place Name MUST match. DOW SHOULD match if present in text.
-                        # "東京(土)" vs "東京" + "(土)"
+                        # Match Logic: Place Name MUST match.
+                        # DOW check removed - race_id does not contain date info
                         if place_name in txt:
-                            # If text contains a DOW like (土), verify it matches target_dow
-                            # If text is just "東京", assume it's correct?
-                            
-                            # Simple strict match: if target_dow is known, check if it's in text
-                            if dow and dow not in txt:
-                                print(f"Skipping {txt} (Matches place but not DOW {dow})")
-                                continue
-                            
                             print(f"Found Place Element: {txt}")
                             self.driver.execute_script("arguments[0].scrollIntoView(true);", link)
                             try:
@@ -526,6 +518,7 @@ class IpatDirectAutomator:
                                 self.driver.execute_script("arguments[0].click();", link)
                             return True
                 return False
+
 
             # 実行
             if attempt_click_place(target_place_name, target_dow):
