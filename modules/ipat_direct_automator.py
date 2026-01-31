@@ -1072,8 +1072,8 @@ class IpatDirectAutomator:
                                         title = win32gui.GetWindowText(hwnd)
                                         _, pid = win32process.GetWindowThreadProcessId(hwnd)
                                         
-                                        # ChromeDriverのPIDと一致するか、タイトルに「Chrome」が含まれるウィンドウを探す
-                                        if (chrome_pid and pid == chrome_pid) or 'Chrome' in title or 'IPAT' in title:
+                                        # Chromeウィンドウのみを候補に追加
+                                        if 'Chrome' in title:
                                             results.append((hwnd, title, pid))
                                             print(f"  候補ウィンドウ: {title} (PID: {pid}, HWND: {hwnd})")
                                     return True
@@ -1082,8 +1082,34 @@ class IpatDirectAutomator:
                                 win32gui.EnumWindows(enum_callback, windows)
                                 
                                 if windows:
-                                    # 最初のウィンドウを使用
-                                    target_hwnd, target_title, target_pid = windows[0]
+                                    # 優先順位でウィンドウを選択
+                                    # 1. タイトルに「JRAネット投票」や「IPAT」を含むウィンドウ
+                                    # 2. ChromeDriverのPIDと一致するウィンドウ
+                                    # 3. その他のChromeウィンドウ
+                                    
+                                    target_window = None
+                                    
+                                    # 優先度1: JRA/IPATを含むウィンドウ
+                                    for hwnd, title, pid in windows:
+                                        if 'JRA' in title or 'IPAT' in title or 'ネット投票' in title:
+                                            target_window = (hwnd, title, pid)
+                                            print(f"✓ JRA/IPAT関連ウィンドウを優先選択: {title}")
+                                            break
+                                    
+                                    # 優先度2: ChromeDriverのPIDと一致
+                                    if not target_window and chrome_pid:
+                                        for hwnd, title, pid in windows:
+                                            if pid == chrome_pid:
+                                                target_window = (hwnd, title, pid)
+                                                print(f"✓ ChromeDriver PID一致ウィンドウを選択: {title}")
+                                                break
+                                    
+                                    # 優先度3: 最初のChromeウィンドウ
+                                    if not target_window:
+                                        target_window = windows[0]
+                                        print(f"⚠ デフォルトで最初のウィンドウを選択: {target_window[1]}")
+                                    
+                                    target_hwnd, target_title, target_pid = target_window
                                     print(f"対象ウィンドウ: {target_title} (HWND: {target_hwnd})")
                                     
                                     # ウィンドウを前面に表示
