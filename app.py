@@ -585,9 +585,38 @@ def model_info():
 # ==============================================================================
 # IPAT連携 API (Selenium Browser Automation - Direct IPAT Access)
 # ==============================================================================
-# from modules.ipat_connector import IpatConnector, IpatBetItem # REMOVED: HTTP request method is deprecated due to JRA security
+# from modules.ipat_connector import IpatConnector, IpatBetItem # REMOVED: HTTP request is deprecated
 # from modules.netkeiba_automator import NetkeibaAutomator # DEPRECATED: Now using direct IPAT access
 from modules.ipat_direct_automator import IpatDirectAutomator
+
+
+def convert_recommendations_to_bets(recommendations: list) -> list:
+    """
+    買い目推奨データをIPAT vote()用のフォーマットに変換する
+    
+    Args:
+        recommendations: BettingAllocatorの出力リスト
+        
+    Returns:
+        list: vote()メソッド用のbetsリスト
+    """
+    bets = []
+    
+    for rec in recommendations:
+        # method変換: SINGLE -> '通常', BOX -> 'ボックス'
+        method = '通常' if rec.get('method') == 'SINGLE' else 'ボックス'
+        
+        bet = {
+            'type': rec['type'],
+            'horses': rec['horses'],
+            'amount': rec['amount'],
+            'method': method
+        }
+        
+        bets.append(bet)
+    
+    return bets
+
 
 @app.route('/api/ipat/launch_browser', methods=['POST'])
 def launch_ipat_browser():
@@ -597,10 +626,16 @@ def launch_ipat_browser():
     try:
         data = request.json
         race_id = data.get('race_id')
-        bets = data.get('bets', [])
+        recommendations = data.get('recommendations', [])  # フロントエンドから推奨データを受け取る
         
         if not race_id:
             return jsonify({'success': False, 'error': 'レースIDが必要です'}), 400
+        
+        if not recommendations:
+            return jsonify({'success': False, 'error': '買い目データが必要です'}), 400
+        
+        # 推奨データをbets形式に変換
+        bets = convert_recommendations_to_bets(recommendations)
         
         # 環境変数から認証情報を取得
         inetid = os.environ.get('IPAT_INETID', '')
@@ -615,37 +650,34 @@ def launch_ipat_browser():
                 'error': 'IPAT認証情報が設定されていません。環境変数 IPAT_SUBSCRIBER_NO, IPAT_PIN, IPAT_PARS_NO を設定してください。'
             }), 400
             
-        print(f"Launching IPAT browser for Race {race_id}, Bets: {len(bets)}")
+        print(f"Launching IPAT for Race {race_id}, Bets: {len(bets)}")
+        print(f"Converted bets: {bets}")
         
-        # IPAT直接連携オートメーション実行
+        # IPAT自動投票実行
         automator = IpatDirectAutomator()
         
         # 1. ログイン
         login_success, login_msg = automator.login(inetid, subscriber_no, pin, pars_no)
         if not login_success:
+            automator.close()
             return jsonify({
                 'success': False, 
                 'error': f'IPATログインに失敗しました: {login_msg}'
             }), 400
         
-        # 2. 投票画面へ遷移
-        nav_success, nav_msg = automator.navigate_to_race_bet_page(race_id)
-        if not nav_success:
-            # 手動選択を促すメッセージ（エラーではない）
-            print(f"Info: {nav_msg}")
+        # 2. 投票実行 (確認画面で停止)
+        vote_success, vote_msg = automator.vote(race_id, bets, stop_at_confirmation=True)
         
-        # 3. 買い目を入力
-        fill_success, fill_msg = automator.fill_bet_form(bets)
-        
-        if fill_success:
+        if vote_success:
             return jsonify({
                 'success': True, 
-                'message': f'{fill_msg}\n\n⚠️ 投票確定ボタンは手動で押してください。'
+                'message': f'{vote_msg}\n\n⚠️ 合計金額を確認し、「入力終了」→「投票」ボタンを手動で押してください。'
             })
         else:
+            automator.close()
             return jsonify({
                 'success': False, 
-                'error': f'買い目の入力に失敗しました: {fill_msg}'
+                'error': f'投票処理に失敗しました: {vote_msg}'
             }), 500
         
     except Exception as e:
