@@ -1007,6 +1007,7 @@ class IpatDirectAutomator:
             
             time.sleep(2)
 
+            
                 # 6. 合計金額入力 (Total Amount)
             print("Waiting for Total Amount Input page...")
             try:
@@ -1015,8 +1016,38 @@ class IpatDirectAutomator:
                     lambda d: "合計金額入力" in d.page_source
                 )
                 
-                # Recalculate based on bets list
-                total_amount = sum(b.get('amount', 100) for b in bets)
+                # 合計金額を正しく計算
+                # - SINGLE(method='通常'): amountをそのまま使用
+                # - BOX(method='ボックス'): amount × 通り数を計算
+                total_amount = 0
+                for b in bets:
+                    amount = b.get('amount', 100)
+                    method = b.get('method', '通常')
+                    
+                    if method == 'ボックス':
+                        # BOXの場合: 通り数を計算
+                        horses = b.get('horses', [])
+                        n = len(horses)
+                        bet_type = b.get('type', '')
+                        
+                        count = 0
+                        if bet_type in ['馬連', 'ワイド', '枠連']:
+                            count = n * (n - 1) // 2
+                        elif bet_type == '馬単':
+                            count = n * (n - 1)
+                        elif bet_type == '3連複':
+                            count = n * (n - 1) * (n - 2) // 6
+                        elif bet_type == '3連単':
+                            count = n * (n - 1) * (n - 2)
+                        
+                        bet_total = amount * count
+                        total_amount += bet_total
+                        print(f"  {bet_type}BOX: {amount}円 × {count}通り = {bet_total}円")
+                    else:
+                        # SINGLEの場合: amountをそのまま
+                        total_amount += amount
+                        print(f"  {b.get('type', '単勝')}: {amount}円")
+                
                 print(f"Inputting Total Amount: {total_amount}")
                 
                 # Check for input
