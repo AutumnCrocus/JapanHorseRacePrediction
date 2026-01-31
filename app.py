@@ -612,8 +612,9 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
         # 'horse_numbers'(BettingAllocator)と'horses'(旧形式)の両方をサポート
         horses = rec.get('horse_numbers') or rec.get('horses')
         
-        # 'total_amount'(BettingAllocator)と'amount'(旧形式)の両方をサポート
-        amount = rec.get('total_amount') or rec.get('amount')
+        # CRITICAL FIX: IPATには1通あたりの金額を渡す必要がある
+        # 'unit_amount'を使用（BOXの場合、total_amountは合計金額なので誤り）
+        amount = rec.get('unit_amount', 100)  # デフォルト100円
         
         bet = {
             'type': bet_type,
