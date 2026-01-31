@@ -340,6 +340,56 @@ class IpatDirectAutomator:
             traceback.print_exc()
             return False, f"システムエラー: {e}"
 
+    def _handle_multi_info_popup(self):
+        """Helper to handle Multi Info popup with proper timing."""
+        if "multi_info" in self.driver.current_url or len(self.driver.find_elements(By.ID, "multi_info")) > 0:
+            # Check visibility
+            try:
+                # Page should be active
+                active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                if active.get_attribute("id") != "multi_info":
+                    return False
+            except: 
+                return False
+
+            print("Multi Info screen detected. Waiting for page to be fully ready...")
+            
+            # CRITICAL: Wait for jQuery Mobile to fully initialize the page
+            time.sleep(2.0)  # Give JQM time to bind event handlers
+            
+            try:
+                # Wait for OK button to be clickable
+                from selenium.webdriver.support.ui import WebDriverWait
+                from selenium.webdriver.support import expected_conditions as EC
+                
+                ok_button = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'OK') or contains(text(), 'ＯＫ')]"))
+                )
+                
+                print(f"OK button is clickable. Text: {ok_button.text}")
+                
+                # Click the button
+                ok_button.click()
+                print("Clicked OK button with standard click")
+                
+                # Wait for transition
+                time.sleep(2.0)
+                
+                # Verify we left multi_info
+                if "multi_info" not in self.driver.current_url:
+                    print("Successfully closed Multi Info popup!")
+                    return True
+                else:
+                    print("Still on multi_info after click. Trying JS click...")
+                    self.driver.execute_script("arguments[0].click();", ok_button)
+                    time.sleep(2.0)
+                    return "multi_info" not in self.driver.current_url
+                    
+            except Exception as e:
+                print(f"Error clicking Multi Info OK button: {e}")
+                return False
+        return False
+
     def vote(self, race_id: str, bets: list[dict], stop_at_confirmation: bool = False) -> tuple[bool, str]:
         """
         指定レースに投票を実行する（拡張版）
@@ -698,23 +748,21 @@ class IpatDirectAutomator:
                         aid = active.get_attribute("id")
                         print(f"Selection Loop Check: {aid} (Attempt {attempt+1})")
 
+
+
+    # ... in vote method ...
+    
                         # Case 1: Multi Info -> Click OK
                         if aid == "multi_info" or "multi_info" in self.driver.current_url:
-                            print("Multi Info screen detected. Clicking OK...")
-                            try:
-                                # Try to find OK button by text (more robust than generic class)
-                                ok_btns = self.driver.find_elements(By.XPATH, "//a[contains(text(), 'OK') or contains(text(), 'ＯＫ')]")
-                                if ok_btns:
-                                    self.driver.execute_script("arguments[0].click();", ok_btns[0])
-                                else:
-                                    # Fallback
-                                    ok_btn = self.driver.find_element(By.CSS_SELECTOR, "a.ui-btn")
-                                    self.driver.execute_script("arguments[0].click();", ok_btn)
-                                
-                                time.sleep(0.5)
-                                continue # Check again
-                            except Exception as e:
-                                print(f"Failed to close Multi Info: {e}")
+                            self._handle_multi_info_popup()
+                            # Specific fallback for this loop (to Horse Selection)
+                            if "multi_info" in self.driver.current_url:
+                                print("Stuck on Multi Info (Loop). Forcing navigation to #uma1...")
+                                self.driver.execute_script("$.mobile.changePage('#uma1');")
+                            time.sleep(1.0)
+                            continue
+
+
                         
                         # Case 2: Method Selection (#hou) -> Select Method
                         if aid == "hou":
@@ -807,7 +855,16 @@ class IpatDirectAutomator:
                             print("Clicking 'To Amount Input' button...")
                             self.driver.execute_script("arguments[0].scrollIntoView(true);", btn)
                             btn.click()
-                            time.sleep(0.5) # Reduced from 2
+                            time.sleep(1.0) 
+                            
+                            # Handle potential Multi Info popup again
+                            if self._handle_multi_info_popup():
+                                print("Closed Multi Info popup after amount transition.")
+                            elif "multi_info" in self.driver.current_url:
+                                 print("Stuck on Multi Info (Amount). Forcing navigation to #kin...")
+                                 self.driver.execute_script("$.mobile.changePage('#kin');")
+                                 time.sleep(1.0)
+
                             break
                 except: pass
                 

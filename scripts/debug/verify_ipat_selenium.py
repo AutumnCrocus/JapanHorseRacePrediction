@@ -68,8 +68,8 @@ def main():
             {'type': '馬連', 'horses': [2, 3, 4], 'amount': 100, 'method': 'ボックス'},
             # Check 3: Sanrenpuku (Box) - New
             {'type': '3連複', 'horses': [5, 6, 7], 'amount': 100, 'method': 'ボックス'},
-            # Check 4: Sanrentan (Box) - New (Commented out due to automation popup instability)
-            # {'type': '3連単', 'horses': [8, 9, 10], 'amount': 100, 'method': 'ボックス'}
+            # Check 4: Sanrentan (Box) - New
+            {'type': '3連単', 'horses': [8, 9, 10], 'amount': 100, 'method': 'ボックス'}
         ]
         
         print(f"Bets: {bets}")
