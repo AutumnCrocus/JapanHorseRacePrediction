@@ -58,3 +58,7 @@ reports/
 # Debug Secrets
 scripts/debug/ipat_secrets.json
 debug_screenshots/
+
+# Debug snapshots (IPAT automation)
+debug_*.html
+debug_*.png
