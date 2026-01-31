@@ -25,7 +25,8 @@ class IpatDirectAutomator:
     
     # 定数
     JRA_IPAT_URL = "https://www.ipat.jra.go.jp/sp/"
-    WAIT_SEC = 2
+    WAIT_SEC = 0.5  # 基本待機時間(旧: 2秒 → 0.5秒に短縮)
+    WAIT_SEC_LONG = 1.0  # ページ遷移時の待機時間
     
     # 曜日リスト (記事準拠)
     DOW_LST = ["月", "火", "水", "木", "金", "土", "日"]
@@ -166,7 +167,7 @@ class IpatDirectAutomator:
                         # ログイン/次へボタン (汎用的)
                         if not self._click_css_selector("a[onclick^='javascript']", 0):
                             self._click_css_selector("a", 0)
-                        time.sleep(self.WAIT_SEC)
+                        time.sleep(self.WAIT_SEC_LONG)  # ログイン後のページ遷移
                     else:
                         print("Warning: INET-ID screen detected but no INET-ID provided.")
                 else:
@@ -424,7 +425,7 @@ class IpatDirectAutomator:
             if not nav_success:
                  return False, "通常投票メニューへの遷移失敗"
             
-            time.sleep(self.WAIT_SEC)
+            time.sleep(self.WAIT_SEC_LONG)  # 通常投票メニューへの遷移
 
             # Check for Warning Page (Deposit Instruction)
             # id="warning" class="ui-page-active"
@@ -543,7 +544,7 @@ class IpatDirectAutomator:
             # 実行
             if attempt_click_place(target_place_name, target_dow):
                 place_found = True
-                time.sleep(self.WAIT_SEC)
+                time.sleep(self.WAIT_SEC_LONG)  # 会場選択後のレース選択画面遷移
             
             # タブ切り替え (#voteRace の場合のみ有効だが、汎用的に残すか、#jyoなら不要)
             # #jyo does not seem to have tabs. #voteRace does.
@@ -563,8 +564,9 @@ class IpatDirectAutomator:
                             
                             if attempt_click_place(target_place_name, target_dow):
                                 place_found = True
-                                time.sleep(self.WAIT_SEC)
-                                break
+                                time.sleep(self.WAIT_SEC_LONG)  # 警告ページから遷移
+            
+            time.sleep(self.WAIT_SEC)  # 画面安定待ちak
 
             if not place_found:
                  print(f"Failed to find place: {target_place_name} {target_dow}")
