@@ -618,6 +618,45 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
     return bets
 
 
+def load_ipat_credentials():
+    """
+    IPAT認証情報を読み込む
+    
+    優先順位:
+    1. scripts/debug/ipat_secrets.json (あれば)
+    2. 環境変数 (フォールバック)
+    
+    Returns:
+        tuple: (inetid, subscriber_no, pin, pars_no)
+    """
+    # JSONファイルから読み込み試行
+    secrets_path = os.path.join(os.path.dirname(__file__), 'scripts', 'debug', 'ipat_secrets.json')
+    
+    if os.path.exists(secrets_path):
+        try:
+            with open(secrets_path, 'r', encoding='utf-8') as f:
+                secrets = json.load(f)
+                print(f"IPAT認証情報を読み込みました: {secrets_path}")
+                return (
+                    secrets.get('inetid', ''),
+                    secrets.get('subscriber_no', ''),
+                    secrets.get('pin', ''),
+                    secrets.get('pars_no', '')
+                )
+        except Exception as e:
+            print(f"JSONファイルの読み込みに失敗: {e}")
+            # フォールバックで環境変数を使用
+    
+    # 環境変数から読み込み
+    print("環境変数からIPAT認証情報を読み込みます")
+    return (
+        os.environ.get('IPAT_INETID', ''),
+        os.environ.get('IPAT_SUBSCRIBER_NO', ''),
+        os.environ.get('IPAT_PIN', ''),
+        os.environ.get('IPAT_PARS_NO', '')
+    )
+
+
 @app.route('/api/ipat/launch_browser', methods=['POST'])
 def launch_ipat_browser():
     """
@@ -637,17 +676,14 @@ def launch_ipat_browser():
         # 推奨データをbets形式に変換
         bets = convert_recommendations_to_bets(recommendations)
         
-        # 環境変数から認証情報を取得
-        inetid = os.environ.get('IPAT_INETID', '')
-        subscriber_no = os.environ.get('IPAT_SUBSCRIBER_NO', '')
-        pin = os.environ.get('IPAT_PIN', '')
-        pars_no = os.environ.get('IPAT_PARS_NO', '')
+        # 認証情報を取得 (JSONファイル優先、環境変数フォールバック)
+        inetid, subscriber_no, pin, pars_no = load_ipat_credentials()
         
         # 認証情報チェック
         if not all([subscriber_no, pin, pars_no]):
             return jsonify({
                 'success': False, 
-                'error': 'IPAT認証情報が設定されていません。環境変数 IPAT_SUBSCRIBER_NO, IPAT_PIN, IPAT_PARS_NO を設定してください。'
+                'error': 'IPAT認証情報が設定されていません。scripts/debug/ipat_secrets.json または環境変数を設定してください。'
             }), 400
             
         print(f"Launching IPAT for Race {race_id}, Bets: {len(bets)}")
