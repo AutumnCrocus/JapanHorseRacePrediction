@@ -1026,6 +1026,19 @@ class IpatDirectAutomator:
                 # STOP HERE if requested
                 if stop_at_confirmation:
                     print("Stopping at Total Amount Input screen as requested.")
+                    
+                    # ウィンドウを前面に表示
+                    try:
+                        # ウィンドウを最大化してアクティブ化
+                        self.driver.maximize_window()
+                        # 現在のウィンドウハンドルに切り替え（フォーカス）
+                        self.driver.switch_to.window(self.driver.current_window_handle)
+                        # JavaScriptでもフォーカス
+                        self.driver.execute_script("window.focus();")
+                        print("ブラウザウィンドウを前面に表示しました")
+                    except Exception as e:
+                        print(f"ウィンドウのアクティブ化に失敗: {e}")
+                    
                     self._save_snapshot("stopped_at_confirmation")
                     return True, "確認画面で停止しました（シミュレーション成功）"
                 
