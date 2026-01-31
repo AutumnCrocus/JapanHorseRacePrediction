@@ -602,27 +602,47 @@ class IpatDirectAutomator:
                 self._save_snapshot(f"start_loop_{i}")
 
                 # Ensure we are on Type Selection (#siki) or able to select type
-                # If we are on Horse Page (from previous 'Continue'?), go back
+                # If we are on Horse Page (from previous 'Continue'?), go back until we reach #siki
                 try:
-                    time.sleep(1)
-                    active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
-                    aid = active.get_attribute("id")
-                    print(f"Active Page at start of bet loop: {aid}")
-                    
-                    if aid.startswith("uma") or aid.startswith("waku"):
-                       # We are on Horse selection, need to go back to Bet Type
-                       print("Currently on Horse page, returning to Bet Type...")
-                       headers = active.find_elements(By.CSS_SELECTOR, "header .headerNavLeftArrow a")
-                       if headers:
-                           # Ensure visible / interactable
-                           headers[0].click()
-                           time.sleep(1)
-                           self._save_snapshot(f"after_back_click_{i}")
-                except: pass
+                    time.sleep(0.1)
+                    max_back_attempts = 5
+                    for _ in range(max_back_attempts):
+                        active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                        aid = active.get_attribute("id")
+                        print(f"Active Page check: {aid}")
+                        
+                        if aid == "siki":
+                            print("On Bet Type Selection page. Ready.")
+                            break
+                        
+                        if aid.startswith("uma") or aid.startswith("waku") or aid.startswith("box") or aid == "hou":
+                           print(f"Currently on {aid}, returning to Bet Type...")
+                           headers = active.find_elements(By.CSS_SELECTOR, "header .headerNavLeftArrow a")
+                           if headers:
+                               headers[0].click()
+                               time.sleep(0.5) # Wait for transition
+                           else:
+                               print("Back button not found!")
+                               break
+                        elif aid == "race":
+                             # If we went back too far? Forward to siki?
+                             # Or just break and let race selection logic handle it?
+                             # But loop logic expects siki.
+                             # Actually race selection comes BEFORE siki in logic? 
+                             # No, race selection is automated once.
+                             # If we are on race, we might need to select race again?
+                             # Usually we don't go back to race.
+                             break
+                        else:
+                            # Unknown page, maybe wait?
+                            pass
+                            
+                except Exception as e:
+                    print(f"Back navigation error: {e}")
 
                 # 4. 式別選択 (Bet Type)
                 try:
-                    # Wait for list
+                    # Wait for list (Reduced wait)
                     status_text = "Wait for Bet Type Buttons"
                     WebDriverWait(self.driver, 5).until(
                          lambda d: d.find_elements(By.CSS_SELECTOR, ".ui-page-active ul.selectList li a")
@@ -637,9 +657,13 @@ class IpatDirectAutomator:
                     
                     for t in types:
                         if not t.is_displayed(): continue
-                        clean_text = t.text.strip().split("\n")[0]
-                        if btype_text in t.text:
-                            print(f"Found Bet Type button: {btype_text}")
+                        txt = t.text.strip()
+                        # Normalize full width to half width for matching
+                        norm_txt = txt.replace("１", "1").replace("２", "2").replace("３", "3")
+                        norm_btype = btype_text.replace("１", "1").replace("２", "2").replace("３", "3")
+                        
+                        if norm_btype in norm_txt:
+                            print(f"Found Bet Type button: {txt} (Matched {btype_text})")
                             try:
                                 t.click()
                             except:
@@ -648,131 +672,144 @@ class IpatDirectAutomator:
                             break
                     
                     if not found_type:
-                        print(f"Warning: Bet Type button '{btype_text}' not found.")
+                        print(f"Warning: Bet Type button '{btype_text}' not found. Available buttons:")
+                        for t in types:
+                             if t.is_displayed():
+                                 print(f" - {t.text}")
                         self._save_snapshot(f"bet_type_not_found_{i}")
                 
                 except Exception as e:
                     print(f"Bet Type selection error: {e}")
                     self._save_snapshot(f"bet_type_error_{i}")
 
-                # Wait for Horse Selection Page (#uma... or #waku...)
-                print("Waiting for Horse Selection page...")
-                try:
-                    WebDriverWait(self.driver, 5).until(
-                        lambda d: d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id").startswith("uma") or \
-                                  d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id").startswith("waku") or \
-                                  d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id") == "hou"
-                    )
-                    active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
-                    aid = active.get_attribute("id")
-                    print(f"Horse Selection page is active. ID: {aid}")
-                    
-                    # Check for "Multi Info" (マルチについて)
-                    if aid == "multi_info" or "multi_info" in self.driver.current_url:
-                        print("Multi Info screen detected. Clicking OK...")
-                        try:
-                            ok_btn = self.driver.find_element(By.CSS_SELECTOR, "a.ui-btn") # Usually OK is the main button
-                            self.driver.execute_script("arguments[0].scrollIntoView(true);", ok_btn)
-                            self.driver.execute_script("arguments[0].click();", ok_btn)
-                            time.sleep(1)
-                            # Update active
-                            active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
-                            aid = active.get_attribute("id")
-                            print(f"After Multi Info: {aid}")
-                        except Exception as e:
-                            print(f"Failed to close Multi Info: {e}")
-
-                    # If we are on Method Selection (#hou), select Method
-                    if aid == "hou":
-                        method = bet.get('method', '通常') # Default Normal
-                        print(f"On Method Selection (#hou). Selecting '{method}'...")
-                        
-                        target_text = method
-                        if method == 'Box' or method == 'box' or method == 'ボックス': target_text = "ボックス"
-                        if method == 'Normal' or method == 'normal' or method == '通常': target_text = "通常"
-                        
-                        try:
-                            # Search for button by text
-                            method_btn = None
-                            btns = self.driver.find_elements(By.CSS_SELECTOR, "ul.selectList li a")
-                            for b in btns:
-                                if target_text in b.text:
-                                    method_btn = b
-                                    break
-                            
-                            if method_btn:
-                                self.driver.execute_script("arguments[0].scrollIntoView(true);", method_btn)
-                                method_btn.click()
-                            else:
-                                print(f"Method button '{target_text}' not found. Clicking first available (Fall back).")
-                                btns[0].click()
-
-                            time.sleep(1)
-                            # Update active page
-                            active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
-                            aid = active.get_attribute("id")
-                            print(f"Moved to: {aid}")
-                        except Exception as e:
-                            print(f"Failed to select vote method: {e}")
-                            
-                except:
-                    print("Wait for Horse Selection page timed out.")
+                # Wait for Horse Selection Page or Method Selection Page or Multi Info
+                # Use a loop to handle transitions (e.g. Method -> Multi Info -> Horse)
+                print("Waiting for Selection page...")
+                max_selection_attempts = 5
+                selection_ready = False
                 
-                time.sleep(1)
+                for attempt in range(max_selection_attempts):
+                    try:
+                        valid_ids = ["uma", "waku", "hou", "multi_info"]
+                        WebDriverWait(self.driver, 5).until(
+                            lambda d: any(d.find_element(By.CSS_SELECTOR, ".ui-page-active").get_attribute("id").startswith(v) for v in valid_ids)
+                        )
+                        active = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                        aid = active.get_attribute("id")
+                        print(f"Selection Loop Check: {aid} (Attempt {attempt+1})")
+
+                        # Case 1: Multi Info -> Click OK
+                        if aid == "multi_info" or "multi_info" in self.driver.current_url:
+                            print("Multi Info screen detected. Clicking OK...")
+                            try:
+                                # Try to find OK button by text (more robust than generic class)
+                                ok_btns = self.driver.find_elements(By.XPATH, "//a[contains(text(), 'OK') or contains(text(), 'ＯＫ')]")
+                                if ok_btns:
+                                    self.driver.execute_script("arguments[0].click();", ok_btns[0])
+                                else:
+                                    # Fallback
+                                    ok_btn = self.driver.find_element(By.CSS_SELECTOR, "a.ui-btn")
+                                    self.driver.execute_script("arguments[0].click();", ok_btn)
+                                
+                                time.sleep(0.5)
+                                continue # Check again
+                            except Exception as e:
+                                print(f"Failed to close Multi Info: {e}")
+                        
+                        # Case 2: Method Selection (#hou) -> Select Method
+                        if aid == "hou":
+                            method = bet.get('method', '通常')
+                            # Only select method if we haven't already (or just do it, idempotency?)
+                            # If we are here, we probably need to select it.
+                            print(f"On Method Selection (#hou). Selecting '{method}'...")
+                            
+                            target_text = method
+                            if method == 'Box' or method == 'box' or method == 'ボックス': target_text = "ボックス"
+                            if method == 'Normal' or method == 'normal' or method == '通常': target_text = "通常"
+                            
+                            try:
+                                method_btn = None
+                                btns = self.driver.find_elements(By.CSS_SELECTOR, "ul.selectList li a")
+                                for b in btns:
+                                    if target_text in b.text:
+                                        method_btn = b
+                                        break
+                                
+                                if method_btn:
+                                    method_btn.click()
+                                else:
+                                    btns[0].click() # Fallback
+
+                                time.sleep(0.5)
+                                continue # Check again (should invoke Multi Info or Uma)
+                            except Exception as e:
+                                print(f"Failed to select vote method: {e}")
+                                break # Fail
+                        
+                        # Case 3: Horse Selection (#uma/#waku) -> Valid!
+                        if aid.startswith("uma") or aid.startswith("waku"):
+                            print(f"Reached Horse Selection: {aid}")
+                            selection_ready = True
+                            break
+                            
+                    except Exception as e:
+                        print(f"Selection loop error: {e}")
+                        time.sleep(1)
+                
+                if not selection_ready:
+                    print("Warning: Failed to reach Horse Selection page.")
+                
+                time.sleep(0.1) # Reduced from 1
 
                 # 馬番選択 (#uma... / #waku...)
-                for horse in bet.get('horses', []):
-                    try:
-                        h_code = str(int(horse)) # "1"
-                        
-                        # Use simple robust selector: a[data-value='1']
-                        # Backup: label for checkboxes
-                        selector = f"a[data-value='{h_code}']"
-                        
+                if selection_ready:
+                    for horse in bet.get('horses', []):
                         try:
-                             # Find Element WITHIN Active Page
-                             active_page = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
-                             els = active_page.find_elements(By.CSS_SELECTOR, selector)
-                             
-                             clicked = False
-                             for el in els:
-                                 if el.is_displayed():
-                                     print(f"Selecting Horse {h_code}...")
-                                     try:
-                                         el.click()
-                                     except:
-                                         self.driver.execute_script("arguments[0].click();", el)
-                                     clicked = True
-                                     break
-                             
-                             if not clicked:
-                                 print(f"Horse element {selector} found but not displayed.")
+                            h_code = str(int(horse)) # "1"
+                            
+                            selector = f"a[data-value='{h_code}']"
+                            
+                            try:
+                                 # Find Element WITHIN Active Page
+                                 active_page = self.driver.find_element(By.CSS_SELECTOR, ".ui-page-active")
+                                 els = active_page.find_elements(By.CSS_SELECTOR, selector)
                                  
+                                 clicked = False
+                                 for el in els:
+                                     if el.is_displayed():
+                                         print(f"Selecting Horse {h_code}...")
+                                         try:
+                                             el.click()
+                                         except:
+                                             self.driver.execute_script("arguments[0].click();", el)
+                                         clicked = True
+                                         break
+                                 
+                                 if not clicked:
+                                     print(f"Horse element {selector} found but not displayed.")
+                                     
+                            except Exception as e:
+                                 print(f"Primary horse selector failed: {e}. Trying backups...")
+                                 pass
+                            
                         except Exception as e:
-                             print(f"Primary horse selector failed: {e}. Trying backups...")
-                             pass
-                        
-                    except Exception as e:
-                         print(f"Horse number {horse} selection failed: {e}")
+                             print(f"Horse number {horse} selection failed: {e}")
                 
-                time.sleep(1)
+                time.sleep(0.1) # Reduced from 1
 
                 # Check if we need to click "To Amount" to proceed from Horse Page
                 # Typically for multi-horse bets (like Umaren), there is a button "金額入力画面へ"
                 try:
-                    # Check if we are still on Horse/Method page (and not Amount page)
-                    # Amount page usually has input fields. Horse page might not?
-                    # Or check for the button explicitly.
+                    # Optimized check: only if NOT on amount page
                     next_btns = self.driver.find_elements(By.XPATH, "//a[contains(text(), '金額入力画面へ')]")
                     for btn in next_btns:
                         if btn.is_displayed():
                             print("Clicking 'To Amount Input' button...")
                             self.driver.execute_script("arguments[0].scrollIntoView(true);", btn)
                             btn.click()
-                            time.sleep(2)
+                            time.sleep(0.5) # Reduced from 2
                             break
-                except Exception as e:
-                    print(f"Next button error: {e}")
+                except: pass
                 
                 # 購入枚数・金額入力
                 try:
@@ -853,12 +890,12 @@ class IpatDirectAutomator:
                 except Exception as e:
                     print(f"Amount/Set error: {e}")
                 
-                time.sleep(2)
+                time.sleep(0.5) # Reduced from 2
                 
                 # End of Cycle for this bet confirmed by presence of #toui (Vote List)
                 try:
                     print("Waiting for Vote List (#toui)...")
-                    WebDriverWait(self.driver, 10).until(
+                    WebDriverWait(self.driver, 5).until( # Reduced timeout from 10
                         lambda d: d.find_element(By.CSS_SELECTOR, "#toui.ui-page-active")
                     )
                     print("Vote List (#toui) is active.")
@@ -873,7 +910,7 @@ class IpatDirectAutomator:
                              # Re-find input
                              inp = self.driver.find_element(By.CSS_SELECTOR, "input[type='number'], input[type='tel']")
                              inp.send_keys(Keys.ENTER)
-                             time.sleep(2)
+                             time.sleep(0.5) # Reduced from 2
                     except: pass
                     
                     self._save_snapshot(f"set_failed_stuck_{i}")
@@ -884,14 +921,14 @@ class IpatDirectAutomator:
                          print("More bets to process. Clicking 'Continue Input'...")
                          # "馬（枠）番から続けて入力" -> Usually returns to Horse/Bet Type
                          cont_btn = self.driver.find_element(By.XPATH, "//a[contains(text(), '続けて入力')]")
+                         self.driver.execute_script("arguments[0].scrollIntoView(true);", cont_btn)
                          cont_btn.click()
                          # Wait for transition away from #toui
                          WebDriverWait(self.driver, 10).until_not(
                             lambda d: d.find_element(By.CSS_SELECTOR, "#toui.ui-page-active")
                          )
-                         time.sleep(2) # Extra stability wait
-                    except Exception as e:
-                        print(f"Failed to click Continue: {e}")
+                         time.sleep(0.5) # Reduced from 2
+                    except: pass
 
                 # End of betting loop
             
