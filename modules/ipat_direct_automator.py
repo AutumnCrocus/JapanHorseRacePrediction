@@ -33,13 +33,17 @@ class IpatDirectAutomator:
     # レース会場リスト (記事準拠)
     PLACE_LST = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"]
     
-    def __init__(self):
+    def __init__(self, debug_mode: bool = False):
         """初期化"""
         self.driver = None
         self.wait_timeout = 10
+        self.debug_mode = debug_mode
         
     def _save_debug_screenshot(self, driver, name: str):
-        """デバッグ用スクリーンショットを保存"""
+        """デバッグ用スクリーンショットを保存（debug_mode=Trueの場合のみ）"""
+        if not self.debug_mode:
+            return
+            
         try:
             screenshot_dir = os.path.join(os.getcwd(), 'debug_screenshots')
             os.makedirs(screenshot_dir, exist_ok=True)
@@ -80,7 +84,7 @@ class IpatDirectAutomator:
 
     def _save_snapshot(self, name):
         """Save screenshot and page source for debugging."""
-        if not self.driver: return
+        if not self.driver or not self.debug_mode: return
         
         try:
             timestamp = datetime.datetime.now().strftime("%H%M%S")

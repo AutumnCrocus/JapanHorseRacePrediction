@@ -693,31 +693,6 @@ def launch_ipat_browser():
         # 推奨データをbets形式に変換
         bets = convert_recommendations_to_bets(recommendations)
         
-        # 認証情報を取得 (JSONファイル優先、環境変数フォールバック)
-        inetid, subscriber_no, pin, pars_no = load_ipat_credentials()
-        
-        # 認証情報チェック
-        if not all([subscriber_no, pin, pars_no]):
-            return jsonify({
-                'success': False, 
-                'error': 'IPAT認証情報が設定されていません。scripts/debug/ipat_secrets.json または環境変数を設定してください。'
-            }), 400
-            
-        print(f"Launching IPAT for Race {race_id}, Bets: {len(bets)}")
-        print(f"Converted bets: {bets}")
-        
-        # IPAT自動投票実行
-        automator = IpatDirectAutomator()
-        
-        # 1. ログイン
-        login_success, login_msg = automator.login(inetid, subscriber_no, pin, pars_no)
-        if not login_success:
-            automator.close()
-            return jsonify({
-                'success': False, 
-                'error': f'IPATログインに失敗しました: {login_msg}'
-            }), 400
-        
         # 2. 投票実行 (確認画面で停止)
         vote_success, vote_msg = automator.vote(race_id, bets, stop_at_confirmation=True)
         
