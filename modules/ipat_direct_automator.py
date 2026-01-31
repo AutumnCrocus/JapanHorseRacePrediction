@@ -96,22 +96,55 @@ class IpatDirectAutomator:
                     # ログインボタンクリック
                     login_btn = self.driver.find_element(By.CSS_SELECTOR, "a[title='ログイン']")
                     login_btn.click()
-                    time.sleep(2)
+                    
+                    # ページ遷移完了を待つ（より長い待機時間）
+                    print("ページ遷移を待機中...")
+                    time.sleep(5)  # 2秒→5秒に延長
+                    
+                    # ページ完全ロード待機
+                    wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
+                    
                     print("INET-ID認証完了、メインログイン画面へ")
+                    self._save_debug_screenshot(self.driver, "after_inetid_login")
                 except Exception as e:
                     print(f"INET-ID入力エラー（スキップ）: {e}")
             
             # 第2段階: メイン認証情報を入力
             print("第2段階: 認証情報を入力中...")
+            print(f"現在のURL: {self.driver.current_url}")
             
             # 加入者番号（PC版セレクタ: name="kanyu"）
             try:
-                subscriber_field = wait.until(EC.presence_of_element_located((By.NAME, "kanyu")))
+                print("加入者番号フィールドを探しています...")
+                
+                # 複数のセレクタパターンを試行
+                selectors = [
+                    (By.NAME, "kanyu"),
+                    (By.ID, "kanyu"),
+                    (By.CSS_SELECTOR, "input[name='kanyu']"),
+                    (By.XPATH, "//input[@type='text' and contains(@placeholder, '加入者')]"),
+                ]
+                
+                subscriber_field = None
+                for by_type, selector_value in selectors:
+                    try:
+                        print(f"  試行中: {by_type} = {selector_value}")
+                        subscriber_field = wait.until(EC.presence_of_element_located((by_type, selector_value)))
+                        print(f"  ✓ 見つかりました: {by_type} = {selector_value}")
+                        break
+                    except:
+                        print(f"  ✗ 見つかりませんでした")
+                        continue
+                
+                if not subscriber_field:
+                    raise Exception("全てのセレクタパターンで加入者番号フィールドが見つかりませんでした")
+                
                 subscriber_field.clear()
                 subscriber_field.send_keys(subscriber_no)
                 print("加入者番号を入力しました")
             except Exception as e:
                 print(f"加入者番号入力エラー: {e}")
+                print(f"ページソース（最初の500文字）: {self.driver.page_source[:500]}")
                 self._save_debug_screenshot(self.driver, "subscriber_error")
                 return False, f"加入者番号フィールドが見つかりません: {str(e)}"
             
