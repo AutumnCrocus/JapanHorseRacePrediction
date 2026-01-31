@@ -112,12 +112,10 @@ class IpatDirectAutomator:
     def _setup_driver(self):
         """WebDriverをセットアップする"""
         options = Options()
-        # ヘッドレスモード設定 (デバッグモードでない場合)
-        if not self.debug_mode:
-            options.add_argument("--headless")
-            options.add_argument("--disable-gpu")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
+        # Headlessモードは無効化 (IPATはユーザー確認が必要なため常にGUI表示)
+        # if not self.debug_mode:
+        #    options.add_argument("--headless")
+        #    options.add_argument("--disable-gpu")
         
         # スマートフォンエミュレーション
         mobile_emulation = { "deviceName": "iPhone X" } # 例: iPhone X
