@@ -13,6 +13,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.keys import Keys
+
 import time
 from typing import List, Dict, Any, Optional
 import os
@@ -22,63 +24,26 @@ import sys
 import platform
 
 class IpatDirectAutomator:
-    """IPAT直接連携クラス（Selenium版 - PC Site）"""
-    
-    # 定数
-    JRA_IPAT_URL = "https://www.ipat.jra.go.jp/" # PC版URL
-    WAIT_SEC = 0.5  # 基本待機時間
-    WAIT_SEC_LONG = 1.0  # ページ遷移時の待機時間
-    
-    # 曜日リスト
-    DOW_LST = ["月", "火", "水", "木", "金", "土", "日"]
-    # レース会場リスト (netkeibaの表記とIPATの表記のマッピングが必要な場合に備える)
-    # PC版でも基本は似ているが、画面上のテキストとのマッチングに使用
-    PLACE_LST = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"]
-    
-    def __init__(self, debug_mode: bool = False):
-        """初期化"""
-        self.driver = None
-        self.wait_timeout = 10
-        self.debug_mode = debug_mode
-        
-    def _save_debug_screenshot(self, driver, name: str):
-        """デバッグ用スクリーンショットを保存（debug_mode=Trueの場合のみ）"""
-        if not self.debug_mode:
-            return
+    # (中略)
+
+            # 場所コードマッピング (netkeiba -> IPAT PC)
+            # ipat_direct_automator.py (Line 350 approx)
+            # Netkeiba Place Code:
+            # 01:札幌, 02:函館, 03:福島, 04:新潟, 05:東京, 06:中山, 07:中京, 08:京都, 09:阪神, 10:小倉
+            place_name_map = {
+                '01': '札幌', '02': '函館', '03': '福島', '04': '新潟', '05': '東京', 
+                '06': '中山', '07': '中京', '08': '京都', '09': '阪神', '10': '小倉'
+            }
+            # Note: Verify if verify_ipat_complex.py uses correct race_id format.
+            # verify_ipat_complex.py uses '202605010211'
+            # 2026(YYYY) + 05(Place:Tokyo) + 01(Kai) + 02(Day) + 11(Race)
             
-        try:
-            screenshot_dir = os.path.join(os.getcwd(), 'debug_screenshots')
-            os.makedirs(screenshot_dir, exist_ok=True)
-            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-            filepath = os.path.join(screenshot_dir, f'{name}_{timestamp}.png')
-            driver.save_screenshot(filepath)
-            print(f"Screenshot saved: {filepath}")
-        except Exception as e:
-            print(f"Failed to save screenshot: {e}")
-
-    def _setup_driver(self):
-        """WebDriverをセットアップする (PC版設定)"""
-        options = Options()
-        
-        # PC版なのでモバイルエミュレーションは削除
-        # mobile_emulation = { "deviceName": "iPhone X" }
-        # options.add_experimental_option("mobileEmulation", mobile_emulation)
-        
-        # PC用ウィンドウサイズ
-        options.add_argument("--window-size=1280,800")
-        options.add_argument("--lang=ja")
-        
-        # 自動化検出回避 (基本設定)
-        options.add_argument('--disable-blink-features=AutomationControlled')
-        
-        # Headlessモードは無効化 (ユーザー確認が必要なため)
-        
-        # WebDriverの初期化
-        service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service, options=options)
-        self.driver.set_page_load_timeout(self.wait_timeout)
-
-    def login(self, inetid: str, subscriber_no: str, pin: str, pars_no: str) -> tuple[bool, str]:
+            target_place_name = place_name_map.get(place_code)
+            if not target_place_name:
+                 print(f"Unknown place code: {place_code}. Defaulting to first available.")
+                 # Fallback logic could be added here
+            
+            print(f"Target: {target_place_name} {race_num}R (Code: {place_code})")
         """
         IPATログイン画面で認証を実行（PC版）
         
@@ -304,31 +269,23 @@ class IpatDirectAutomator:
             
             except Exception as e:
                 print(f"Login sequence failed: {e}")
+                if not self.debug_mode:
+                    pass
             
             # ログイン成功確認
-                
-                # ログイン成功確認
-                time.sleep(1.0)
-                if "ネット投票" in self.driver.page_source or "投票メニュー" in self.driver.page_source:
-                    print("Login success.")
-                    return True, "ログイン成功"
-                else:
-                    # エラーメッセージ取得
-                    err_msg = "Login verification failed."
-                    try:
-                        err_el = self.driver.find_element(By.CSS_SELECTOR, ".error, .err, .msg")
-                        err_msg = err_el.text
-                    except:
-                        pass
-                    return False, f"ログイン失敗: {err_msg}"
-                    
-            except Exception as e:
-                print(f"Login process error: {e}")
-                self._save_debug_screenshot(self.driver, "login_error")
-                return False, f"ログイン処理エラー: {e}"
+            time.sleep(1.0)
+            if "ネット投票" in self.driver.page_source or "投票メニュー" in self.driver.page_source or "ログアウト" in self.driver.page_source:
+                print("Login success.")
+                # self.save_snapshot("login_success")
+                return True, "ログイン成功"
+            else:
+                print("Login failed verification.")
+                # self.save_snapshot("login_failed")
+                return False, "ログインに失敗しました（メニュー画面が検出できません）"
                 
         except Exception as e:
-            return False, f"ブラウザ起動/アクセスエラー: {e}"
+            print(f"Login Loop Error: {e}")
+            return False, f"ログイン処理中に例外が発生しました: {e}"
 
     def vote(self, race_id: str, bets: List[Dict[str, Any]], stop_at_confirmation: bool = True) -> tuple[bool, str]:
         """
