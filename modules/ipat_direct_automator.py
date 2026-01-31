@@ -40,14 +40,35 @@ class IpatDirectAutomator:
         IPATログイン画面で認証を実行（PC版、2段階認証）
         
         Args:
-            inetid: INET-ID（第1段階、オプション）
-            subscriber_no: 加入者番号
-            pin: 暗証番号
-            pars_no: P-ARS番号
+            inetid: INET-ID（第1段階、オプション、8桁の半角英数字）
+            subscriber_no: 加入者番号（8桁の半角数字）
+            pin: 暗証番号（4桁の半角数字）
+            pars_no: P-ARS番号（4桁の半角数字）
             
         Returns:
             (成功フラグ, メッセージ)
         """
+        # 入力値のバリデーション
+        print("認証情報のバリデーション中...")
+        
+        # INET-ID: 8桁の半角英数字（オプション）
+        if inetid and (len(inetid) != 8 or not inetid.isalnum()):
+            return False, f"INET-IDエラー: 8桁の半角英数字で入力してください（現在: {len(inetid)}桁）"
+        
+        # 加入者番号: 8桁の半角数字
+        if len(subscriber_no) != 8 or not subscriber_no.isdigit():
+            return False, f"加入者番号エラー: 8桁の半角数字で入力してください（現在: {len(subscriber_no)}桁）"
+        
+        # 暗証番号: 4桁の半角数字
+        if len(pin) != 4 or not pin.isdigit():
+            return False, f"暗証番号エラー: 4桁の半角数字で入力してください（現在: {len(pin)}桁）"
+        
+        # P-ARS番号: 4桁の半角数字
+        if len(pars_no) != 4 or not pars_no.isdigit():
+            return False, f"P-ARS番号エラー: 4桁の半角数字で入力してください（現在: {len(pars_no)}桁）"
+        
+        print(f"バリデーション成功: INET-ID={inetid or '(未設定)'}, 加入者番号={subscriber_no}, 暗証番号=****, P-ARS番号={pars_no}")
+        
         try:
             # Chromeオプション設定
             options = webdriver.ChromeOptions()
