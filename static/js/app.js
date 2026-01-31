@@ -850,10 +850,21 @@ function closeIpatVoteModal() {
     }
 }
 
+// ブラウザ起動処理中フラグ（ダブルクリック防止）
+let isBrowserLaunching = false;
+
 /**
  * ブラウザ起動処理 (旧 handleConfirmVote)
  */
 async function handleConfirmVote() {
+    // 既に処理中の場合は無視（ダブルクリック防止）
+    if (isBrowserLaunching) {
+        console.warn('Browser launch already in progress. Ignoring duplicate request.');
+        return;
+    }
+
+    isBrowserLaunching = true;
+
     const confirmBtn = document.getElementById('confirmVoteBtn');
     const originalText = confirmBtn.textContent;
     confirmBtn.textContent = '起動中... (数秒かかります)';
@@ -900,6 +911,7 @@ async function handleConfirmVote() {
     } finally {
         confirmBtn.textContent = originalText;
         confirmBtn.disabled = false;
+        isBrowserLaunching = false; // 処理完了フラグをリセット
     }
 }
 
