@@ -606,16 +606,26 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
         # method変換: SINGLE -> '通常', BOX -> 'ボックス'
         method = '通常' if rec.get('method') == 'SINGLE' else 'ボックス'
         
+        # BettingAllocatorは'bet_type'を使用するが、後方互換性のため'type'もサポート
+        bet_type = rec.get('bet_type') or rec.get('type')
+        
+        # 'horse_numbers'(BettingAllocator)と'horses'(旧形式)の両方をサポート
+        horses = rec.get('horse_numbers') or rec.get('horses')
+        
+        # 'total_amount'(BettingAllocator)と'amount'(旧形式)の両方をサポート
+        amount = rec.get('total_amount') or rec.get('amount')
+        
         bet = {
-            'type': rec['type'],
-            'horses': rec['horses'],
-            'amount': rec['amount'],
+            'type': bet_type,
+            'horses': horses,
+            'amount': amount,
             'method': method
         }
         
         bets.append(bet)
     
     return bets
+
 
 
 def load_ipat_credentials():
