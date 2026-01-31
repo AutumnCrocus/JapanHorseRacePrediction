@@ -456,27 +456,36 @@ class Shutuba:
             
             # APIからオッズを取得
             try:
-                api_url = f"https://race.netkeiba.com/api/api_get_jra_odds.html?race_id={race_id}&type=1"
-                api_res = requests.get(api_url, headers=HEADERS)
+                api_url = f"https://race.netkeiba.com/api/api_get_jra_odds.html?race_id={race_id}&type=1&action=init&compress=0&output=json"
+                api_res = requests.get(api_url, headers=HEADERS, timeout=15)
                 api_res.encoding = "EUC-JP"
                 odds_data = api_res.json()
                 
-                if odds_data.get("status") == "result":
-                    raw_odds = odds_data.get("data", {}).get("odds", {}).get("1", {})
-                    for row_data in data_list:
-                        u_num = str(row_data["馬番"])
-                        # API keys are zero-padded (e.g., "01", "02")
-                        u_num_padded = u_num.zfill(2)
-                        
-                        # Check both original and padded keys
-                        target_key = None
-                        if u_num in raw_odds: target_key = u_num
-                        elif u_num_padded in raw_odds: target_key = u_num_padded
-                        
-                        if target_key:
-                            row_data["単勝"] = raw_odds[target_key][0]
-                            row_data["人気"] = raw_odds[target_key][2]
-            except: pass
+                # status='middle'（レース前）と status='result'（レース後）の両方に対応
+                if odds_data.get("status") in ["middle", "result"]:
+                    if "data" in odds_data and odds_data["data"]:
+                        data_content = odds_data["data"]
+                        if isinstance(data_content, dict) and "odds" in data_content:
+                            all_odds = data_content["odds"]
+                            raw_odds = all_odds.get("1", {})  # 単勝オッズ
+                            
+                            for row_data in data_list:
+                                u_num = str(row_data["馬番"])
+                                # API keys are zero-padded (e.g., "01", "02")
+                                u_num_padded = u_num.zfill(2)
+                                
+                                # Check both original and padded keys
+                                target_key = None
+                                if u_num in raw_odds: target_key = u_num
+                                elif u_num_padded in raw_odds: target_key = u_num_padded
+                                
+                                if target_key and raw_odds[target_key]:
+                                    if len(raw_odds[target_key]) > 0:
+                                        row_data["単勝"] = raw_odds[target_key][0]
+                                    if len(raw_odds[target_key]) > 2:
+                                        row_data["人気"] = raw_odds[target_key][2]
+            except Exception as e:
+                print(f"[DEBUG] Error fetching odds from API: {e}")
 
             needs_fallback = any(not r.get("単勝") or "---" in str(r.get("単勝")) for r in data_list)
             

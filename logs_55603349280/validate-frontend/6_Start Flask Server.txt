@@ -1,0 +1,26 @@
+﻿2026-01-27T21:30:34.4145484Z ##[group]Run # Start server in background using the test runner script
+2026-01-27T21:30:34.4145985Z [36;1m# Start server in background using the test runner script[0m
+2026-01-27T21:30:34.4146406Z [36;1mnohup python scripts/debug/run_app_test.py > server.log 2>&1 &[0m
+2026-01-27T21:30:34.4146779Z [36;1mecho "Server started with PID $!"[0m
+2026-01-27T21:30:34.4147012Z [36;1m[0m
+2026-01-27T21:30:34.4147189Z [36;1m# Checking if server starts up[0m
+2026-01-27T21:30:34.4147419Z [36;1msleep 10[0m
+2026-01-27T21:30:34.4147600Z [36;1mcat server.log[0m
+2026-01-27T21:30:34.4179937Z shell: /usr/bin/bash -e {0}
+2026-01-27T21:30:34.4180171Z env:
+2026-01-27T21:30:34.4180414Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:34.4180840Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+2026-01-27T21:30:34.4181441Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:34.4181808Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:34.4182195Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:34.4182548Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+2026-01-27T21:30:34.4182843Z ##[endgroup]
+2026-01-27T21:30:34.4235841Z Server started with PID 3144
+2026-01-27T21:30:44.5247859Z Traceback (most recent call last):
+2026-01-27T21:30:44.5254879Z   File "/home/runner/work/JapanHorseRacePrediction/JapanHorseRacePrediction/scripts/debug/run_app_test.py", line 7, in <module>
+2026-01-27T21:30:44.5255586Z     from app import app, load_model
+2026-01-27T21:30:44.5256180Z   File "/home/runner/work/JapanHorseRacePrediction/JapanHorseRacePrediction/app.py", line 556, in <module>
+2026-01-27T21:30:44.5256808Z     from modules.netkeiba_automator import NetkeibaAutomator
+2026-01-27T21:30:44.5257800Z   File "/home/runner/work/JapanHorseRacePrediction/JapanHorseRacePrediction/modules/netkeiba_automator.py", line 2, in <module>
+2026-01-27T21:30:44.5258427Z     from selenium import webdriver
+2026-01-27T21:30:44.5258718Z ModuleNotFoundError: No module named 'selenium'

@@ -1,0 +1,275 @@
+﻿2026-01-27T21:28:14.4972035Z ##[group]Run python -m pip install --upgrade pip
+2026-01-27T21:28:14.4972707Z [36;1mpython -m pip install --upgrade pip[0m
+2026-01-27T21:28:14.4973160Z [36;1mif [ -f requirements.txt ]; then pip install -r requirements.txt; fi[0m
+2026-01-27T21:28:14.4973590Z [36;1mpip install playwright[0m
+2026-01-27T21:28:14.5012105Z shell: /usr/bin/bash -e {0}
+2026-01-27T21:28:14.5012409Z env:
+2026-01-27T21:28:14.5012716Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:28:14.5013189Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+2026-01-27T21:28:14.5013638Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:28:14.5014039Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:28:14.5014426Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:28:14.5014826Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+2026-01-27T21:28:14.5015163Z ##[endgroup]
+2026-01-27T21:28:15.2823518Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (25.3)
+2026-01-27T21:28:16.1980340Z Collecting pandas>=2.0.0 (from -r requirements.txt (line 1))
+2026-01-27T21:28:16.2783320Z   Downloading pandas-2.3.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+2026-01-27T21:28:16.6108607Z Collecting numpy>=1.24.0 (from -r requirements.txt (line 2))
+2026-01-27T21:28:16.6230627Z   Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+2026-01-27T21:28:16.6723840Z Collecting requests>=2.28.0 (from -r requirements.txt (line 3))
+2026-01-27T21:28:16.6846675Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2026-01-27T21:28:16.7129323Z Collecting beautifulsoup4>=4.12.0 (from -r requirements.txt (line 4))
+2026-01-27T21:28:16.7250552Z   Downloading beautifulsoup4-4.14.3-py3-none-any.whl.metadata (3.8 kB)
+2026-01-27T21:28:17.0078889Z Collecting lxml>=4.9.0 (from -r requirements.txt (line 5))
+2026-01-27T21:28:17.0203031Z   Downloading lxml-6.0.2-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (3.6 kB)
+2026-01-27T21:28:17.0518913Z Collecting lightgbm>=4.0.0 (from -r requirements.txt (line 6))
+2026-01-27T21:28:17.0651720Z   Downloading lightgbm-4.6.0-py3-none-manylinux_2_28_x86_64.whl.metadata (17 kB)
+2026-01-27T21:28:17.1868190Z Collecting scikit-learn>=1.3.0 (from -r requirements.txt (line 7))
+2026-01-27T21:28:17.1999447Z   Downloading scikit_learn-1.7.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (11 kB)
+2026-01-27T21:28:17.2422158Z Collecting flask>=3.0.0 (from -r requirements.txt (line 8))
+2026-01-27T21:28:17.2543894Z   Downloading flask-3.1.2-py3-none-any.whl.metadata (3.2 kB)
+2026-01-27T21:28:17.2996183Z Collecting tqdm>=4.65.0 (from -r requirements.txt (line 9))
+2026-01-27T21:28:17.3117067Z   Downloading tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+2026-01-27T21:28:17.3954198Z Collecting torch>=2.0.0 (from -r requirements.txt (line 10))
+2026-01-27T21:28:17.4020791Z   Downloading torch-2.10.0-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (31 kB)
+2026-01-27T21:28:17.5262139Z Collecting catboost>=1.2.0 (from -r requirements.txt (line 11))
+2026-01-27T21:28:17.5404564Z   Downloading catboost-1.2.8-cp310-cp310-manylinux2014_x86_64.whl.metadata (1.2 kB)
+2026-01-27T21:28:17.5890170Z Collecting pytest>=7.0.0 (from -r requirements.txt (line 12))
+2026-01-27T21:28:17.6013108Z   Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+2026-01-27T21:28:17.6361308Z Collecting python-dateutil>=2.8.2 (from pandas>=2.0.0->-r requirements.txt (line 1))
+2026-01-27T21:28:17.6481614Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-01-27T21:28:17.7228719Z Collecting pytz>=2020.1 (from pandas>=2.0.0->-r requirements.txt (line 1))
+2026-01-27T21:28:17.7351495Z   Downloading pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+2026-01-27T21:28:17.7615903Z Collecting tzdata>=2022.7 (from pandas>=2.0.0->-r requirements.txt (line 1))
+2026-01-27T21:28:17.7737822Z   Downloading tzdata-2025.3-py2.py3-none-any.whl.metadata (1.4 kB)
+2026-01-27T21:28:17.8922251Z Collecting charset_normalizer<4,>=2 (from requests>=2.28.0->-r requirements.txt (line 3))
+2026-01-27T21:28:17.9046240Z   Downloading charset_normalizer-3.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2026-01-27T21:28:17.9322191Z Collecting idna<4,>=2.5 (from requests>=2.28.0->-r requirements.txt (line 3))
+2026-01-27T21:28:17.9443632Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2026-01-27T21:28:17.9868855Z Collecting urllib3<3,>=1.21.1 (from requests>=2.28.0->-r requirements.txt (line 3))
+2026-01-27T21:28:17.9990364Z   Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+2026-01-27T21:28:18.0313321Z Collecting certifi>=2017.4.17 (from requests>=2.28.0->-r requirements.txt (line 3))
+2026-01-27T21:28:18.0434199Z   Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+2026-01-27T21:28:18.0726508Z Collecting soupsieve>=1.6.1 (from beautifulsoup4>=4.12.0->-r requirements.txt (line 4))
+2026-01-27T21:28:18.0847496Z   Downloading soupsieve-2.8.3-py3-none-any.whl.metadata (4.6 kB)
+2026-01-27T21:28:18.1128472Z Collecting typing-extensions>=4.0.0 (from beautifulsoup4>=4.12.0->-r requirements.txt (line 4))
+2026-01-27T21:28:18.1251405Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-01-27T21:28:18.3068654Z Collecting scipy (from lightgbm>=4.0.0->-r requirements.txt (line 6))
+2026-01-27T21:28:18.3191979Z   Downloading scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+2026-01-27T21:28:18.3795002Z Collecting joblib>=1.2.0 (from scikit-learn>=1.3.0->-r requirements.txt (line 7))
+2026-01-27T21:28:18.3916553Z   Downloading joblib-1.5.3-py3-none-any.whl.metadata (5.5 kB)
+2026-01-27T21:28:18.4105769Z Collecting threadpoolctl>=3.1.0 (from scikit-learn>=1.3.0->-r requirements.txt (line 7))
+2026-01-27T21:28:18.4227895Z   Downloading threadpoolctl-3.6.0-py3-none-any.whl.metadata (13 kB)
+2026-01-27T21:28:18.4444867Z Collecting blinker>=1.9.0 (from flask>=3.0.0->-r requirements.txt (line 8))
+2026-01-27T21:28:18.4567189Z   Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+2026-01-27T21:28:18.4838301Z Collecting click>=8.1.3 (from flask>=3.0.0->-r requirements.txt (line 8))
+2026-01-27T21:28:18.4959648Z   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2026-01-27T21:28:18.5155289Z Collecting itsdangerous>=2.2.0 (from flask>=3.0.0->-r requirements.txt (line 8))
+2026-01-27T21:28:18.5274355Z   Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+2026-01-27T21:28:18.5512088Z Collecting jinja2>=3.1.2 (from flask>=3.0.0->-r requirements.txt (line 8))
+2026-01-27T21:28:18.5634120Z   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-01-27T21:28:18.6363990Z Collecting markupsafe>=2.1.1 (from flask>=3.0.0->-r requirements.txt (line 8))
+2026-01-27T21:28:18.6487806Z   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2026-01-27T21:28:18.6804482Z Collecting werkzeug>=3.1.0 (from flask>=3.0.0->-r requirements.txt (line 8))
+2026-01-27T21:28:18.6925879Z   Downloading werkzeug-3.1.5-py3-none-any.whl.metadata (4.0 kB)
+2026-01-27T21:28:18.7250050Z Collecting filelock (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:18.7372520Z   Downloading filelock-3.20.3-py3-none-any.whl.metadata (2.1 kB)
+2026-01-27T21:28:18.7679788Z Collecting sympy>=1.13.3 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:18.7798786Z   Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+2026-01-27T21:28:18.8184062Z Collecting networkx>=2.5.1 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:18.8309865Z   Downloading networkx-3.4.2-py3-none-any.whl.metadata (6.3 kB)
+2026-01-27T21:28:18.8716301Z Collecting fsspec>=0.8.5 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:18.9171558Z   Downloading fsspec-2026.1.0-py3-none-any.whl.metadata (10 kB)
+2026-01-27T21:28:18.9890238Z Collecting cuda-bindings==12.9.4 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.0016186Z   Downloading cuda_bindings-12.9.4-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (2.6 kB)
+2026-01-27T21:28:19.0244973Z Collecting nvidia-cuda-nvrtc-cu12==12.8.93 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.0390540Z   Downloading nvidia_cuda_nvrtc_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.0605679Z Collecting nvidia-cuda-runtime-cu12==12.8.90 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.0729907Z   Downloading nvidia_cuda_runtime_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.0939435Z Collecting nvidia-cuda-cupti-cu12==12.8.90 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.1066190Z   Downloading nvidia_cuda_cupti_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.1328051Z Collecting nvidia-cudnn-cu12==9.10.2.21 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.1453679Z   Downloading nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl.metadata (1.8 kB)
+2026-01-27T21:28:19.1665407Z Collecting nvidia-cublas-cu12==12.8.4.1 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.1790945Z   Downloading nvidia_cublas_cu12-12.8.4.1-py3-none-manylinux_2_27_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.2013173Z Collecting nvidia-cufft-cu12==11.3.3.83 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.2144884Z   Downloading nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.2363279Z Collecting nvidia-curand-cu12==10.3.9.90 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.2489118Z   Downloading nvidia_curand_cu12-10.3.9.90-py3-none-manylinux_2_27_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.2701841Z Collecting nvidia-cusolver-cu12==11.7.3.90 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.2826087Z   Downloading nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl.metadata (1.8 kB)
+2026-01-27T21:28:19.3053485Z Collecting nvidia-cusparse-cu12==12.5.8.93 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.3199312Z   Downloading nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+2026-01-27T21:28:19.3383225Z Collecting nvidia-cusparselt-cu12==0.7.1 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.3508662Z   Downloading nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl.metadata (7.0 kB)
+2026-01-27T21:28:19.3711788Z Collecting nvidia-nccl-cu12==2.27.5 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.3853714Z   Downloading nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.0 kB)
+2026-01-27T21:28:19.4037642Z Collecting nvidia-nvshmem-cu12==3.4.5 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.4162990Z   Downloading nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.1 kB)
+2026-01-27T21:28:19.4381608Z Collecting nvidia-nvtx-cu12==12.8.90 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.4528815Z   Downloading nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+2026-01-27T21:28:19.4744071Z Collecting nvidia-nvjitlink-cu12==12.8.93 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.4875261Z   Downloading nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.5050402Z Collecting nvidia-cufile-cu12==1.13.1.3 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.5176215Z   Downloading nvidia_cufile_cu12-1.13.1.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.5451171Z Collecting triton==3.6.0 (from torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.5576914Z   Downloading triton-3.6.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.7 kB)
+2026-01-27T21:28:19.5789872Z Collecting cuda-pathfinder~=1.1 (from cuda-bindings==12.9.4->torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:19.5919271Z   Downloading cuda_pathfinder-1.3.3-py3-none-any.whl.metadata (1.9 kB)
+2026-01-27T21:28:19.6401813Z Collecting graphviz (from catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:19.6527645Z   Downloading graphviz-0.21-py3-none-any.whl.metadata (12 kB)
+2026-01-27T21:28:19.8312267Z Collecting matplotlib (from catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:19.8439018Z   Downloading matplotlib-3.10.8-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (52 kB)
+2026-01-27T21:28:19.9249350Z Collecting plotly (from catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:19.9384498Z   Downloading plotly-6.5.2-py3-none-any.whl.metadata (8.5 kB)
+2026-01-27T21:28:19.9672032Z Collecting six (from catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:19.9792048Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-01-27T21:28:20.0018934Z Collecting exceptiongroup>=1 (from pytest>=7.0.0->-r requirements.txt (line 12))
+2026-01-27T21:28:20.0138081Z   Downloading exceptiongroup-1.3.1-py3-none-any.whl.metadata (6.7 kB)
+2026-01-27T21:28:20.0324801Z Collecting iniconfig>=1.0.1 (from pytest>=7.0.0->-r requirements.txt (line 12))
+2026-01-27T21:28:20.0447830Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-01-27T21:28:20.0703690Z Collecting packaging>=22 (from pytest>=7.0.0->-r requirements.txt (line 12))
+2026-01-27T21:28:20.0823655Z   Downloading packaging-26.0-py3-none-any.whl.metadata (3.3 kB)
+2026-01-27T21:28:20.1039931Z Collecting pluggy<2,>=1.5 (from pytest>=7.0.0->-r requirements.txt (line 12))
+2026-01-27T21:28:20.1161278Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-01-27T21:28:20.1467185Z Collecting pygments>=2.7.2 (from pytest>=7.0.0->-r requirements.txt (line 12))
+2026-01-27T21:28:20.1589233Z   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2026-01-27T21:28:20.1899273Z Collecting tomli>=1 (from pytest>=7.0.0->-r requirements.txt (line 12))
+2026-01-27T21:28:20.2022149Z   Downloading tomli-2.4.0-py3-none-any.whl.metadata (10 kB)
+2026-01-27T21:28:20.2779606Z Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch>=2.0.0->-r requirements.txt (line 10))
+2026-01-27T21:28:20.2899090Z   Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+2026-01-27T21:28:20.3946141Z Collecting contourpy>=1.0.1 (from matplotlib->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:20.4068363Z   Downloading contourpy-1.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.5 kB)
+2026-01-27T21:28:20.4280442Z Collecting cycler>=0.10 (from matplotlib->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:20.4400148Z   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+2026-01-27T21:28:20.6908603Z Collecting fonttools>=4.22.0 (from matplotlib->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:20.7035128Z   Downloading fonttools-4.61.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (114 kB)
+2026-01-27T21:28:20.8090505Z Collecting kiwisolver>=1.3.1 (from matplotlib->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:20.8215261Z   Downloading kiwisolver-1.4.9-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl.metadata (6.3 kB)
+2026-01-27T21:28:21.0634652Z Collecting pillow>=8 (from matplotlib->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:21.0758441Z   Downloading pillow-12.1.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+2026-01-27T21:28:21.1176863Z Collecting pyparsing>=3 (from matplotlib->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:21.1299810Z   Downloading pyparsing-3.3.2-py3-none-any.whl.metadata (5.8 kB)
+2026-01-27T21:28:21.2063463Z Collecting narwhals>=1.15.1 (from plotly->catboost>=1.2.0->-r requirements.txt (line 11))
+2026-01-27T21:28:21.2184690Z   Downloading narwhals-2.15.0-py3-none-any.whl.metadata (13 kB)
+2026-01-27T21:28:21.2992507Z Downloading pandas-2.3.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.8 MB)
+2026-01-27T21:28:21.8137901Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 26.0 MB/s  0:00:00
+2026-01-27T21:28:21.8260209Z Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+2026-01-27T21:28:22.0210973Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 86.8 MB/s  0:00:00
+2026-01-27T21:28:22.0337556Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2026-01-27T21:28:22.0481320Z Downloading charset_normalizer-3.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (153 kB)
+2026-01-27T21:28:22.0627367Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2026-01-27T21:28:22.0769757Z Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+2026-01-27T21:28:22.0915093Z Downloading beautifulsoup4-4.14.3-py3-none-any.whl (107 kB)
+2026-01-27T21:28:22.1057622Z Downloading lxml-6.0.2-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (5.3 MB)
+2026-01-27T21:28:22.1505768Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.3/5.3 MB 119.3 MB/s  0:00:00
+2026-01-27T21:28:22.1631743Z Downloading lightgbm-4.6.0-py3-none-manylinux_2_28_x86_64.whl (3.6 MB)
+2026-01-27T21:28:22.1901238Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.6/3.6 MB 137.1 MB/s  0:00:00
+2026-01-27T21:28:22.2041250Z Downloading scikit_learn-1.7.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.7 MB)
+2026-01-27T21:28:22.2674179Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.7/9.7 MB 154.9 MB/s  0:00:00
+2026-01-27T21:28:22.2794565Z Downloading flask-3.1.2-py3-none-any.whl (103 kB)
+2026-01-27T21:28:22.2940401Z Downloading tqdm-4.67.1-py3-none-any.whl (78 kB)
+2026-01-27T21:28:22.3101730Z Downloading torch-2.10.0-cp310-cp310-manylinux_2_28_x86_64.whl (915.6 MB)
+2026-01-27T21:28:28.7712678Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 915.6/915.6 MB 56.8 MB/s  0:00:06
+2026-01-27T21:28:28.7870932Z Downloading cuda_bindings-12.9.4-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.1 MB)
+2026-01-27T21:28:28.8417642Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 228.2 MB/s  0:00:00
+2026-01-27T21:28:28.8539296Z Downloading nvidia_cublas_cu12-12.8.4.1-py3-none-manylinux_2_27_x86_64.whl (594.3 MB)
+2026-01-27T21:28:33.2068926Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 594.3/594.3 MB 76.5 MB/s  0:00:04
+2026-01-27T21:28:33.2196450Z Downloading nvidia_cuda_cupti_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (10.2 MB)
+2026-01-27T21:28:33.2651281Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.2/10.2 MB 232.7 MB/s  0:00:00
+2026-01-27T21:28:33.2774392Z Downloading nvidia_cuda_nvrtc_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (88.0 MB)
+2026-01-27T21:28:33.6273924Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 88.0/88.0 MB 252.8 MB/s  0:00:00
+2026-01-27T21:28:33.6401580Z Downloading nvidia_cuda_runtime_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (954 kB)
+2026-01-27T21:28:33.6482358Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 954.8/954.8 kB 134.2 MB/s  0:00:00
+2026-01-27T21:28:33.6603274Z Downloading nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl (706.8 MB)
+2026-01-27T21:28:39.3879426Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 706.8/706.8 MB 58.7 MB/s  0:00:05
+2026-01-27T21:28:39.4006707Z Downloading nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (193.1 MB)
+2026-01-27T21:28:40.3157648Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 193.1/193.1 MB 211.4 MB/s  0:00:00
+2026-01-27T21:28:40.3283905Z Downloading nvidia_cufile_cu12-1.13.1.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.2 MB)
+2026-01-27T21:28:40.3394352Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 116.8 MB/s  0:00:00
+2026-01-27T21:28:40.3516128Z Downloading nvidia_curand_cu12-10.3.9.90-py3-none-manylinux_2_27_x86_64.whl (63.6 MB)
+2026-01-27T21:28:40.6022738Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.6/63.6 MB 255.7 MB/s  0:00:00
+2026-01-27T21:28:40.6146626Z Downloading nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl (267.5 MB)
+2026-01-27T21:28:42.6354963Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 267.5/267.5 MB 130.7 MB/s  0:00:02
+2026-01-27T21:28:42.6480704Z Downloading nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (288.2 MB)
+2026-01-27T21:28:45.0574149Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 288.2/288.2 MB 112.2 MB/s  0:00:02
+2026-01-27T21:28:45.0700951Z Downloading nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl (287.2 MB)
+2026-01-27T21:28:46.5491696Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 287.2/287.2 MB 186.6 MB/s  0:00:01
+2026-01-27T21:28:46.5620646Z Downloading nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (322.3 MB)
+2026-01-27T21:28:49.1575361Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 322.3/322.3 MB 108.4 MB/s  0:00:02
+2026-01-27T21:28:49.1700013Z Downloading nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (39.3 MB)
+2026-01-27T21:28:49.3506173Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 39.3/39.3 MB 220.0 MB/s  0:00:00
+2026-01-27T21:28:49.3632935Z Downloading nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (139.1 MB)
+2026-01-27T21:28:49.9202000Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 139.1/139.1 MB 250.5 MB/s  0:00:00
+2026-01-27T21:28:49.9337673Z Downloading nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (89 kB)
+2026-01-27T21:28:49.9485998Z Downloading triton-3.6.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (188.1 MB)
+2026-01-27T21:28:50.8708937Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.1/188.1 MB 204.3 MB/s  0:00:00
+2026-01-27T21:28:50.8834536Z Downloading cuda_pathfinder-1.3.3-py3-none-any.whl (27 kB)
+2026-01-27T21:28:50.8982757Z Downloading catboost-1.2.8-cp310-cp310-manylinux2014_x86_64.whl (99.2 MB)
+2026-01-27T21:28:51.3032287Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 99.2/99.2 MB 246.4 MB/s  0:00:00
+2026-01-27T21:28:51.3161429Z Downloading pytest-9.0.2-py3-none-any.whl (374 kB)
+2026-01-27T21:28:51.3317443Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-01-27T21:28:51.3458508Z Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+2026-01-27T21:28:51.3599811Z Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+2026-01-27T21:28:51.3743158Z Downloading click-8.3.1-py3-none-any.whl (108 kB)
+2026-01-27T21:28:51.3893824Z Downloading exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+2026-01-27T21:28:51.4033510Z Downloading fsspec-2026.1.0-py3-none-any.whl (201 kB)
+2026-01-27T21:28:51.4182483Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-01-27T21:28:51.4327954Z Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+2026-01-27T21:28:51.4467047Z Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-01-27T21:28:51.4610677Z Downloading joblib-1.5.3-py3-none-any.whl (309 kB)
+2026-01-27T21:28:51.4766397Z Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+2026-01-27T21:28:51.4907734Z Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
+2026-01-27T21:28:51.5025713Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 166.2 MB/s  0:00:00
+2026-01-27T21:28:51.5145458Z Downloading packaging-26.0-py3-none-any.whl (74 kB)
+2026-01-27T21:28:51.5289055Z Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2026-01-27T21:28:51.5383301Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 144.0 MB/s  0:00:00
+2026-01-27T21:28:51.5504142Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-01-27T21:28:51.5653955Z Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB)
+2026-01-27T21:28:51.5822654Z Downloading scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (37.7 MB)
+2026-01-27T21:28:51.7414681Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 37.7/37.7 MB 239.3 MB/s  0:00:00
+2026-01-27T21:28:51.7537383Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-01-27T21:28:51.7678592Z Downloading soupsieve-2.8.3-py3-none-any.whl (37 kB)
+2026-01-27T21:28:51.7818144Z Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-01-27T21:28:51.8120952Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 218.4 MB/s  0:00:00
+2026-01-27T21:28:51.8243348Z Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-01-27T21:28:51.8301308Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 82.0 MB/s  0:00:00
+2026-01-27T21:28:51.8422266Z Downloading threadpoolctl-3.6.0-py3-none-any.whl (18 kB)
+2026-01-27T21:28:51.8560940Z Downloading tomli-2.4.0-py3-none-any.whl (14 kB)
+2026-01-27T21:28:51.8703013Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-01-27T21:28:51.8844970Z Downloading tzdata-2025.3-py2.py3-none-any.whl (348 kB)
+2026-01-27T21:28:51.9000491Z Downloading werkzeug-3.1.5-py3-none-any.whl (225 kB)
+2026-01-27T21:28:51.9147014Z Downloading filelock-3.20.3-py3-none-any.whl (16 kB)
+2026-01-27T21:28:51.9285446Z Downloading graphviz-0.21-py3-none-any.whl (47 kB)
+2026-01-27T21:28:51.9429352Z Downloading matplotlib-3.10.8-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (8.7 MB)
+2026-01-27T21:28:51.9836561Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.7/8.7 MB 220.0 MB/s  0:00:00
+2026-01-27T21:28:51.9957144Z Downloading contourpy-1.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (325 kB)
+2026-01-27T21:28:52.0111478Z Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+2026-01-27T21:28:52.0252133Z Downloading fonttools-4.61.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.9 MB)
+2026-01-27T21:28:52.0501410Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.9/4.9 MB 206.7 MB/s  0:00:00
+2026-01-27T21:28:52.0649288Z Downloading kiwisolver-1.4.9-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl (1.6 MB)
+2026-01-27T21:28:52.0759956Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 167.9 MB/s  0:00:00
+2026-01-27T21:28:52.0882979Z Downloading pillow-12.1.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.0 MB)
+2026-01-27T21:28:52.1236002Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 208.6 MB/s  0:00:00
+2026-01-27T21:28:52.1357051Z Downloading pyparsing-3.3.2-py3-none-any.whl (122 kB)
+2026-01-27T21:28:52.1501931Z Downloading plotly-6.5.2-py3-none-any.whl (9.9 MB)
+2026-01-27T21:28:52.1990339Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 209.3 MB/s  0:00:00
+2026-01-27T21:28:52.2113153Z Downloading narwhals-2.15.0-py3-none-any.whl (432 kB)
+2026-01-27T21:28:55.8239289Z Installing collected packages: pytz, nvidia-cusparselt-cu12, mpmath, urllib3, tzdata, typing-extensions, triton, tqdm, tomli, threadpoolctl, sympy, soupsieve, six, pyparsing, pygments, pluggy, pillow, packaging, nvidia-nvtx-cu12, nvidia-nvshmem-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufile-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, networkx, narwhals, markupsafe, lxml, kiwisolver, joblib, itsdangerous, iniconfig, idna, graphviz, fsspec, fonttools, filelock, cycler, cuda-pathfinder, click, charset_normalizer, certifi, blinker, werkzeug, scipy, requests, python-dateutil, plotly, nvidia-cusparse-cu12, nvidia-cufft-cu12, nvidia-cudnn-cu12, jinja2, exceptiongroup, cuda-bindings, contourpy, beautifulsoup4, scikit-learn, pytest, pandas, nvidia-cusolver-cu12, matplotlib, lightgbm, flask, torch, catboost
+2026-01-27T21:30:06.5374202Z 
+2026-01-27T21:30:06.5489010Z Successfully installed beautifulsoup4-4.14.3 blinker-1.9.0 catboost-1.2.8 certifi-2026.1.4 charset_normalizer-3.4.4 click-8.3.1 contourpy-1.3.2 cuda-bindings-12.9.4 cuda-pathfinder-1.3.3 cycler-0.12.1 exceptiongroup-1.3.1 filelock-3.20.3 flask-3.1.2 fonttools-4.61.1 fsspec-2026.1.0 graphviz-0.21 idna-3.11 iniconfig-2.3.0 itsdangerous-2.2.0 jinja2-3.1.6 joblib-1.5.3 kiwisolver-1.4.9 lightgbm-4.6.0 lxml-6.0.2 markupsafe-3.0.3 matplotlib-3.10.8 mpmath-1.3.0 narwhals-2.15.0 networkx-3.4.2 numpy-2.2.6 nvidia-cublas-cu12-12.8.4.1 nvidia-cuda-cupti-cu12-12.8.90 nvidia-cuda-nvrtc-cu12-12.8.93 nvidia-cuda-runtime-cu12-12.8.90 nvidia-cudnn-cu12-9.10.2.21 nvidia-cufft-cu12-11.3.3.83 nvidia-cufile-cu12-1.13.1.3 nvidia-curand-cu12-10.3.9.90 nvidia-cusolver-cu12-11.7.3.90 nvidia-cusparse-cu12-12.5.8.93 nvidia-cusparselt-cu12-0.7.1 nvidia-nccl-cu12-2.27.5 nvidia-nvjitlink-cu12-12.8.93 nvidia-nvshmem-cu12-3.4.5 nvidia-nvtx-cu12-12.8.90 packaging-26.0 pandas-2.3.3 pillow-12.1.0 plotly-6.5.2 pluggy-1.6.0 pygments-2.19.2 pyparsing-3.3.2 pytest-9.0.2 python-dateutil-2.9.0.post0 pytz-2025.2 requests-2.32.5 scikit-learn-1.7.2 scipy-1.15.3 six-1.17.0 soupsieve-2.8.3 sympy-1.14.0 threadpoolctl-3.6.0 tomli-2.4.0 torch-2.10.0 tqdm-4.67.1 triton-3.6.0 typing-extensions-4.15.0 tzdata-2025.3 urllib3-2.6.3 werkzeug-3.1.5
+2026-01-27T21:30:07.8281729Z Collecting playwright
+2026-01-27T21:30:07.9136025Z   Downloading playwright-1.57.0-py3-none-manylinux1_x86_64.whl.metadata (3.5 kB)
+2026-01-27T21:30:08.4127258Z Collecting pyee<14,>=13 (from playwright)
+2026-01-27T21:30:08.4229273Z   Downloading pyee-13.0.0-py3-none-any.whl.metadata (2.9 kB)
+2026-01-27T21:30:08.6325685Z Collecting greenlet<4.0.0,>=3.1.1 (from playwright)
+2026-01-27T21:30:08.6429835Z   Downloading greenlet-3.3.1-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.7 kB)
+2026-01-27T21:30:08.7746308Z Requirement already satisfied: typing-extensions in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pyee<14,>=13->playwright) (4.15.0)
+2026-01-27T21:30:08.7853519Z Downloading playwright-1.57.0-py3-none-manylinux1_x86_64.whl (46.0 MB)
+2026-01-27T21:30:09.4313082Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.0/46.0 MB 75.2 MB/s  0:00:00
+2026-01-27T21:30:09.4414616Z Downloading greenlet-3.3.1-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (586 kB)
+2026-01-27T21:30:09.4483226Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 587.0/587.0 kB 93.9 MB/s  0:00:00
+2026-01-27T21:30:09.4581409Z Downloading pyee-13.0.0-py3-none-any.whl (15 kB)
+2026-01-27T21:30:09.6945093Z Installing collected packages: pyee, greenlet, playwright
+2026-01-27T21:30:10.5115028Z 
+2026-01-27T21:30:10.5221941Z Successfully installed greenlet-3.3.1 playwright-1.57.0 pyee-13.0.0

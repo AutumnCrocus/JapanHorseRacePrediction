@@ -1,0 +1,27 @@
+﻿2026-01-27T21:30:46.4385573Z ##[group]Run actions/upload-artifact@v4
+2026-01-27T21:30:46.4385856Z with:
+2026-01-27T21:30:46.4386020Z   name: server-logs
+2026-01-27T21:30:46.4386206Z   path: server.log
+2026-01-27T21:30:46.4386409Z   if-no-files-found: warn
+2026-01-27T21:30:46.4386625Z   compression-level: 6
+2026-01-27T21:30:46.4386815Z   overwrite: false
+2026-01-27T21:30:46.4387001Z   include-hidden-files: false
+2026-01-27T21:30:46.4387202Z env:
+2026-01-27T21:30:46.4387439Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:46.4387845Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+2026-01-27T21:30:46.4388241Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:46.4388588Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:46.4388940Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2026-01-27T21:30:46.4389292Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+2026-01-27T21:30:46.4389576Z ##[endgroup]
+2026-01-27T21:30:46.7311452Z With the provided path, there will be 1 file uploaded
+2026-01-27T21:30:46.7317412Z Artifact name is valid!
+2026-01-27T21:30:46.7319619Z Root directory input is valid!
+2026-01-27T21:30:46.9913449Z Beginning upload of artifact content to blob storage
+2026-01-27T21:30:47.2599691Z Uploaded bytes 373
+2026-01-27T21:30:47.3304641Z Finished uploading artifact content to blob storage!
+2026-01-27T21:30:47.3308224Z SHA256 digest of uploaded artifact zip is e2290f3095731725e14e080cc22c270be213bc6314bc1dc871441b498739e075
+2026-01-27T21:30:47.3309729Z Finalizing artifact upload
+2026-01-27T21:30:47.5010474Z Artifact server-logs.zip successfully finalized. Artifact ID 5279063602
+2026-01-27T21:30:47.5011848Z Artifact server-logs has been successfully uploaded! Final size is 373 bytes. Artifact ID is 5279063602
+2026-01-27T21:30:47.5018623Z Artifact download URL: https://github.com/AutumnCrocus/JapanHorseRacePrediction/actions/runs/21414889745/artifacts/5279063602

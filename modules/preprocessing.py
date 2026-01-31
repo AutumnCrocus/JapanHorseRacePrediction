@@ -795,25 +795,35 @@ class FeatureEngineer:
                 df[f'peds_score_{cat}'] = 0
             return df
 
-        # peds_df側で一括計算
-        # 文字列結合 (高速化のため values を使用)
-        try:
-            peds_str_series = peds_df.fillna('').astype(str).agg(' '.join, axis=1)
-        except Exception:
-             # aggが失敗する場合はapplyで
-             peds_str_series = peds_df.fillna('').astype(str).apply(lambda x: ' '.join(x), axis=1)
+        # peds_dfに既にスコアカラムがある場合は計算をスキップ (高速化)
+        precomputed = True
+        for cat in ped_scores.keys():
+            if f'peds_score_{cat}' not in peds_df.columns:
+                precomputed = False
+                break
         
-        scores_dict = {}
-        for cat, sires in ped_scores.items():
-            # count occurrences
-            def count_s(text):
-                c = 0
-                for s in sires:
-                    if s in text: c += 1
-                return c
-            scores_dict[f'peds_score_{cat}'] = peds_str_series.apply(lambda x: count_s(x))
+        if precomputed:
+             scores_df = peds_df
+        else:
+            # peds_df側で一括計算
+            # 文字列結合 (高速化のため values を使用)
+            try:
+                peds_str_series = peds_df.fillna('').astype(str).agg(' '.join, axis=1)
+            except Exception:
+                 # aggが失敗する場合はapplyで
+                 peds_str_series = peds_df.fillna('').astype(str).apply(lambda x: ' '.join(x), axis=1)
             
-        scores_df = pd.DataFrame(scores_dict, index=peds_df.index)
+            scores_dict = {}
+            for cat, sires in ped_scores.items():
+                # count occurrences
+                def count_s(text):
+                    c = 0
+                    for s in sires:
+                        if s in text: c += 1
+                    return c
+                scores_dict[f'peds_score_{cat}'] = peds_str_series.apply(lambda x: count_s(x))
+                
+            scores_df = pd.DataFrame(scores_dict, index=peds_df.index)
 
         # mapでdfに結合
         for cat in ped_scores.keys():
