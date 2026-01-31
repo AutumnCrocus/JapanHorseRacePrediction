@@ -113,16 +113,16 @@ class IpatDirectAutomator:
             print("第2段階: 認証情報を入力中...")
             print(f"現在のURL: {self.driver.current_url}")
             
-            # 加入者番号（PC版セレクタ: name="kanyu"）
+            # 加入者番号（実際のHTMLでは name="i"）
             try:
                 print("加入者番号フィールドを探しています...")
                 
-                # 複数のセレクタパターンを試行
+                # HTMLソース確認結果: フィールド名は "i" (スマホ版と同じ)
+                # ただし、FORM1, FORM2, FORM3 と複数フォームに分散している
                 selectors = [
-                    (By.NAME, "kanyu"),
-                    (By.ID, "kanyu"),
-                    (By.CSS_SELECTOR, "input[name='kanyu']"),
-                    (By.XPATH, "//input[@type='text' and contains(@placeholder, '加入者')]"),
+                    (By.NAME, "i"),
+                    (By.CSS_SELECTOR, "input[name='i']"),
+                    (By.XPATH, "//input[@name='i' and @type='text']"),
                 ]
                 
                 subscriber_field = None
@@ -148,9 +148,9 @@ class IpatDirectAutomator:
                 self._save_debug_screenshot(self.driver, "subscriber_error")
                 return False, f"加入者番号フィールドが見つかりません: {str(e)}"
             
-            # 暗証番号（PC版セレクタ: name="pin"）
+            # 暗証番号（実際のHTMLでは name="p"）
             try:
-                pin_field = self.driver.find_element(By.NAME, "pin")
+                pin_field = self.driver.find_element(By.NAME, "p")
                 pin_field.clear()
                 pin_field.send_keys(pin)
                 print("暗証番号を入力しました")
@@ -158,9 +158,9 @@ class IpatDirectAutomator:
                 print(f"暗証番号入力エラー: {e}")
                 return False, f"暗証番号フィールドが見つかりません: {str(e)}"
             
-            # P-ARS番号（PC版セレクタ: name="pars"）
+            # P-ARS番号（実際のHTMLでは name="r"）
             try:
-                pars_field = self.driver.find_element(By.NAME, "pars")
+                pars_field = self.driver.find_element(By.NAME, "r")
                 pars_field.clear()
                 pars_field.send_keys(pars_no)
                 print("P-ARS番号を入力しました")
