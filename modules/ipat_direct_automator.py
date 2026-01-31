@@ -24,26 +24,63 @@ import sys
 import platform
 
 class IpatDirectAutomator:
-    # (中略)
+    """IPAT直接連携クラス（Selenium版 - PC Site）"""
+    
+    # 定数
+    JRA_IPAT_URL = "https://www.ipat.jra.go.jp/" # PC版URL
+    WAIT_SEC = 0.5  # 基本待機時間
+    WAIT_SEC_LONG = 1.0  # ページ遷移時の待機時間
+    
+    # 曜日リスト
+    DOW_LST = ["月", "火", "水", "木", "金", "土", "日"]
+    # レース会場リスト (netkeibaの表記とIPATの表記のマッピングが必要な場合に備える)
+    # PC版でも基本は似ているが、画面上のテキストとのマッチングに使用
+    PLACE_LST = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"]
+    
+    def __init__(self, debug_mode: bool = False):
+        """初期化"""
+        self.driver = None
+        self.wait_timeout = 10
+        self.debug_mode = debug_mode
+        
+    def _save_debug_screenshot(self, driver, name: str):
+        """デバッグ用スクリーンショットを保存（debug_mode=Trueの場合のみ）"""
+        if not self.debug_mode:
+            return
+            
+        try:
+            screenshot_dir = os.path.join(os.getcwd(), 'debug_screenshots')
+            os.makedirs(screenshot_dir, exist_ok=True)
+            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            filepath = os.path.join(screenshot_dir, f'{name}_{timestamp}.png')
+            driver.save_screenshot(filepath)
+            print(f"Screenshot saved: {filepath}")
+        except Exception as e:
+            print(f"Failed to save screenshot: {e}")
 
-            # 場所コードマッピング (netkeiba -> IPAT PC)
-            # ipat_direct_automator.py (Line 350 approx)
-            # Netkeiba Place Code:
-            # 01:札幌, 02:函館, 03:福島, 04:新潟, 05:東京, 06:中山, 07:中京, 08:京都, 09:阪神, 10:小倉
-            place_name_map = {
-                '01': '札幌', '02': '函館', '03': '福島', '04': '新潟', '05': '東京', 
-                '06': '中山', '07': '中京', '08': '京都', '09': '阪神', '10': '小倉'
-            }
-            # Note: Verify if verify_ipat_complex.py uses correct race_id format.
-            # verify_ipat_complex.py uses '202605010211'
-            # 2026(YYYY) + 05(Place:Tokyo) + 01(Kai) + 02(Day) + 11(Race)
-            
-            target_place_name = place_name_map.get(place_code)
-            if not target_place_name:
-                 print(f"Unknown place code: {place_code}. Defaulting to first available.")
-                 # Fallback logic could be added here
-            
-            print(f"Target: {target_place_name} {race_num}R (Code: {place_code})")
+    def _setup_driver(self):
+        """WebDriverをセットアップする (PC版設定)"""
+        options = Options()
+        
+        # PC版なのでモバイルエミュレーションは削除
+        # mobile_emulation = { "deviceName": "iPhone X" }
+        # options.add_experimental_option("mobileEmulation", mobile_emulation)
+        
+        # PC用ウィンドウサイズ
+        options.add_argument("--window-size=1280,800")
+        options.add_argument("--lang=ja")
+        
+        # 自動化検出回避 (基本設定)
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        
+        # Headlessモードは無効化 (ユーザー確認が必要なため)
+        
+        # WebDriverの初期化
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver.set_page_load_timeout(self.wait_timeout)
+
+    def login(self, inetid: str, subscriber_no: str, pin: str, pars_no: str) -> tuple[bool, str]:
         """
         IPATログイン画面で認証を実行（PC版）
         
@@ -352,19 +389,59 @@ class IpatDirectAutomator:
                 time.sleep(self.WAIT_SEC)
             except Exception as e:
                 print(f"Place selection warning: {e}")
-                # 自動選択されている場合や、既に選択済みの場合もある
+                # 既に選択済み、または開催場が違う、または見つからない
+                # ユーザーに確認を促す
+                # print(f">>> Could not find place '{target_place_name}'. If necessary, please select it manually in the browser.")
+                pass
                 
             # レース番号選択
             try:
                 # 11R などのボタン
-                # ボタンのテキストは "11" または "11R"
-                race_xpath = f"//a[contains(text(), '{race_num}R') or text()='{race_num}']"
-                race_btn = self.driver.find_element(By.XPATH, race_xpath)
-                race_btn.click()
+                # ボタンのテキストは "11" または "11R" の可能性がある
+                print(f"Selecting Race: {race_num}R")
+                
+                # JSでクリックを試みる (高速かつ確実)
+                script_race_click = f"""
+                var targets = ['{race_num}R', '{race_num} R', '{race_num}'];
+                var links = document.getElementsByTagName('a');
+                for(var i=0; i<links.length; i++){{
+                    var text = links[i].innerText.trim();
+                    if(targets.includes(text)){{
+                        links[i].click();
+                        return true;
+                    }}
+                    // 画像ボタンの場合 alt属性チェック
+                    var imgs = links[i].getElementsByTagName('img');
+                    if(imgs.length > 0){{
+                        var alt = imgs[0].alt;
+                        if(targets.includes(alt)){{
+                            links[i].click();
+                            return true;
+                        }}
+                    }}
+                }}
+                return false;
+                """
+                result = self.driver.execute_script(script_race_click)
+                
+                if not result:
+                    # Selenium Fallback
+                    race_xpath = f"//a[contains(text(), '{race_num}R') or text()='{race_num}']"
+                    race_btn = self.driver.find_element(By.XPATH, race_xpath)
+                    race_btn.click()
+                
                 time.sleep(self.WAIT_SEC)
             except Exception as e:
                 print(f"Race selection error: {e}")
-                return False, f"レース番号({race_num}R)の選択に失敗しました"
+                import traceback
+                traceback.print_exc()
+                # ここで諦めず、ユーザーに助けを求める
+                print(f">>> Automatic selection of {race_num}R failed.")
+                print(">>> Please SELECT THE RACE MANUALLY in the browser.")
+                print(">>> Then press Enter here to continue...")
+                input()
+                # 画面遷移していない可能性が高いが、続行不可
+                return False, f"レース番号({race_num}R)の選択に失敗しました: {e}"
 
             # 4. 投票入力ループ (高速化版)
             # waitを極力排除し、JSで直接DOMを操作する
