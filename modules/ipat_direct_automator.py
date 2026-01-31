@@ -505,21 +505,38 @@ class IpatDirectAutomator:
                     if not links: continue
                     
                     print(f"Checking selector {selector}: {len(links)} links found.")
+                    
+                    # 優先度1: 会場名+曜日で完全一致
+                    target_with_dow = f"{place_name}{dow}"  # 例: "東京(日)"
                     for link in links:
                         txt = link.text.strip()
-                        # 空文字ならスキップ (非表示要素など)
                         if not txt: continue
                         
-                        # Match Logic: Place Name MUST match.
-                        # DOW check removed - race_id does not contain date info
-                        if place_name in txt:
-                            print(f"Found Place Element: {txt}")
+                        # 完全一致チェック
+                        if target_with_dow and txt == target_with_dow:
+                            print(f"Found Place Element (完全一致): {txt}")
                             self.driver.execute_script("arguments[0].scrollIntoView(true);", link)
                             try:
                                 link.click()
                             except:
                                 self.driver.execute_script("arguments[0].click();", link)
                             return True
+                    
+                    # 優先度2: 会場名のみでマッチ（曜日情報がない場合のフォールバック）
+                    if not dow:  # 曜日情報がない場合のみ
+                        for link in links:
+                            txt = link.text.strip()
+                            if not txt: continue
+                            
+                            if place_name in txt:
+                                print(f"Found Place Element (部分一致): {txt}")
+                                self.driver.execute_script("arguments[0].scrollIntoView(true);", link)
+                                try:
+                                    link.click()
+                                except:
+                                    self.driver.execute_script("arguments[0].click();", link)
+                                return True
+                
                 return False
 
 
