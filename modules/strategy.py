@@ -106,12 +106,9 @@ class BettingStrategy:
         if target_rows.empty:
             return "ボックス推奨"
 
-        # 馬番 -> 確率マップ
-        prob_map = dict(zip(target_rows['horse_number'], target_rows['probability']))
-        
-        # 期待回収率 (Return Rate) の計算
-        total_ev_sum = 0.0
-        combo_count = 0
+        # オッズ平均の計算（期待値ではなく馬券オッズの平均）
+        total_odds_sum = 0.0
+        valid_odds_count = 0
         
         if odds_data:
             import itertools
@@ -119,32 +116,26 @@ class BettingStrategy:
             # 券種に応じたキーとオッズ辞書
             odds_dict = {}
             combos = []
-            prob_factor = 1.0
             type_key = ''
             
             if bet_type == '馬連':
                 type_key = 'umaren'
                 odds_dict = odds_data.get('umaren', {})
                 combos = list(itertools.combinations(target_indices, 2))
-                prob_factor = 0.5 # 簡易補正
             elif bet_type == 'ワイド':
                 type_key = 'wide'
                 odds_dict = odds_data.get('wide', {})
                 combos = list(itertools.combinations(target_indices, 2))
-                prob_factor = 0.8
             elif bet_type == '3連複':
                 type_key = 'sanrenpuku'
                 odds_dict = odds_data.get('sanrenpuku', {})
                 combos = list(itertools.combinations(target_indices, 3))
-                prob_factor = 0.3
             elif bet_type == '3連単':
                 type_key = 'sanrentan'
                 odds_dict = odds_data.get('sanrentan', {})
                 combos = list(itertools.permutations(target_indices, 3))
-                prob_factor = 0.15
             
-            combo_count = len(combos)
-            
+            # オッズを集計
             for c in combos:
                 # Key作成 (ソート済みタプルまたはそのまま)
                 key = c
@@ -161,39 +152,24 @@ class BettingStrategy:
                     else:
                         odds = val
                 
-                # 確率推定
-                combo_prob = 1.0
-                for h in c:
-                    combo_prob *= prob_map.get(h, 0.0)
-                combo_prob *= prob_factor
-                
-                # 組み合わせ期待値
-                total_ev_sum += (combo_prob * odds)
+                if odds > 0:
+                    total_odds_sum += odds
+                    valid_odds_count += 1
 
-        # 集合的な指標
-        avg_ev = target_rows['expected_value'].mean() # 旧指標（バックアップ）
-        
-        # 最終的なBOX期待値 (Return Rate)
-        # points = combo_count
-        # BoxEV = (Sum(P * Odds)) / 1 (Cost per point is uniform) ? 
-        # No, Expected Return of the Ticket / Cost of the Ticket
-        # Cost = combo_count * unit
-        # Return = Sum (P * Odds * unit)
-        # Ratio = Sum(P*Odds) / combo_count
-        
-        box_return_rate = 0
-        if combo_count > 0:
-            box_return_rate = total_ev_sum / combo_count
+        # 平均オッズを計算
+        avg_odds = 0
+        if valid_odds_count > 0:
+            avg_odds = total_odds_sum / valid_odds_count
         else:
-            # オッズデータがない場合は旧ロジック(単勝EV平均)で代用
-             box_return_rate = avg_ev
+            # オッズデータがない場合は単勝EVの平均で代用
+            avg_odds = target_rows['expected_value'].mean()
         
         # メッセージ生成
         reason_parts = []
         
-        # 1. 期待値
-        if box_return_rate > 0:
-             reason_parts.append(f"平均期待値{box_return_rate:.2f}倍")
+        # 1. オッズ
+        if avg_odds > 0:
+            reason_parts.append(f"平均オッズ{avg_odds:.1f}倍")
             
         # 2. 定性評価
         has_ana = any((target_rows['odds'] > 20) & (target_rows['probability'] > 0.05))
