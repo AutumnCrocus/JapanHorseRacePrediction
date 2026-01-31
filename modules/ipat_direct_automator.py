@@ -18,6 +18,7 @@ import os
 import datetime
 import traceback
 import sys
+import platform
 
 class IpatDirectAutomator:
     """IPAT直接連携クラス（Selenium版 - Smartphone Site）"""
@@ -1029,12 +1030,43 @@ class IpatDirectAutomator:
                     
                     # ウィンドウを前面に表示
                     try:
-                        # ウィンドウを最大化してアクティブ化
+                        # 1. ウィンドウを最大化
                         self.driver.maximize_window()
-                        # 現在のウィンドウハンドルに切り替え（フォーカス）
+                        time.sleep(0.3)
+                        
+                        # 2. Seleniumでフォーカス
                         self.driver.switch_to.window(self.driver.current_window_handle)
-                        # JavaScriptでもフォーカス
+                        
+                        # 3. JavaScriptでもフォーカス
                         self.driver.execute_script("window.focus();")
+                        
+                        # 4. Windows APIを使用して強制的に前面表示
+                        if platform.system() == 'Windows':
+                            try:
+                                import win32gui
+                                import win32con
+                                # Chromeのウィンドウハンドルを取得
+                                def enum_windows_callback(hwnd, windows):
+                                    if win32gui.IsWindowVisible(hwnd):
+                                        title = win32gui.GetWindowText(hwnd)
+                                        if 'IPAT' in title or 'Chrome' in title:
+                                            windows.append((hwnd, title))
+                                    return True
+                                
+                                windows = []
+                                win32gui.EnumWindows(enum_windows_callback, windows)
+                                
+                                if windows:
+                                    hwnd = windows[0][0]
+                                    # ウィンドウを前面に表示
+                                    win32gui.SetForegroundWindow(hwnd)
+                                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                                    print(f"Windows APIでウィンドウをアクティブ化: {windows[0][1]}")
+                            except ImportError:
+                                print("pywin32がインストールされていません。通常のフォーカス処理のみ実行")
+                            except Exception as we:
+                                print(f"Windows APIでのアクティブ化失敗: {we}")
+                        
                         print("ブラウザウィンドウを前面に表示しました")
                     except Exception as e:
                         print(f"ウィンドウのアクティブ化に失敗: {e}")
