@@ -603,8 +603,17 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
     bets = []
     
     for rec in recommendations:
-        # method変換: SINGLE -> '通常', BOX -> 'ボックス'
-        method = '通常' if rec.get('method') == 'SINGLE' else 'ボックス'
+        # method変換: SINGLE -> '通常', BOX/FORMATION -> 'ボックス' (IPAT上はボックスで一括投票)
+        # BettingAllocatorの出力形式: method='BOX', horse_numbers=[1, 2, 3]
+        method_raw = rec.get('method', 'SINGLE')
+        
+        # IPAT用のmethod名
+        if method_raw == 'SINGLE':
+            method = '通常'
+        elif method_raw == 'BOX':
+            method = 'ボックス'
+        else:
+            method = '通常' # デフォルト
         
         # BettingAllocatorは'bet_type'を使用するが、後方互換性のため'type'もサポート
         bet_type = rec.get('bet_type') or rec.get('type')
@@ -612,16 +621,13 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
         # 'horse_numbers'(BettingAllocator)と'horses'(旧形式)の両方をサポート
         horses = rec.get('horse_numbers') or rec.get('horses')
         
-        # 金額の取得ロジック:
-        # - SINGLE(単勝/複勝): total_amountを使用（例: 600円）
-        # - BOX: unit_amountを使用（例: 100円）
-        # BettingAllocatorのunit_amountは常に100円固定のため、
-        # SINGLEの場合はtotal_amountが実際の購入金額になっている
-        if method == '通常':  # SINGLE
+        # 金額決定
+        if method == '通常':
             amount = rec.get('total_amount', 100)
-        else:  # BOX
+        else:
+            # BOX/フォーメーションの場合は1点あたりの金額
             amount = rec.get('unit_amount', 100)
-        
+            
         bet = {
             'type': bet_type,
             'horses': horses,
