@@ -479,13 +479,15 @@ class IpatDirectAutomator:
 
             
             # 日付から曜日を判定して補強 (例: "東京" -> "東京(土)")
-            # race_id: 20240101...
+            # race_idには日付情報がないため、netkeibaから取得
             try:
-                date_str = race_id[0:8]
-                dt = datetime.datetime.strptime(date_str, "%Y%m%d")
-                w_list = ["(月)", "(火)", "(水)", "(木)", "(金)", "(土)", "(日)"]
-                target_dow = w_list[dt.weekday()]
-            except:
+                from modules.scraping import get_race_date_info
+                race_date_info = get_race_date_info(race_id)
+                target_dow = race_date_info.get('dow_paren', '')
+                if race_date_info.get('date'):
+                    print(f"取得した開催日情報: {race_date_info.get('date')} {target_dow}")
+            except Exception as e:
+                print(f"開催日情報の取得に失敗: {e}")
                 target_dow = ""
                 
             print(f"Target Race: {target_place_name} {target_dow} (Code: {place_code})")

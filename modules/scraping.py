@@ -338,6 +338,82 @@ def update_data(old_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([filtered_old, new_df])
 
 
+def get_race_date_info(race_id: str) -> dict:
+    """
+    出馬表ページから開催日情報を取得
+    
+    Args:
+        race_id: レースID (例: 202601050111)
+    
+    Returns:
+        dict: {
+            'date': '2026年1月31日',
+            'dow': '土',  # 曜日
+            'dow_paren': '(土)'  # 括弧付き曜日
+        }
+        情報が取得できなかった場合は空の辞書を返す
+    """
+    try:
+        url = SHUTUBA_URL + str(race_id)
+        response = requests.get(url, headers=HEADERS, timeout=15)
+        response.encoding = "EUC-JP"
+        
+        if response.status_code != 200:
+            print(f"Failed to fetch race date info for {race_id}: status {response.status_code}")
+            return {}
+        
+        soup = BeautifulSoup(response.text, "lxml")
+        
+        # 年月日をtitleタグから取得
+        # 例: "白富士Ｓ(L) 出馬表 | 2026年1月31日 東京11R..."
+        full_date = None
+        title_elem = soup.find("title")
+        if title_elem:
+            title_text = title_elem.text
+            date_match = re.search(r"(\d{4}年\d{1,2}月\d{1,2}日)", title_text)
+            if date_match:
+                full_date = date_match.group(1)
+        
+        # 曜日をdd.Active aセレクタから取得
+        # 例: "1月31日(土)"
+        dow = None
+        dow_paren = None
+        active_date_elem = soup.select_one("dd.Active a")
+        if active_date_elem:
+            active_date_text = active_date_elem.text.strip()
+            # 曜日を抽出 (括弧付き)
+            dow_match = re.search(r"\((.)\)", active_date_text)
+            if dow_match:
+                dow = dow_match.group(1)
+                dow_paren = f"({dow})"
+        
+        # フォールバック: titleから曜日を取得できなかった場合
+        if not dow and full_date:
+            # 日付文字列から曜日を計算
+            try:
+                # "2026年1月31日" -> datetime
+                date_obj = pd.to_datetime(full_date, format="%Y年%m月%d日")
+                dow_list = ["月", "火", "水", "木", "金", "土", "日"]
+                dow = dow_list[date_obj.weekday()]
+                dow_paren = f"({dow})"
+            except:
+                pass
+        
+        result = {}
+        if full_date:
+            result['date'] = full_date
+        if dow:
+            result['dow'] = dow
+        if dow_paren:
+            result['dow_paren'] = dow_paren
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error getting race date info for {race_id}: {e}")
+        return {}
+
+
 class Shutuba:
     """出馬表のスクレイピングクラス"""
 
