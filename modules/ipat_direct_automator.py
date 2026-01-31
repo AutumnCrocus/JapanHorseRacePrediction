@@ -468,14 +468,15 @@ class IpatDirectAutomator:
                     pass
 
             # 2. レース会場を選択
-            # 2. レース会場を選択
-            # race_id: YYYYMMDDKKRR
+            # race_id format: YYYYPPKKDDRR (Year-Place-Kai-Day-Race)
+            # Example: 202605010111 = 2026年, 05(東京), 01回, 01日目, 11R
             jra_place_map = {
                 "01": "札幌", "02": "函館", "03": "福島", "04": "新潟", "05": "東京", 
                 "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉"
             }
-            place_code = race_id[8:10]
+            place_code = race_id[4:6]  # 修正: [8:10]ではなく[4:6]が正しい
             target_place_name = jra_place_map.get(place_code, "")
+
             
             # 日付から曜日を判定して補強 (例: "東京" -> "東京(土)")
             # race_id: 20240101...
