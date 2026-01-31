@@ -63,7 +63,7 @@ function initEventListeners() {
 
     // IPAT連携ボタン
     if (elements.ipatConnectBtn) {
-        // elements.ipatConnectBtn.addEventListener('click', handleIpatConnect);
+        elements.ipatConnectBtn.addEventListener('click', handleIpatConnect);
     }
 
     // IPATログインフォーム
@@ -73,7 +73,7 @@ function initEventListeners() {
 
     // IPAT投票確認ボタン
     if (elements.confirmVoteBtn) {
-        // elements.confirmVoteBtn.addEventListener('click', handleConfirmVote);
+        elements.confirmVoteBtn.addEventListener('click', handleConfirmVote);
     }
 
     // ナビゲーションのスムーススクロール
