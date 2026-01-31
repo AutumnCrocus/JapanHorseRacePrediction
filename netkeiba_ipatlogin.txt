@@ -1,0 +1,187 @@
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="content-language" content="ja">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=0.5, user-scalable=yes">
+<title>ipat login</title>
+<!-- block=common_include (d) -->
+
+<!-- jQuery -->
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script async="" src="//www.googletagmanager.com/gtm.js?id=GTM-K6PJT6"></script><script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<!-- riot.js -->
+<script src="https://cdn.netkeiba.com/img.race/common/js/route.min.js"></script>
+<script src="https://cdn.netkeiba.com/img.race/common/js/riot.min.js"></script><style type="text/css"></style>
+<script src="https://cdn.netkeiba.com/img.race/ipat/tags/jraipat.min.js?20200706"></script>
+<script>
+window.console = {};
+window.console.log = function(){};
+window.console.debug = function(){};
+window.console.info = function(){};
+window.console.warn = function(){};
+window.console.error = function(){};
+window.console.time = function(){};
+window.console.timeEnd = function(){};
+</script>
+
+<script src="https://cdn.netkeiba.com/img.race/common/js/zlib.min.js?180322a"></script>
+<script src="https://cdn.netkeiba.com/img.race/common/js/store.legacy.min.js?180322a"></script>
+<script src="https://cdn.netkeiba.com/img.race/common/js/ndcommon.min.js?180514b"></script>
+<link rel="stylesheet" href="https://cdn.netkeiba.com/img.race/ipat/common/css/sweetalert2.min.css?180614a" type="text/css" media="screen">
+<script src="https://cdn.netkeiba.com/img.race/ipat/common/js/promise.min.js?180614a"></script>
+<script src="https://cdn.netkeiba.com/img.race/ipat/common/js/sweetalert2.min.js?180614a"></script>
+<script src="https://cdn.netkeiba.com/img.race/ipat/common/js/nd_isam.js?180322a"></script>
+<script src="https://cdn.netkeiba.com/img.race/ipat/common/js/ndipat_api.js?180614a"></script>
+<script src="https://cdn.netkeiba.com/img.race/cart/common/js/cart_api.js?180919a"></script>
+<link rel="stylesheet" href="https://cdn.netkeiba.com/img.race/ipat/common/css/common_new.css?180322a" type="text/css" media="screen">
+<link rel="stylesheet" href="https://cdn.netkeiba.com/img.race/ipat/common/css/shutuba_nar.css?180322a" type="text/css" media="screen">
+<link rel="stylesheet" href="https://cdn.netkeiba.com/img.race/ipat/common/css/ipat_vote.css?20200409" type="text/css" media="screen">
+<!-- Google Tag Manager -->
+<script>
+window.dataLayer = window.dataLayer || [];
+dataLayer.push({
+'itemInfo': '','memberRank': 'Free','memberId': '3066821'
+});
+</script>
+
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K6PJT6');</script>
+<!-- End Google Tag Manager -->
+</head>
+<body id="Ipat" class="PatternBG">
+
+<div class="Contents">
+<div id="tag-jraipat" style="display: block;">
+<jraipat> <div> <div class="RaceIpat"> <div class="Contents_Header RaceIpat_Header"> <div class="Title"> <h2>IPATログイン</h2> </div> </div> <form id="ipat_login_form"> <div class="RaceIpat_Inner"> <dl class="Ipat_Login_Form LoginForm_Area"> <dt>加入者番号</dt> <dd> <input type="tel" ref="ipat_number" maxlength="8" placeholder="8桁(半角)"> </dd> </dl> <dl class="Ipat_Login_Form LoginForm_Area"> <dt>暗証番号</dt> <dd> <input type="password" ref="ipat_passwd" style="-webkit-text-security: disc;" value="" maxlength="4" placeholder="4桁(半角)"> </dd> </dl> <dl class="Ipat_Login_Form LoginForm_Area"> <dt>P-ARS番号</dt> <dd> <input type="tel" ref="ipat_pars" maxlength="4" placeholder="4桁(半角)"> </dd> </dl> <div class="Check"> <input type="checkbox" id="ipat_save" value="1" checked="checked"> <label for="ipat_save">次回から暗証番号のみを入力</label> </div> <div class="Ipat_Login_Footer mb20"> <a class="SubmitBtn">IPAT投票へすすむ</a>   </div> </div> </form> </div> </div> <div id="ipat_confirm" class="disp_none"> <div class=""> <div class="RaceIpat_Dialog"> <div class="Dialog_Header"> <div class="Title">netkeiba-IPAT連携サービスとは</div> </div> <form name="kiyaku_form" method="post" class="Inner"> <div class="Dialog_Body"> <div class="Introduction"> <p class="Txt"><strong>netkeiba</strong>で作成した買い目データを、<strong>JRA IPAT</strong>にカンタン送信・保存するサービスです。</p> <img src="common/img/race/ipat_flow.png" alt=""> </div> <div class="Dialog_Contents"> <div class="Title">利用規約の確認</div> <p class="Txt">利用規約をご確認のうえ「同意する」へお進みください。</p> <div class="LinkBtn_04 mt10"> <a target="_blank" href="https://www.netkeiba.com/info/ipat_kiyaku.html">利用規約を読む</a> </div> <ul class="Dialog_Btn Col2 fc"> <li class="Disagree"> <input type="submit" value="同意しない" class="Btn"> </li> <li class="Agree"> <input type="submit" value="同意する" class="Btn"> </li> </ul> </div> <div class="Check mb00"> <input type="checkbox" id="kiyaku_submit" value="1"> <label for="kiyaku_submit">今後、この画面を表示しない</label> </div> </div> </form> </div> </div> </div> </jraipat>
+</div>
+</div>
+<script>
+// $Id: jraipat.html 2151 2018-07-13 02:34:08Z yokoo $
+"use strict"
+var debug = false;
+var tags = {
+// tag_name: mount status
+jraipat: null,
+};
+var tag_count = 0;
+var default_tag = 'jraipat';
+var shared_obs = riot.observable(this);
+var domain = '.netkeiba.com';
+var env = 'live';
+// login check
+//var login_url = 'https://regist.netkeiba.com?pid=stage_login&return_url=%s';
+//var cookie_value = getCookie('netkeiba');
+//console.log('cookie_value: %s', cookie_value);
+//if ('' == cookie_value) {
+//    alert('ログインを行ってください');
+//    login_url = sprintf(login_url, "https://race.netkeiba.com/ipat/");
+//    window.location.href = login_url;
+//}
+// タグに渡す構造体
+var tag_opt = {
+tag_name: null,
+obs: shared_obs,
+race_url: 'https://race.netkeiba.com/',
+api_url: 'https://race.netkeiba.com/race_api/',
+cart_url: 'https://race.netkeiba.com/cart/',
+ipat_url: 'https://race.netkeiba.com/ipat/api_post_ipat.html',
+www_netkeiba_url: 'https://www.netkeiba.com/',
+domain: domain,
+//cookie_value: cookie_value,
+};
+var query = {};
+var i = 0;
+for (var k in tags) i++;
+tag_count = i;
+route.base('/ipat/');
+route.start(true);
+// route event
+route(function() {
+query = route.query();
+if (debug) console.log('jraipat.html query: %O', query);
+if (undefined !== query['m']) {
+var els = document.querySelectorAll('[id^=tag-]');
+for (var i = 0; i < els.length; i++) {
+els[i].style.display = 'none';
+}
+}
+if (tags[query['m']]) {
+var elem = document.getElementById('tag-' + query['m']);
+if (elem) {
+elem.style.display = 'block';
+}
+shared_obs.trigger('render_' + query['m'], query);
+console.log('jraipat.html trigger --> %s', 'render_' + query['m']);
+}
+});
+shared_obs.on('tag_mounted', function(e) {
+// 子タグがマウントを完了した
+if (debug) console.log('jraipat.html tag_mounted e: %O', e);
+tags[e['tag']] = true;
+var mount_count = 0;
+for (var name in tags) {
+if (true == tags[name]) {
+mount_count++;
+}
+}
+if (debug) console.log('jraipat.html mount_count: %s', mount_count);
+if (mount_count >= tag_count) {
+var cur_tag = null;
+if (undefined === query['m']) {
+// 初期表示(デフォルト)
+cur_tag = default_tag;
+} else {
+// 初期表示(URLで指定したタブ)
+cur_tag = query['m'];
+}
+query = route.query();
+shared_obs.trigger('render_' + cur_tag, query);
+var elem = document.getElementById('tag-' + cur_tag);
+if (elem) {
+elem.style.display = 'block';
+}
+}
+});
+if(env == 'live'){
+for(var name in tags){
+var opt = tag_opt;
+opt['tag_name'] = name;
+riot.mount(name, opt);
+}
+}else{
+riot.compile(function() {
+if(debug) console.log('index.html compiled');
+for(var name in tags){
+var opt = tag_opt;
+opt['tag_name'] = name;
+riot.mount(name, opt);
+}
+});
+}
+$(function() {
+$('#act-clear').on('click', function() {
+if (confirm("\nブラウザのストレージを削除してよろしいですか？\n")) {
+store.clearAll();
+window.location.href = '';
+}
+});
+$('.Tips_Toggle_Box .Tips_Title').on('click', function() {
+$(this).next('.Tips_Body').slideToggle('fast');
+$(this).toggleClass('Open');
+});
+});
+function Scroll_Top() {
+$('body,html').animate({scrollTop:0}, 400, 'swing');
+return false;
+}
+</script>
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K6PJT6"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager -->
+
+</body></html>

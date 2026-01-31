@@ -115,88 +115,199 @@ class IpatDirectAutomator:
             self.driver.get(self.JRA_IPAT_URL)
             time.sleep(self.WAIT_SEC)
             
-            # PC版ログインフォーム入力
-            # 加入者番号: name="i"
-            # P-ARS番号: name="r"
-            # INET-ID: name="inetid"
-            # ログインボタン: onclick="DoLogin()" or class="login_btn"
+            # トップページに「ログイン」ボタンがある場合（ランディングページ）の処理
+            # またはフレーム構造の対応
+            
+            # フレーム対応: メインコンテンツが含まれるフレームを探す
+            frames = self.driver.find_elements(By.TAG_NAME, "frame") # iframeではなくframeタグの場合が多い
+            if not frames:
+                frames = self.driver.find_elements(By.TAG_NAME, "iframe")
+                
+            if len(frames) > 0:
+                print(f"Frames found: {len(frames)}. Searching for login form inside frames...")
+                found_frame = False
+                for i, frame in enumerate(frames):
+                    self.driver.switch_to.default_content()
+                    try:
+                        self.driver.switch_to.frame(frame)
+                        if len(self.driver.find_elements(By.NAME, "i")) > 0 or len(self.driver.find_elements(By.NAME, "inetid")) > 0:
+                            print(f"Login form found in frame index {i}")
+                            found_frame = True
+                            # switch_to.frameしたまま抜ける
+                            break
+                        # ログインボタンがあるか？
+                        if len(self.driver.find_elements(By.XPATH, "//a[contains(@class, 'login')]")) > 0:
+                             print(f"Login button found in frame index {i}")
+                             found_frame = True
+                             break
+                    except:
+                        pass
+                
+                if not found_frame:
+                    self.driver.switch_to.default_content()
+
+            try:
+                # ログインボタンを探して押す
+                # PC版は 'inetid' 入力欄がいきなりある場合と、ボタンの場合がある
+                # すでにフレームに入っている場合はその中で探す
+                if len(self.driver.find_elements(By.NAME, "inetid")) == 0 and len(self.driver.find_elements(By.NAME, "i")) == 0:
+                     print("Login form not found directly. Searching for entry button...")
+                     entry_btn_candidates = [
+                         "//a[contains(@class, 'login')]",
+                         "//img[contains(@alt, 'ログイン') or contains(@alt, 'Log in')]/..",
+                         "//a[contains(text(), 'ログイン')]",
+                         "//input[@value='ログイン']"
+                     ]
+                     for xpath in entry_btn_candidates:
+                         try:
+                             btn = self.driver.find_element(By.XPATH, xpath)
+                             btn.click()
+                             time.sleep(self.WAIT_SEC_LONG)
+                             break
+                         except:
+                             continue
+            except:
+                pass
+            
+            # ユーザー提供情報による2段階ログインフロー
+            # 1. INET-ID 入力 -> ログインボタン
+            # 2. 加入者情報入力 (加入者番号, 暗証番号, P-ARS番号) -> ネット投票メニューへ (ログインボタン)
             
             try:
-                # 1. 加入者番号
-                self.driver.find_element(By.NAME, "i").send_keys(subscriber_no)
-                time.sleep(0.1)
-                
-                # 2. P-ARS番号
-                self.driver.find_element(By.NAME, "r").send_keys(pars_no)
-                time.sleep(0.1)
-                
-                # 3. INET-ID
-                self.driver.find_element(By.NAME, "inetid").send_keys(inetid)
-                time.sleep(0.1)
-                
-                # 4. ログインボタン
-                # PC版は通常CSSセレクタかXPathでクリック
-                # 構造が変わる可能性があるため、いくつか候補を試す
-                login_btn_candidates = [
-                    "//a[contains(@onclick, 'DoLogin')]",
-                    "//div[contains(@class, 'login_btn')]//a",
-                    "//input[@type='image' and contains(@alt, 'ログイン')]"
-                ]
-                
-                clicked = False
-                for xpath in login_btn_candidates:
-                    try:
-                        btn = self.driver.find_element(By.XPATH, xpath)
-                        btn.click()
-                        clicked = True
-                        break
-                    except:
-                        continue
-                
-                if not clicked:
-                     # 最後の手段: JS実行
-                     self.driver.execute_script("DoLogin();")
-                
-                time.sleep(self.WAIT_SEC_LONG)
-                
-                # 5. 暗証番号入力 (画面遷移後)
-                # PC版は加入者情報入力 -> 暗証番号入力 の2段階認証の場合がある
-                # あるいは1画面で済む場合もある。画面遷移を見て判断
-                
-                # 暗証番号入力要素を探す
-                # name="p" が一般的
-                try:
-                    pin_input = self.driver.find_element(By.NAME, "p")
-                    pin_input.send_keys(pin)
-                    
-                    # 認証ボタン
-                    # onclick="DoAuth()" ?
-                    auth_btn_candidates = [
-                        "//a[contains(@onclick, 'DoAuth')]",
-                        "//a[contains(text(), '確認')]",
-                        "//a[contains(text(), 'ログイン')]" # 2段階目のボタンもログイン表記の場合あり
-                    ]
-                    
-                    clicked_auth = False
-                    for xpath in auth_btn_candidates:
-                        try:
-                            btn = self.driver.find_element(By.XPATH, xpath)
-                            btn.click()
-                            clicked_auth = True
-                            break
-                        except:
-                            continue
-                            
-                    if not clicked_auth:
-                        self.driver.execute_script("DoAuth();")
-                        
-                    time.sleep(self.WAIT_SEC_LONG)
-                    
-                except:
-                    print("PIN input skipped or merged in previous screen.")
+                 # --- STEP 1: INET-ID 入力 ---
+                 print("Login Step 1: INET-ID")
+                 
+                 # inetid入力フィールドを探す
+                 # フレーム切り替え等はここまでの処理で実施済み
+                 try:
+                     inet_elem = self.driver.find_element(By.NAME, "inetid")
+                 except:
+                     # 見つからない場合はフレーム探索などが失敗している可能性
+                     # 再度フレームを探してみる
+                     frames = self.driver.find_elements(By.TAG_NAME, "frame")
+                     if not frames: frames = self.driver.find_elements(By.TAG_NAME, "iframe")
+                     for f in frames:
+                         try:
+                             self.driver.switch_to.default_content()
+                             self.driver.switch_to.frame(f)
+                             inet_elem = self.driver.find_element(By.NAME, "inetid")
+                             print("INET-ID input found in frame.")
+                             break
+                         except:
+                             pass
+                 
+                 # 入力
+                 try:
+                     inet_elem = self.driver.find_element(By.NAME, "inetid")
+                     inet_elem.clear()
+                     inet_elem.send_keys(inetid)
+                     
+                     # ログインボタン (INET-ID画面)
+                     # ボタンを押して次へ
+                     # 画像ボタンやsubmitボタンの可能性がある
+                     # ユーザー画像では「ログイン」というボタンが見える
+                     step1_btn_candidates = [
+                         "//a[contains(text(), 'ログイン')]",
+                         "//input[@value='ログイン']",
+                         "//img[contains(@alt, 'ログイン')]/..",
+                         "//a[contains(@onclick, 'Login')]"
+                     ]
+                     
+                     clicked_step1 = False
+                     for xpath in step1_btn_candidates:
+                         try:
+                             btn = self.driver.find_element(By.XPATH, xpath)
+                             btn.click()
+                             clicked_step1 = True
+                             break
+                         except:
+                             continue
+                     
+                     if not clicked_step1:
+                         # Enterキーでsubmit試行
+                         inet_elem.send_keys(Keys.RETURN)
+                     
+                     time.sleep(self.WAIT_SEC_LONG)
+                     
+                 except Exception as e:
+                     print(f"Step 1 (INET-ID) failed: {e}")
+                     # 既にStep 2の画面にいる可能性もあるので続行してみる
+
+                 # --- STEP 2: 加入者情報入力 ---
+                 print("Login Step 2: Subscriber Info")
+                 
+                 # 画面が変わったことを想定して要素を探す
+                 # 加入者番号: i, 暗証番号: p, P-ARS: r
+                 
+                 # 加入者番号 (i)
+                 try:
+                     i_elem = self.driver.find_element(By.NAME, "i")
+                     i_elem.clear()
+                     i_elem.send_keys(subscriber_no)
+                 except:
+                     try:
+                         # フレームが変わった可能性、またはまだ読込中
+                         time.sleep(1.0)
+                         frames = self.driver.find_elements(By.TAG_NAME, "frame")
+                         if not frames: frames = self.driver.find_elements(By.TAG_NAME, "iframe")
+                         for f in frames:
+                             self.driver.switch_to.default_content()
+                             self.driver.switch_to.frame(f)
+                             if len(self.driver.find_elements(By.NAME, "i")) > 0:
+                                 break
+                         i_elem = self.driver.find_element(By.NAME, "i")
+                         i_elem.clear()
+                         i_elem.send_keys(subscriber_no)
+                     except:
+                         print("Subscriber No input not found.")
+                 
+                 # 暗証番号 (p)
+                 try:
+                     p_elem = self.driver.find_element(By.NAME, "p")
+                     p_elem.clear()
+                     p_elem.send_keys(pin)
+                 except:
+                     print("PIN input not found.")
+                     
+                 # P-ARS番号 (r)
+                 try:
+                     r_elem = self.driver.find_element(By.NAME, "r")
+                     r_elem.clear()
+                     r_elem.send_keys(pars_no)
+                 except:
+                     print("P-ARS input not found.")
+                 
+                 # ログインボタン (ネット投票メニューへ)
+                 # ユーザー画像では「ネット投票メニューへ」
+                 step2_btn_candidates = [
+                     "//a[contains(text(), 'ネット投票メニューへ')]",
+                     "//a[contains(text(), 'ログイン')]",
+                     "//a[contains(@onclick, 'DoLogin')]",
+                     "//input[@type='image' and contains(@alt, 'ネット投票メニューへ')]"
+                 ]
+                 
+                 clicked_step2 = False
+                 for xpath in step2_btn_candidates:
+                     try:
+                         btn = self.driver.find_element(By.XPATH, xpath)
+                         btn.click()
+                         clicked_step2 = True
+                         break
+                     except:
+                         continue
+                 
+                 if not clicked_step2:
+                     # JS実行
+                     self.driver.execute_script("try { DoLogin(); } catch(e) {}")
+                 
+                 time.sleep(self.WAIT_SEC_LONG)
+            
+            except Exception as e:
+                print(f"Login sequence failed: {e}")
+            
+            # ログイン成功確認
                 
                 # ログイン成功確認
-                # メニュー画面等が表示されているか
                 time.sleep(1.0)
                 if "ネット投票" in self.driver.page_source or "投票メニュー" in self.driver.page_source:
                     print("Login success.")
