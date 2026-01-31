@@ -1160,40 +1160,26 @@ class IpatDirectAutomator:
                                     target_hwnd, target_title, target_pid = target_window
                                     print(f"対象ウィンドウ: {target_title} (HWND: {target_hwnd})")
                                     
-                                    # ウィンドウを前面に表示
-                                    # Windowsのセキュリティ制約により、SetForegroundWindowが失敗することがある
-                                    # 複数の手法を組み合わせて確実にアクティブ化する
-                                    
+                                    # シンプルな方法: Webアプリを最小化 + IPATウィンドウを最大化
                                     try:
-                                        # 方法1: ShowWindowでウィンドウを通常表示
-                                        win32gui.ShowWindow(target_hwnd, win32con.SW_SHOWNORMAL)
+                                        # 1. Webアプリウィンドウ(競馬予想AI)を最小化
+                                        webapp_hwnd = None
+                                        for hwnd, title, pid in windows:
+                                            if '競馬予想AI' in title or 'Horse Racing Predictor' in title:
+                                                webapp_hwnd = hwnd
+                                                print(f"Webアプリウィンドウを最小化: {title}")
+                                                win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
+                                                break
+                                        
                                         time.sleep(0.2)
-                                        print("✓ ShowWindow(SW_SHOWNORMAL)実行")
                                         
-                                        # 方法2: SetForegroundWindowを試す
-                                        try:
-                                            win32gui.SetForegroundWindow(target_hwnd)
-                                            print("✓ SetForegroundWindow成功")
-                                        except Exception as fg_e:
-                                            # SetForegroundWindowが失敗した場合(Windowsの制約)
-                                            print(f"⚠ SetForegroundWindow失敗(Windowsセキュリティ制約): {fg_e}")
-                                            
-                                            # 代替手法: ウィンドウを点滅させてユーザーの注意を引く
-                                            try:
-                                                # BringWindowToTopを試す
-                                                win32gui.BringWindowToTop(target_hwnd)
-                                                print("✓ BringWindowToTop実行")
-                                                
-                                                # ウィンドウを点滅させる(3回、100ms間隔)
-                                                win32gui.FlashWindowEx(target_hwnd, win32con.FLASHW_ALL | win32con.FLASHW_TIMERNOFG, 3, 100)
-                                                print("✓ ウィンドウを点滅させてユーザーに通知しました")
-                                                print("  (タスクバーのIPATウィンドウをクリックしてください)")
-                                            except Exception as alt_e:
-                                                print(f"⚠ 代替手法も失敗: {alt_e}")
+                                        # 2. IPATウィンドウ(JRAネット投票)を最大化
+                                        print(f"IPATウィンドウを最大化: {target_title}")
+                                        win32gui.ShowWindow(target_hwnd, win32con.SW_MAXIMIZE)
                                         
-                                        print("✓ Windows APIでウィンドウアクティブ化処理完了")
+                                        print("✓ ウィンドウ切り替え完了")
                                     except Exception as show_e:
-                                        print(f"⚠ ShowWindow失敗: {show_e}")
+                                        print(f"⚠ ウィンドウ切り替え失敗: {show_e}")
                                 else:
                                     print("⚠ Chromeウィンドウが見つかりませんでした")
                                     
