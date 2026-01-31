@@ -806,7 +806,7 @@ function showIpatLaunchConfirmModal() {
         `).join('');
 
         voteDetails.innerHTML = `
-            <h4 style="margin-bottom: var(--space-md);">投票予定内容 (ブラウザへ転送)</h4>
+            <h4 style="margin-bottom: var(--space-md);">IPAT投票予定内容</h4>
             <div style="background: var(--bg-secondary); padding: var(--space-md); border-radius: 8px; max-height: 300px; overflow-y: auto;">
                 ${rows}
                 <div style="display: flex; justify-content: space-between; padding-top: 12px; margin-top: 8px; border-top: 2px solid var(--border-color); font-weight: bold;">
@@ -821,7 +821,7 @@ function showIpatLaunchConfirmModal() {
     // ボタンのテキスト変更
     const confirmBtn = document.getElementById('confirmVoteBtn');
     if (confirmBtn) {
-        confirmBtn.textContent = 'ブラウザを起動して投票へ 🚀';
+        confirmBtn.textContent = 'IPAT投票画面を開く 🚀';
     }
 
     if (elements.ipatVoteConfirmModal) {
@@ -886,10 +886,10 @@ async function handleConfirmVote() {
         const data = await response.json();
 
         if (data.success) {
-            alert('✅ ブラウザを起動しました！\n\n開いたブラウザ上で投票手続きを完了させてください。');
+            alert('✅ IPAT投票画面を開きました！\n\n' + data.message + '\n\n⚠️ 買い目を確認の上、投票確定ボタンは手動で押してください。');
             closeIpatVoteModal();
         } else {
-            alert('❌ 起動エラー: ' + (data.error || '不明なエラーが発生しました'));
+            alert('❌ エラー: ' + (data.error || '不明なエラーが発生しました'));
         }
 
     } catch (error) {
