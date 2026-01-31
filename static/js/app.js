@@ -791,19 +791,31 @@ function handleIpatConnect() {
  * (旧 ipatVoteConfirmModal を流用)
  */
 function showIpatLaunchConfirmModal() {
-    const totalAmount = currentRecommendations.reduce((sum, rec) => sum + (rec.amount || 0), 0);
+    // BettingAllocatorのデータ構造に対応
+    const totalAmount = currentRecommendations.reduce((sum, rec) => {
+        const amount = rec.total_amount || rec.amount || 0;
+        return sum + amount;
+    }, 0);
+
     const voteDetails = document.getElementById('voteDetails');
 
     if (voteDetails) {
-        const rows = currentRecommendations.map(rec => `
+        const rows = currentRecommendations.map(rec => {
+            // BettingAllocatorフォーマットに対応
+            const type = rec.bet_type || rec.type || '不明';
+            const combo = rec.combination || rec.combo || rec.umaban || '-';
+            const amount = rec.total_amount || rec.amount || 0;
+
+            return `
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
                 <span>
-                    <span class="badge badge-primary">${rec.type}</span> 
-                    <b>${rec.umaban || rec.combination}</b>
+                    <span class="badge badge-primary">${type}</span> 
+                    <b>${combo}</b>
                 </span>
-                <span>¥${rec.amount ? rec.amount.toLocaleString() : 0}</span>
+                <span>¥${amount.toLocaleString()}</span>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         voteDetails.innerHTML = `
             <h4 style="margin-bottom: var(--space-md);">IPAT投票予定内容</h4>
@@ -848,27 +860,17 @@ async function handleConfirmVote() {
     confirmBtn.disabled = true;
 
     try {
-        // Betsデータ整形
+        // Betsデータ整形（BettingAllocatorフォーマットに対応）
         const bets = currentRecommendations.map(rec => {
-            // 単勝・複勝の場合は umaban を数値として使用
-            // 馬連・ワイド等の場合は combination を文字列として使用
-            let horseNo;
-            if (rec.type === '単勝' || rec.type === '複勝') {
-                // 単複の場合、umabanを数値化
-                horseNo = parseInt(rec.umaban);
-                if (isNaN(horseNo)) {
-                    console.warn(`Invalid umaban for ${rec.type}: ${rec.umaban}`);
-                    horseNo = rec.umaban; // フォールバック
-                }
-            } else {
-                // 組み合わせ馬券の場合、combinationをそのまま使用（例: "1-2"）
-                horseNo = rec.combination || rec.umaban;
-            }
+            // BettingAllocatorのデータ構造に対応
+            const betType = rec.bet_type || rec.type || '単勝';
+            const horseNo = rec.combination || rec.combo || rec.umaban || rec.horse_no;
+            const amount = rec.total_amount || rec.amount || 100;
 
             return {
-                horse_no: horseNo,
-                type: BET_TYPE_CODES[rec.type],
-                amount: rec.amount || 100
+                type: betType,
+                horses: horseNo,
+                amount: amount
             };
         });
 
