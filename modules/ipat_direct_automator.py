@@ -1030,46 +1030,90 @@ class IpatDirectAutomator:
                     
                     # ウィンドウを前面に表示
                     try:
+                        print("=== ウィンドウアクティブ化処理開始 ===")
+                        
                         # 1. ウィンドウを最大化
                         self.driver.maximize_window()
-                        time.sleep(0.3)
+                        time.sleep(0.5)
+                        print("✓ ウィンドウを最大化")
                         
                         # 2. Seleniumでフォーカス
                         self.driver.switch_to.window(self.driver.current_window_handle)
+                        print("✓ Seleniumでフォーカス")
                         
                         # 3. JavaScriptでもフォーカス
                         self.driver.execute_script("window.focus();")
+                        print("✓ JavaScriptでフォーカス")
                         
                         # 4. Windows APIを使用して強制的に前面表示
                         if platform.system() == 'Windows':
                             try:
                                 import win32gui
                                 import win32con
-                                # Chromeのウィンドウハンドルを取得
-                                def enum_windows_callback(hwnd, windows):
+                                import win32process
+                                
+                                print("Windows環境を検出、Windows APIを使用します")
+                                
+                                # ChromeDriverのサービスからプロセスIDを取得
+                                chrome_pid = None
+                                try:
+                                    # Selenium 4.x のservice経由でプロセスIDを取得
+                                    if hasattr(self.driver, 'service') and hasattr(self.driver.service, 'process'):
+                                        chrome_pid = self.driver.service.process.pid
+                                        print(f"ChromeDriver PID: {chrome_pid}")
+                                except:
+                                    pass
+                                
+                                # すべてのトップレベルウィンドウを列挙
+                                target_hwnd = None
+                                
+                                def enum_callback(hwnd, results):
                                     if win32gui.IsWindowVisible(hwnd):
                                         title = win32gui.GetWindowText(hwnd)
-                                        if 'IPAT' in title or 'Chrome' in title:
-                                            windows.append((hwnd, title))
+                                        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                                        
+                                        # ChromeDriverのPIDと一致するか、タイトルに「Chrome」が含まれるウィンドウを探す
+                                        if (chrome_pid and pid == chrome_pid) or 'Chrome' in title or 'IPAT' in title:
+                                            results.append((hwnd, title, pid))
+                                            print(f"  候補ウィンドウ: {title} (PID: {pid}, HWND: {hwnd})")
                                     return True
                                 
                                 windows = []
-                                win32gui.EnumWindows(enum_windows_callback, windows)
+                                win32gui.EnumWindows(enum_callback, windows)
                                 
                                 if windows:
-                                    hwnd = windows[0][0]
+                                    # 最初のウィンドウを使用
+                                    target_hwnd, target_title, target_pid = windows[0]
+                                    print(f"対象ウィンドウ: {target_title} (HWND: {target_hwnd})")
+                                    
                                     # ウィンドウを前面に表示
-                                    win32gui.SetForegroundWindow(hwnd)
-                                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-                                    print(f"Windows APIでウィンドウをアクティブ化: {windows[0][1]}")
-                            except ImportError:
-                                print("pywin32がインストールされていません。通常のフォーカス処理のみ実行")
+                                    # SW_RESTORE: 最小化されている場合は元に戻す
+                                    win32gui.ShowWindow(target_hwnd, win32con.SW_RESTORE)
+                                    time.sleep(0.2)
+                                    
+                                    # SetForegroundWindowを実行
+                                    result = win32gui.SetForegroundWindow(target_hwnd)
+                                    print(f"SetForegroundWindow結果: {result}")
+                                    
+                                    # 追加: BringWindowToTopも試す
+                                    win32gui.BringWindowToTop(target_hwnd)
+                                    print("✓ Windows APIでウィンドウをアクティブ化")
+                                else:
+                                    print("⚠ Chromeウィンドウが見つかりませんでした")
+                                    
+                            except ImportError as ie:
+                                print(f"⚠ pywin32がインストールされていません: {ie}")
+                                print("  通常のフォーカス処理のみ実行")
                             except Exception as we:
-                                print(f"Windows APIでのアクティブ化失敗: {we}")
+                                print(f"⚠ Windows APIでのアクティブ化失敗: {we}")
+                                import traceback
+                                traceback.print_exc()
                         
-                        print("ブラウザウィンドウを前面に表示しました")
+                        print("=== ウィンドウアクティブ化処理完了 ===")
                     except Exception as e:
                         print(f"ウィンドウのアクティブ化に失敗: {e}")
+                        import traceback
+                        traceback.print_exc()
                     
                     self._save_snapshot("stopped_at_confirmation")
                     return True, "確認画面で停止しました（シミュレーション成功）"
