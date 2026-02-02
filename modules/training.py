@@ -8,36 +8,39 @@ import os
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+# from sklearn.model_selection import train_test_split, cross_val_score
+# from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from .constants import MODEL_DIR
 
-try:
-    import shap
-except ImportError:
-    shap = None
+# try:
+#     import shap
+# except ImportError:
+#     shap = None
+shap = None
 
+# try:
+#     import xgboost as xgb
+# except ImportError:
+#     xgb = None
+xgb = None
 
-try:
-    import xgboost as xgb
-except ImportError:
-    xgb = None
+# try:
+#     import catboost as cb
+# except ImportError:
+#     cb = None
+cb = None
 
-try:
-    import catboost as cb
-except ImportError:
-    cb = None
+# try:
+#     import torch
+#     import torch.nn as nn
+#     import torch.optim as optim
+#     from torch.utils.data import DataLoader, TensorDataset
+# except Exception:
+#     torch = None
+torch = None
 
-try:
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    from torch.utils.data import DataLoader, TensorDataset
-except ImportError:
-    torch = None
-
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.preprocessing import StandardScaler
+# from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+# from sklearn.preprocessing import StandardScaler
 
 class SimpleMLP(nn.Module if torch else object):
     def __init__(self, input_dim):
@@ -152,6 +155,7 @@ class HorseRaceModel:
             X_train, y_train = X, y
             # X_val, y_val はそのまま使用
         elif test_size > 0:
+            from sklearn.model_selection import train_test_split
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=test_size, random_state=42
             )
@@ -162,9 +166,11 @@ class HorseRaceModel:
         if self.model_type == 'lgbm':
             self._train_lgbm(X_train, y_train, X_val, y_val, early_stopping_rounds)
         elif self.model_type == 'rf':
+            from sklearn.ensemble import RandomForestClassifier
             self.model = RandomForestClassifier(**self.model_params)
             self.model.fit(X_train, y_train)
         elif self.model_type == 'gbc':
+            from sklearn.ensemble import GradientBoostingClassifier
             self.model = GradientBoostingClassifier(**self.model_params)
             self.model.fit(X_train, y_train)
         elif self.model_type == 'xgb':
@@ -188,6 +194,8 @@ class HorseRaceModel:
         y_pred_proba = self.predict(X_val)
         y_pred = (y_pred_proba > 0.5).astype(int)
         
+        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+
         metrics = {
             'accuracy': accuracy_score(y_val, y_pred),
             'precision': precision_score(y_val, y_pred, zero_division=0),

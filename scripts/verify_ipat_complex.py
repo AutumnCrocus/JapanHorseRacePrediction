@@ -39,7 +39,7 @@ def test_complex_betting():
     print(f"Bets: {len(bets)} patterns")
     
     # 3. Execution
-    automator = IpatDirectAutomator(debug_mode=False) # Headless OFF (GUI Visible)
+    automator = IpatDirectAutomator(debug_mode=True) # Headless OFF (GUI Visible)
     
     try:
         # Login
@@ -82,7 +82,8 @@ def test_complex_betting():
         traceback.print_exc()
     finally:
         # Don't close immediately so user can see
-        input("Press Enter to close browser...")
+        print("Verification finished. Closing in 5 seconds...")
+        time.sleep(5)
         automator.close()
 
 if __name__ == "__main__":

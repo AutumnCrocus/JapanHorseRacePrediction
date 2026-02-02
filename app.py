@@ -1,6 +1,6 @@
 """
 競馬予想AI - Webアプリケーション
-Flask APIサーバーとUI (Last Updated: Phase 3 Optimization v8 - Remove Unnecessary Window Resize)
+Flask APIサーバーとUI (Last Updated: Phase 3 Optimization v9 - Integrated Extreme Speed IPAT Automation)
 """
 
 import os
@@ -178,9 +178,10 @@ def predict():
         # 予算とレースID（あれば）を取得
         budget = int(data.get('budget', 0))
         race_id = data.get('race_id', 'custom_race')
+        strategy = data.get('strategy', 'balance')
         
         # 共通の予測ロジックを実行
-        return run_prediction_logic(df, "カスタムレース", "入力データによる予測", race_id=race_id, budget=budget)
+        return run_prediction_logic(df, "カスタムレース", "入力データによる予測", race_id=race_id, budget=budget, strategy=strategy)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -220,8 +221,9 @@ def predict_by_url():
         
         # 予算取得
         budget = int(data.get('budget', 0))
+        strategy = data.get('strategy', 'balance')
         
-        return run_prediction_logic(df, race_name, race_info, race_id=race_id, budget=budget)
+        return run_prediction_logic(df, race_name, race_info, race_id=race_id, budget=budget, strategy=strategy)
         
     except Exception as e:
         import traceback
@@ -230,7 +232,7 @@ def predict_by_url():
 
 from modules.betting_allocator import BettingAllocator
 
-def run_prediction_logic(df, race_name_default, race_info_default, race_id=None, budget=0):
+def run_prediction_logic(df, race_name_default, race_info_default, race_id=None, budget=0, strategy='balance'):
     """共通予測ロジック"""
     model = get_model()
     if model is None:
@@ -404,7 +406,7 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
              except Exception as oe:
                  print(f"Failed to fetch detailed odds data: {oe}")
              
-             recommendations = BettingAllocator.allocate_budget(df_preds_alloc, budget, odds_data=odds_data)
+             recommendations = BettingAllocator.allocate_budget(df_preds_alloc, budget, odds_data=odds_data, strategy=strategy)
              
              if not recommendations:
                  odds_warning = "推奨条件を満たす組み合わせが見つかりませんでした (予算不足または確度不足)"
@@ -753,7 +755,7 @@ def launch_ipat_browser():
         if vote_success:
             return jsonify({
                 'success': True, 
-                'message': f'{vote_msg}\n\n⚠️ 合計金額を確認し、「入力終了」→「投票」ボタンを手動で押してください。'
+                'message': f'{vote_msg}\n\n✅ 合計金額は自動計算・入力済みです（Extreme Speed Mode）。\n⚠️ 内容を確認し、「入力終了」→「投票」ボタンを手動で押してください。'
             })
         else:
             # 投票失敗時はブラウザを閉じる

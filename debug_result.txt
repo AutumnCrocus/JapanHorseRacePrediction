@@ -1,0 +1,34 @@
+DEBUG: Starting process for 202610010412
+Models loaded.
+DEBUG: Exception in process_race: train and valid dataset categorical_feature do not match.
+Traceback (most recent call last):
+  File "C:\Users\t4kic\Documents\JapanHorseRacePrediction\scripts\debug_predict.py", line 24, in debug_race
+    res = process_race(race_id, predictor, budget=5000, horse_results_db=horse_results, peds_db=peds)
+  File "C:\Users\t4kic\Documents\JapanHorseRacePrediction\scripts\..\scripts\predict_today_all.py", line 229, in process_race
+    probs = predictor.model.predict(X)
+  File "C:\Users\t4kic\Documents\JapanHorseRacePrediction\scripts\..\modules\training.py", line 300, in predict
+    return self.model.predict(X)
+           ~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\t4kic\AppData\Local\Programs\Python\Python314\Lib\site-packages\lightgbm\basic.py", line 4767, in predict
+    return predictor.predict(
+           ~~~~~~~~~~~~~~~~~^
+        data=data,
+        ^^^^^^^^^^
+    ...<6 lines>...
+        validate_features=validate_features,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\t4kic\AppData\Local\Programs\Python\Python314\Lib\site-packages\lightgbm\basic.py", line 1158, in predict
+    data = _data_from_pandas(
+           ~~~~~~~~~~~~~~~~~^
+        data=data,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        pandas_categorical=self.pandas_categorical,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )[0]
+    ^
+  File "C:\Users\t4kic\AppData\Local\Programs\Python\Python314\Lib\site-packages\lightgbm\basic.py", line 851, in _data_from_pandas
+    raise ValueError("train and valid dataset categorical_feature do not match.")
+ValueError: train and valid dataset categorical_feature do not match.

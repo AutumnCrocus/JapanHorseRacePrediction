@@ -199,6 +199,7 @@ async function runUrlPrediction() {
     showLoading(true);
 
     const budget = document.getElementById('budget') ? document.getElementById('budget').value : 0;
+    const strategy = document.getElementById('strategy') ? document.getElementById('strategy').value : 'balance';
 
     try {
         const response = await fetch(`${API_BASE}/api/predict_by_url`, {
@@ -206,7 +207,7 @@ async function runUrlPrediction() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url, budget })
+            body: JSON.stringify({ url, budget, strategy })
         });
 
         const data = await response.json();

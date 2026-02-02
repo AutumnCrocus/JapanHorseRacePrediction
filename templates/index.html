@@ -76,9 +76,17 @@
                             <input type="text" id="raceUrl" class="input-text"
                                 placeholder="https://race.netkeiba.com/race/shutuba.html?race_id=2026..."
                                 style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+
                             <input type="number" id="budget" class="input-text" placeholder="予算: 10000円" min="0"
                                 step="100"
                                 style="flex: 1; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+
+                            <select id="strategy" class="input-text"
+                                style="flex: 1; min-width: 140px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: white; color: #333;">
+                                <option value="balance">⚖️ バランス型 (推奨)</option>
+                                <option value="formation">⚔️ フォーメーション (高回収)</option>
+                            </select>
+
                             <button id="predictUrlBtn" class="btn btn-primary">
                                 <span class="btn-icon">🌐</span>
                                 予測
