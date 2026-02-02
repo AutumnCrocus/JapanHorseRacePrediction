@@ -1,3 +1,11 @@
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import re
+
+# Define constants if missing
+SHUTUBA_URL = "https://race.netkeiba.com/race/shutuba.html?race_id="
+HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 class Shutuba:
     """出馬表のスクレイピングクラス"""

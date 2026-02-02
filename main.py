@@ -516,7 +516,7 @@ def main():
         # 引数の優先順位: --start-year/--end-year
         start = args.start_year or 2020
         end = args.end_year or 2024
-        run_scraping(start, end)
+        scrape_data(start_year=start, end_year=end, sample=args.sample)
     elif args.command == 'train':
         train_model(algo=args.algo, ensemble=args.ensemble, full_train=args.full_train)
     elif args.command == 'predict':

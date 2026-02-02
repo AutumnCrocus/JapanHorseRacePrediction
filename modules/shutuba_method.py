@@ -1,4 +1,14 @@
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import re
+import os
 
+# Define constants if missing, though likely imported elsewhere or defined here
+SHUTUBA_URL = "https://race.netkeiba.com/race/shutuba.html?race_id="
+HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+class ShutubaMethod:
     @staticmethod
     def scrape(race_id: str) -> pd.DataFrame:
         """

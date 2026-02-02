@@ -31,7 +31,6 @@ jockey_stats = None
 
 def get_model():
     """モデルを取得（未ロードならロードする）"""
-    global model
     if model is None:
         load_model()
     return model
@@ -207,7 +206,6 @@ def predict_by_url():
         # Fetch data
         try:
             # Load global artifacts
-            global processor, engineer, bias_map, jockey_stats
             df = fetch_and_process_race_data(race_id, processor, engineer, bias_map, jockey_stats)
         except Exception as e:
             return jsonify({'error': f'データ取得に失敗しました: {str(e)}'}), 500

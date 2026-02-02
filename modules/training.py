@@ -30,14 +30,16 @@ xgb = None
 #     cb = None
 cb = None
 
-# try:
-#     import torch
-#     import torch.nn as nn
-#     import torch.optim as optim
-#     from torch.utils.data import DataLoader, TensorDataset
-# except Exception:
-#     torch = None
-torch = None
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    from torch.utils.data import DataLoader, TensorDataset
+except ImportError:
+    torch = None
+    nn = None
+    optim = None
+
 
 # from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 # from sklearn.preprocessing import StandardScaler

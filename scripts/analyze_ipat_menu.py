@@ -3,6 +3,8 @@ import sys
 import os
 import time
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 
 # モジュールパスを通す
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
