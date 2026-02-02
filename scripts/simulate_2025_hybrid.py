@@ -1,6 +1,5 @@
 
 import pandas as pd
-import numpy as np
 import pickle
 import os
 import sys
@@ -556,6 +555,7 @@ def check_hit(my_combos, ret_df, bet_type, unit):
     return total_pay
              
     return total_pay
+
 
 if __name__ == '__main__':
     run_simulation()

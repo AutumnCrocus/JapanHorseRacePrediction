@@ -8,7 +8,7 @@ import json
 import pickle
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 
 # モジュールのインポート（絶対インポート）
