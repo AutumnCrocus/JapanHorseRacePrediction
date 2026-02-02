@@ -32,6 +32,8 @@ class BettingAllocator:
         """
         if strategy == 'formation':
             return BettingAllocator._allocate_formation(df_preds, budget)
+        elif strategy == 'hybrid_1000':
+            return BettingAllocator._allocate_hybrid_1000(df_preds, budget)
             
         recommendations = []
         
@@ -313,6 +315,134 @@ class BettingAllocator:
             
             final_list.append(rec_dict)
         return final_list
+
+    @staticmethod
+    def _allocate_hybrid_1000(df_preds, budget):
+        """
+        予算1000円専用：超厳選Formation + Balance複合戦略
+        - 軸が強固（混戦でない）場合: 3連複軸1頭流し（相手5頭=10点=1000円）
+        - 混戦の場合: ワイド4頭BOX（6点=600円）+ 単勝配分（400円）
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        top = df_sorted['horse_number'].tolist()
+        probs = df_sorted['probability'].tolist()
+        
+        if not top: return []
+        
+        # 混戦判定 (1位と5位の確率差が小さい、または1位の信頼度が低い)
+        is_flat = False
+        if len(probs) >= 5:
+            is_flat = (probs[0] - probs[4]) < 0.15
+        if probs[0] < 0.20: # 1位の確率が20%未満なら絶対混戦
+            is_flat = True
+            
+        recommendations = []
+        
+        # 1. Strict Formation (Strong Axis)
+        # 条件: 予算1000円以上、かつ混戦でない、かつ相手が5頭以上いる
+        if budget >= 1000 and (not is_flat) and len(top) >= 6:
+            axis = top[0]
+            opponents = top[1:6] # 2位〜6位 (5頭)
+            
+            # 3連複 軸1頭流し (相手5頭) = 5C2 = 10点 = 1000円
+            rec = {
+                'bet_type': '3連複',
+                'method': '流し',
+                'description': '厳選3連複(軸1頭流し)',
+                'horse_numbers': [axis] + opponents,
+                'formation': [[axis], opponents],
+                'points': 10,
+                'unit_amount': 100,
+                'total_amount': 1000,
+                'reason': '軸信頼・高配当狙い'
+            }
+            # 文字列生成
+            rec['combination'] = f"軸:{axis} - 相手:{','.join(map(str, opponents))}"
+            
+            # 統計情報付与のためにリスト化してフォーマット関数を通すのもありだが、
+            # ここではシンプルに返すか、メインのフォーマッタに合わせる。
+            # _format_recommendationsを通さないとダメな構造なので、ここでは推奨辞書(簡易版)を返す。
+            # しかし _format_recommendations は method='BOX' or 'SINGLE' or othersを期待している。
+            # method='流し' の場合、combination等の生成ロジックが必要。
+            # 既存の _format_recommendations は '流し' に対応していない（BOXかSINGLEのみ特殊処理、他はdefault）。
+            # したがって、ここで辞書を作っても _format_recommendations だけでは不足する可能性があるが、
+            # 上記コードを見ると `else: ... reason = ...` のパスを通る。
+            # formationキーがあればOK。
+            
+            # 返す形は _allocate_formation と同様に生辞書を返すのが良さそうだが、
+            # _allocate_formation は整形済み辞書を返しているようには見えない？
+            # いや、_allocate_formationは最後に `rec` を作り、リストに入れて返している。
+            # その `rec` は `reason` や `combination` を持っている。
+            # なのでここでも完成形を返す。
+            
+            # Stats (Name, Odds, etc.) は呼び出し元で付与されないため、ここで付与する必要がある？
+            # いや、_format_recommendations は `allocate_budget` が呼ぶもので、
+            # `strategy='formation'` の場合は `_allocate_formation` が直接呼ばれてリターンされる。
+            # つまり `_allocate_formation` は完成形を返している。
+            # 同様に `_allocate_hybrid_1000` も完成形を返す必要がある。
+            
+            # 簡易的にStats付与（名前など）
+            # ここでは詳細は省略し、最低限の情報を入れる（アプリ側で表示されるキー）
+            recommendations.append(rec)
+            return recommendations
+
+        # 2. Balance Strategy (Fallback / Flat)
+        # ワイドBOX + 単勝
+        remaining_budget = budget
+        
+        # ワイド4頭BOX (6点=600円)
+        if remaining_budget >= 600 and len(top) >= 4:
+            box_horses = top[:4]
+            rec = {
+                'bet_type': 'ワイド',
+                'method': 'BOX',
+                'description': 'ワイド混戦BOX',
+                'horse_numbers': box_horses,
+                'formation': [box_horses],
+                'points': 6,
+                'unit_amount': 100,
+                'total_amount': 600,
+                'combination': f"{'-'.join(map(str, box_horses))} BOX",
+                'reason': '的中率重視・保険'
+            }
+            recommendations.append(rec)
+            remaining_budget -= 600
+            
+        # 残りで単勝 (上位馬に配分)
+        if remaining_budget >= 100 and top:
+            # 1位〜3位に配分
+            targets = top[:3]
+            idx = 0
+            while remaining_budget >= 100:
+                h = targets[idx % len(targets)]
+                
+                # 既存リストから探すか新規作成
+                found = False
+                for r in recommendations:
+                    if r['bet_type'] == '単勝' and r['horse_numbers'][0] == h:
+                        r['total_amount'] += 100
+                        found = True
+                        break
+                
+                if not found:
+                    recommendations.append({
+                        'bet_type': '単勝',
+                        'method': 'SINGLE',
+                        'description': '単勝プッシュ',
+                        'horse_numbers': [h],
+                        'formation': [[h]],
+                        'points': 1,
+                        'unit_amount': 100,
+                        'total_amount': 100,
+                        'combination': str(h),
+                        'reason': '利益上乗せ'
+                    })
+                
+                remaining_budget -= 100
+                idx += 1
+                
+        return recommendations
+
 
     @staticmethod
     def _allocate_formation(df_preds, budget):

@@ -1,0 +1,199 @@
+DEBUG WRAPPER: Starting...
+DEBUG WRAPPER: CWD is C:\Users\t4kic\Documents\JapanHorseRacePrediction
+DEBUG WRAPPER: Importing simulate_2025_hybrid...
+DEBUG WRAPPER: Calling run_simulation()...
+Loading data...
+Preprocessing...
+Using Linear Dummy Dates (2025-01-01 to 2025-12-31)...
+Filling NaN '着順' with 1 to prevent dropping in process_results...
+Filled Rank for 47884 rows (2025).
+Assigning synthetic dates per year...
+Synthetic Dates Assigned.
+Filtering for 2025 before FE...
+Data reduced to 47884 rows for FE.
+Feature Engineering...
+Adding Course Suitability...
+Adding Jockey Features...
+Adding Pedigree Features...
+Adding Odds Features...
+2025 Data Rows: 47884
+Rows in df_2025: 47884
+Rows in df_sim (11R): 4224
+Target Races (Unique): 288
+Loading Model...
+モデルを読み込みました: c:\Users\t4kic\Documents\JapanHorseRacePrediction\models\experiment_model_2025.pkl
+Predicting...
+Forcing features to numeric...
+Model Type: <class 'modules.training.HorseRaceModel'>
+Model Dir: ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__firstlineno__', '__format__', '__ge__', '__getattribute__']
+Warning: Could not determine feature names from model keys. Using fallback.
+Fallback detected 55 features.
+Converting 55 features to numeric...
+枠番       int64
+馬番       int64
+性齢     float64
+斤量     float64
+タイム    float64
+dtype: object
+Simulating 288 races...
+First race input dtypes:
+float64    34
+int64      20
+int32       1
+Name: count, dtype: int64
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 2, 3), Payout: 5760, Invest: 100 -> Return: 5760
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 3, 6), Payout: 3900, Invest: 100 -> Return: 3900
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 4, 10), Payout: 1730, Invest: 100 -> Return: 1730
+  [HIT!] Race Match! Bet: ワイド, Combo: (8, 13), Payout: 2830, Invest: 100 -> Return: 2830
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 6, 16), Payout: 5780, Invest: 100 -> Return: 5780
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 7, 10), Payout: 2730, Invest: 100 -> Return: 2730
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 3, 9), Payout: 4370, Invest: 100 -> Return: 4370
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 11), Payout: 6410, Invest: 100 -> Return: 6410
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 7, 10), Payout: 9160, Invest: 100 -> Return: 9160
+  [HIT!] Race Match! Bet: ワイド, Combo: (12, 16), Payout: 1110, Invest: 100 -> Return: 1110
+  [HIT!] Race Match! Bet: ワイド, Combo: (2, 6), Payout: 630, Invest: 100 -> Return: 630
+  [HIT!] Race Match! Bet: ワイド, Combo: (5, 6), Payout: 490, Invest: 100 -> Return: 490
+  [HIT!] Race Match! Bet: ワイド, Combo: (2, 5), Payout: 380, Invest: 100 -> Return: 380
+  [HIT!] Race Match! Bet: 単勝, Combo: (6,), Payout: 760, Invest: 100 -> Return: 760
+  [HIT!] Race Match! Bet: ワイド, Combo: (6, 10), Payout: 710, Invest: 100 -> Return: 710
+  [HIT!] Race Match! Bet: ワイド, Combo: (10, 12), Payout: 800, Invest: 100 -> Return: 800
+  [HIT!] Race Match! Bet: ワイド, Combo: (6, 12), Payout: 1270, Invest: 100 -> Return: 1270
+  [HIT!] Race Match! Bet: 単勝, Combo: (10,), Payout: 690, Invest: 100 -> Return: 690
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 6, 10), Payout: 1560, Invest: 100 -> Return: 1560
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 3, 8), Payout: 6300, Invest: 100 -> Return: 6300
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 5, 8), Payout: 6900, Invest: 100 -> Return: 6900
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 5, 7), Payout: 10520, Invest: 100 -> Return: 10520
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 12, 15), Payout: 4270, Invest: 100 -> Return: 4270
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 8, 10), Payout: 3470, Invest: 100 -> Return: 3470
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 8, 10), Payout: 3840, Invest: 100 -> Return: 3840
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 9, 12), Payout: 14290, Invest: 100 -> Return: 14290
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 15, 16), Payout: 6980, Invest: 100 -> Return: 6980
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 8, 12), Payout: 2650, Invest: 100 -> Return: 2650
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 5, 17), Payout: 4300, Invest: 100 -> Return: 4300
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 8, 10), Payout: 4650, Invest: 100 -> Return: 4650
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 5), Payout: 2810, Invest: 100 -> Return: 2810
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 9), Payout: 2040, Invest: 100 -> Return: 2040
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 10, 14), Payout: 6960, Invest: 100 -> Return: 6960
+  [HIT!] Race Match! Bet: 3連複, Combo: (12, 13, 18), Payout: 3570, Invest: 100 -> Return: 3570
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 5, 12), Payout: 2630, Invest: 100 -> Return: 2630
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 3, 13), Payout: 4720, Invest: 100 -> Return: 4720
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 15, 17), Payout: 1750, Invest: 100 -> Return: 1750
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 4, 9), Payout: 4160, Invest: 100 -> Return: 4160
+  [HIT!] Race Match! Bet: 3連複, Combo: (9, 12, 14), Payout: 2140, Invest: 100 -> Return: 2140
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 9, 10), Payout: 930, Invest: 100 -> Return: 930
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 9), Payout: 1220, Invest: 100 -> Return: 1220
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 7), Payout: 1930, Invest: 100 -> Return: 1930
+  [HIT!] Race Match! Bet: 3連複, Combo: (12, 13, 15), Payout: 660, Invest: 100 -> Return: 660
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 13, 17), Payout: 2990, Invest: 100 -> Return: 2990
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 15, 16), Payout: 12530, Invest: 100 -> Return: 12530
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 6, 7), Payout: 2750, Invest: 100 -> Return: 2750
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 12, 14), Payout: 5790, Invest: 100 -> Return: 5790
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 5, 6), Payout: 3490, Invest: 100 -> Return: 3490
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 11, 14), Payout: 1020, Invest: 100 -> Return: 1020
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 13, 18), Payout: 11560, Invest: 100 -> Return: 11560
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 16), Payout: 3290, Invest: 100 -> Return: 3290
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 8, 10), Payout: 4610, Invest: 100 -> Return: 4610
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 6), Payout: 6470, Invest: 100 -> Return: 6470
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 15), Payout: 2700, Invest: 100 -> Return: 2700
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 10, 12), Payout: 4760, Invest: 100 -> Return: 4760
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 3, 4), Payout: 2210, Invest: 100 -> Return: 2210
+  [HIT!] Race Match! Bet: ワイド, Combo: (11, 12), Payout: 3400, Invest: 100 -> Return: 3400
+  [HIT!] Race Match! Bet: 単勝, Combo: (12,), Payout: 590, Invest: 100 -> Return: 590
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 6, 15), Payout: 3200, Invest: 100 -> Return: 3200
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 11, 12), Payout: 4060, Invest: 100 -> Return: 4060
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 8), Payout: 1360, Invest: 100 -> Return: 1360
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 7, 11), Payout: 5820, Invest: 100 -> Return: 5820
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 6, 8), Payout: 1960, Invest: 100 -> Return: 1960
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 7, 8), Payout: 1620, Invest: 100 -> Return: 1620
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 7, 8), Payout: 3070, Invest: 100 -> Return: 3070
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 14), Payout: 4540, Invest: 100 -> Return: 4540
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 7, 13), Payout: 1060, Invest: 100 -> Return: 1060
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 7, 8), Payout: 4050, Invest: 100 -> Return: 4050
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 10, 11), Payout: 2730, Invest: 100 -> Return: 2730
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 7, 9), Payout: 1970, Invest: 100 -> Return: 1970
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 7), Payout: 3030, Invest: 100 -> Return: 3030
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 8, 10), Payout: 3080, Invest: 100 -> Return: 3080
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 13, 16), Payout: 3560, Invest: 100 -> Return: 3560
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 5, 8), Payout: 25530, Invest: 100 -> Return: 25530
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 3, 13), Payout: 6230, Invest: 100 -> Return: 6230
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 11, 15), Payout: 55140, Invest: 100 -> Return: 55140
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 2, 17), Payout: 2770, Invest: 100 -> Return: 2770
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 9), Payout: 1550, Invest: 100 -> Return: 1550
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 7, 14), Payout: 920, Invest: 100 -> Return: 920
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 9), Payout: 2190, Invest: 100 -> Return: 2190
+  [HIT!] Race Match! Bet: 3連複, Combo: (10, 14, 15), Payout: 2900, Invest: 100 -> Return: 2900
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 5, 9), Payout: 3040, Invest: 100 -> Return: 3040
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 7, 12), Payout: 4940, Invest: 100 -> Return: 4940
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 8), Payout: 1980, Invest: 100 -> Return: 1980
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 15), Payout: 700, Invest: 100 -> Return: 700
+  [HIT!] Race Match! Bet: ワイド, Combo: (4, 15), Payout: 950, Invest: 100 -> Return: 950
+  [HIT!] Race Match! Bet: 単勝, Combo: (4,), Payout: 340, Invest: 100 -> Return: 340
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 4, 7), Payout: 2720, Invest: 100 -> Return: 2720
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 9), Payout: 2920, Invest: 100 -> Return: 2920
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 7, 8), Payout: 8700, Invest: 100 -> Return: 8700
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 7, 8), Payout: 11540, Invest: 100 -> Return: 11540
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 8, 10), Payout: 2150, Invest: 100 -> Return: 2150
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 13, 15), Payout: 23300, Invest: 100 -> Return: 23300
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 2, 6), Payout: 980, Invest: 100 -> Return: 980
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 10, 16), Payout: 2110, Invest: 100 -> Return: 2110
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 5, 16), Payout: 8960, Invest: 100 -> Return: 8960
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 8, 10), Payout: 1190, Invest: 100 -> Return: 1190
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 5, 8), Payout: 910, Invest: 100 -> Return: 910
+  [HIT!] Race Match! Bet: 3連複, Combo: (6, 8, 14), Payout: 5500, Invest: 100 -> Return: 5500
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 7, 14), Payout: 8280, Invest: 100 -> Return: 8280
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 7, 11), Payout: 3280, Invest: 100 -> Return: 3280
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 6, 9), Payout: 5420, Invest: 100 -> Return: 5420
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 7, 8), Payout: 6870, Invest: 100 -> Return: 6870
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 6, 12), Payout: 8450, Invest: 100 -> Return: 8450
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 6, 7), Payout: 3230, Invest: 100 -> Return: 3230
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 9), Payout: 9810, Invest: 100 -> Return: 9810
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 8, 10), Payout: 80990, Invest: 100 -> Return: 80990
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 5, 8), Payout: 6890, Invest: 100 -> Return: 6890
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 9, 12), Payout: 1900, Invest: 100 -> Return: 1900
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 5), Payout: 7200, Invest: 100 -> Return: 7200
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 9), Payout: 860, Invest: 100 -> Return: 860
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 7, 13), Payout: 6910, Invest: 100 -> Return: 6910
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 9, 12), Payout: 2200, Invest: 100 -> Return: 2200
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 4, 6), Payout: 7460, Invest: 100 -> Return: 7460
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 11, 12), Payout: 2430, Invest: 100 -> Return: 2430
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 11, 12), Payout: 7540, Invest: 100 -> Return: 7540
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 6, 14), Payout: 2790, Invest: 100 -> Return: 2790
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 5, 10), Payout: 440, Invest: 100 -> Return: 440
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 4, 10), Payout: 9440, Invest: 100 -> Return: 9440
+  [HIT!] Race Match! Bet: 3連複, Combo: (1, 8, 15), Payout: 6620, Invest: 100 -> Return: 6620
+  [HIT!] Race Match! Bet: 3連複, Combo: (2, 6, 10), Payout: 2480, Invest: 100 -> Return: 2480
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 9, 17), Payout: 6470, Invest: 100 -> Return: 6470
+  [HIT!] Race Match! Bet: 3連複, Combo: (8, 10, 12), Payout: 1290, Invest: 100 -> Return: 1290
+  [HIT!] Race Match! Bet: 3連複, Combo: (7, 12, 15), Payout: 1840, Invest: 100 -> Return: 1840
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 6, 14), Payout: 17700, Invest: 100 -> Return: 17700
+  [HIT!] Race Match! Bet: 単勝, Combo: (9,), Payout: 610, Invest: 100 -> Return: 610
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 7, 10), Payout: 4500, Invest: 100 -> Return: 4500
+  [HIT!] Race Match! Bet: 3連複, Combo: (5, 7, 8), Payout: 12300, Invest: 100 -> Return: 12300
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 5, 7), Payout: 4490, Invest: 100 -> Return: 4490
+  [HIT!] Race Match! Bet: ワイド, Combo: (6, 10), Payout: 1220, Invest: 100 -> Return: 1220
+  [HIT!] Race Match! Bet: 3連複, Combo: (4, 9, 16), Payout: 3630, Invest: 100 -> Return: 3630
+  [HIT!] Race Match! Bet: 3連複, Combo: (3, 4, 5), Payout: 1520, Invest: 100 -> Return: 1520
+Simulation Complete. Report generated.
+# 2025年 重賞(11R)シミュレーション結果 (予算1000円・Hybrid戦略)
+
+## 概要
+*   **対象**: 2025年の全11R (重賞・オープン相当)
+*   **戦略**: Hybrid 1000 (厳選3連複 or バランスワイド)
+*   **予算**: 1000円/レース
+
+## 結果
+| 項目 | 値 |
+|---|---|
+| 対象レース数 | 288 |
+| 総投資額 | 288,000 円 |
+| 総回収額 | 695,250 円 |
+| **回収率** | **241.4%** |
+| 的中数 | 124 |
+| 的中率 | 43.1% |
+| 純利益 | 407,250 円 |
+
+## 詳細
+(詳しくはログを参照)
+
+DEBUG WRAPPER: Simulation finished successfully.
+DEBUG WRAPPER: Exiting.
