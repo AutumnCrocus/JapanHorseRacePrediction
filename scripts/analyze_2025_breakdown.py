@@ -46,7 +46,10 @@ def create_race_info_map():
     if 'レース名' in hr.columns:
         for _, row in hr.iterrows():
             try:
-                r_name = str(row['レース名'])
+                # Normalize text (Full-width to Half-width, etc)
+                import unicodedata
+                r_name = unicodedata.normalize('NFKC', str(row['レース名']))
+                
                 # "YY/MM/DD 会場名 ..."
                 match = re.search(r'(\d{2}/\d{2}/\d{2})\s+(.+?)\s+(\d+)R', r_name)
                 if not match: continue
@@ -69,7 +72,9 @@ def create_race_info_map():
                     if dist_match:
                         hr_map[key] = {
                             'surface': dist_match.group(1),
-                            'distance': int(dist_match.group(2))
+                            'distance': int(dist_match.group(2)),
+                            'entrants': int(row.get('頭数', 0)) if '頭数' in row else 0,
+                            'name': r_name
                         }
             except: continue
             
@@ -94,10 +99,47 @@ def create_race_info_map():
         else:
             # Fallback or Log
             # print(f"Meta missing for {race_id} ({key})")
-            race_meta[race_id] = {'surface': '不明', 'distance': 0}
+            race_meta[race_id] = {'surface': '不明', 'distance': 0, 'entrants': 0, 'name': ''}
                 
     print(f"  - Mapped {len(race_meta)} races with metadata.")
     return race_meta
+
+def get_age_cat(name):
+    if '2歳' in name: return '2歳'
+    if '3歳' in name: return '3歳'
+    if '4歳以上' in name or '3歳以上' in name: return '4歳以上'
+    # Implicit for named races? Assume 4yo+ if unmentioned
+    return '4歳以上'
+
+def get_class_cat(name):
+    # Order matters
+    if 'G1' in name or 'GI' in name: return '重賞'
+    if 'G2' in name or 'GII' in name: return '重賞'
+    if 'G3' in name or 'GIII' in name: return '重賞'
+    
+    if '新馬' in name: return '新馬'
+    if '未勝利' in name: return '未勝利'
+    
+    if '1勝' in name or '500万' in name: return '1勝クラス'
+    if '2勝' in name or '1000万' in name: return '2勝クラス'
+    if '3勝' in name or '1600万' in name: return '3勝クラス'
+    
+    # OP list or pattern
+    if 'OP' in name or 'オープン' in name or '(L)' in name: return 'オープン/その他'
+    # If named race but no class specified, it's usually Open or Graded (already caught) or some special condition
+    return 'オープン/その他'
+
+def get_sex_cat(name):
+    if '牝' in name: return '牝馬限定'
+    # TODO: Check if race is female only but name doesn't say "牝"?
+    # Usually JRA appends (牝) or 牝馬限定 to condition.
+    return '混合/牡'
+
+def get_entrants_cat(count):
+    if count == 0: return '不明'
+    if count <= 9: return '少頭数 (~9)'
+    if count <= 12: return '中頭数 (10~12)'
+    return '多頭数 (13~)'
 
 def load_resources():
     print("Loading resources...", flush=True)
@@ -251,7 +293,7 @@ def run_analysis():
     for race_id, race_df in tqdm(grouper):
         race_id = str(race_id)
         v_name = PLACE_DICT.get(race_id[4:6], '不明')
-        info = race_meta.get(race_id, {'surface': '不明', 'distance': 0})
+        info = race_meta.get(race_id, {'surface': '不明', 'distance': 0, 'entrants': 0, 'name': ''})
         
         preds = []
         for _, row in race_df.iterrows():
@@ -279,6 +321,10 @@ def run_analysis():
                 'venue': v_name,
                 'surface': info['surface'],
                 'distance': get_dist_cat(info['distance']),
+                'entrants': get_entrants_cat(info.get('entrants', 0)),
+                'age': get_age_cat(info.get('name', '')),
+                'class': get_class_cat(info.get('name', '')),
+                'sex': get_sex_cat(info.get('name', '')),
                 'invest': invest,
                 'payout': payout,
                 'hit': 1 if payout > 0 else 0
@@ -293,7 +339,10 @@ def run_analysis():
             report += "対象データなし\n\n"
             continue
             
-        for col, title in [('venue', '開催場別'), ('surface', '馬場種別'), ('distance', '距離別')]:
+        for col, title in [
+            ('venue', '開催場別'), ('surface', '馬場種別'), ('distance', '距離別'),
+            ('entrants', '出走頭数別'), ('age', '馬齢別'), ('class', 'クラス別'), ('sex', '条件別')
+        ]:
             # レース数と各指標の合計を計算
             agg_sum = df_stats.groupby(col).agg({'invest': 'sum', 'payout': 'sum', 'hit': 'sum'})
             agg_count = df_stats.groupby(col).size().to_frame('races')
