@@ -18,7 +18,7 @@ from modules.training import HorseRaceModel, RacePredictor
 from modules.betting_allocator import BettingAllocator
 
 # --- 設定 ---
-STRATEGIES = ['balance', 'formation']
+STRATEGIES = ['balance', 'formation', 'hybrid_1000']
 BUDGETS = [1000, 5000, 10000]
 MODEL_BASE_DIR = os.path.join('models', 'historical_2010_2024')
 MODEL_PATH = os.path.join(MODEL_BASE_DIR, 'model.pkl')
