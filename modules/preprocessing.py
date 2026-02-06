@@ -260,9 +260,16 @@ class FeatureEngineer:
     def add_horse_history_features(self, df: pd.DataFrame, horse_results_df: pd.DataFrame) -> pd.DataFrame:
         """
         馬の過去成績から特徴量を追加（データリーク修正版 - ローリング平均+シフト+厳密マージ）
-        Interval, Prev Rank 対応
         """
         df = df.copy()
+        
+        # horse_id が index にある場合、カラムに持ってくる (インデックス名が None の場合も考慮)
+        if 'horse_id' not in df.columns:
+            if df.index.name == 'horse_id' or 'horse_id' in df.index.names:
+                df = df.reset_index(level='horse_id')
+            elif df.index.name is None and not isinstance(df.index, pd.MultiIndex):
+                # 無名の1次インデックスを horse_id とみなす (慣習的な実装)
+                df = df.reset_index().rename(columns={'index': 'horse_id'})
         
         # デフォルト値
         default_values = {
@@ -274,198 +281,93 @@ class FeatureEngineer:
             if col not in df.columns:
                 df[col] = val
         
+        # date カラムが欠落している場合の補助 (特に推論用データ)
+        if 'date' not in df.columns:
+            # original_race_id もしくは index から取得
+            rid_source = None
+            if 'original_race_id' in df.columns: rid_source = df['original_race_id']
+            elif df.index.name == 'race_id' or (not df.index.name and not isinstance(df.index, pd.MultiIndex)):
+                rid_source = df.index.to_series()
+            
+            if rid_source is not None:
+                # YYYYMMDD または YYYYPP... 形式を想定して先頭8文字を日付とする
+                df['date'] = pd.to_datetime(rid_source.astype(str).str[:8], format='%Y%m%d', errors='coerce').dt.normalize()
+            else:
+                # 最終手段: 現在日付
+                df['date'] = pd.Timestamp.now().normalize()
+
         if horse_results_df is None or horse_results_df.empty or 'horse_id' not in df.columns:
-            print("Warning: Skipping history features (empty ref data)")
             return df
         
-        # 1. horse_resultsの前処理
+        # 1. 前処理と型合わせ
         hr = self._preprocess_horse_results(horse_results_df)
 
-        # horse_id が index にある場合、カラムに戻す
+        # hr側の horse_id も保証
         if 'horse_id' not in hr.columns:
-            hr = hr.reset_index()
-            if 'horse_id' not in hr.columns:
-                if 'index' in hr.columns: hr = hr.rename(columns={'index': 'horse_id'})
-                elif hr.index.name == 'horse_id': hr = hr.reset_index()
+            if hr.index.name == 'horse_id' or 'horse_id' in hr.index.names:
+                hr = hr.reset_index(level='horse_id')
+            elif hr.index.name is None and not isinstance(hr.index, pd.MultiIndex):
+                hr = hr.reset_index().rename(columns={'index': 'horse_id'})
         
-        if 'horse_id' not in hr.columns:
-             print("Warning: horse_id column not found in horse_results.")
-             return df
-             
-        # 日付変換
-        if 'date' in hr.columns:
-            hr['date'] = pd.to_datetime(hr['date'], errors='coerce')
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            
-        # 予測モード判定
-        is_predict_mode = False
-        if not df.empty and not hr.empty:
-            if 'date' in df.columns:
-                # 簡易サンプリングチェック: dfの日付と馬IDがhrに存在しないなら予測モード
-                sample_horse = df['horse_id'].iloc[0]
-                sample_date = df['date'].iloc[0]
-                match = hr[(hr['horse_id'] == sample_horse) & (hr['date'] == sample_date)]
-                if match.empty:
-                    is_predict_mode = True
+        # IDを文字列に統一
+        hr['horse_id'] = hr['horse_id'].astype(str)
+        df['horse_id'] = df['horse_id'].astype(str)
         
-        # 2. 着順数値化
+        # 日付正規化
+        hr['date'] = pd.to_datetime(hr['date'], errors='coerce').dt.normalize()
+        df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.normalize()
+        
+        # 数値化
         rank_col = '着順' if '着順' in hr.columns else '着 順'
-        if rank_col in hr.columns:
-            hr['rank_num'] = pd.to_numeric(hr[rank_col], errors='coerce')
-        else:
-            hr['rank_num'] = np.nan
-            
+        hr['rank_num'] = pd.to_numeric(hr[rank_col], errors='coerce')
         hr['is_win'] = (hr['rank_num'] == 1).astype(int)
         hr['is_place'] = (hr['rank_num'] <= 3).astype(int)
+        hr['last_3f_num'] = pd.to_numeric(hr['上り'], errors='coerce') if '上り' in hr.columns else np.nan
+
+        # 2. 特徴量計算 (Expanding Window + Shift(1))
+        # 処理対象の馬のみに絞る
+        target_horses = df['horse_id'].unique()
+        hr_filtered = hr[hr['horse_id'].isin(target_horses)].copy()
         
-        # 3. 統計量計算 (groupby)
-        hr_stats_list = []
+        # df側に結果カラムをNaNで作成 (リーク防止)
+        df_for_calc = df.copy()
+        for col in ['rank_num', 'is_win', 'is_place', 'last_3f_num']:
+            df_for_calc[col] = np.nan
+        df_for_calc['_is_target'] = True
+        hr_filtered['_is_target'] = False
         
-        # groupbyのキーエラー回避
-        hr = hr.dropna(subset=['horse_id'])
+        combined = pd.concat([hr_filtered, df_for_calc], sort=False).sort_values(['horse_id', 'date'])
         
-        for horse_id, group in hr.groupby('horse_id'):
-            group = group.sort_values('date')
-            
-            if is_predict_mode:
-                # 予測モード: 最新の累積値を計算
-                if len(group) == 0: continue
-                
-                last_row = group.iloc[-1]
-                
-                avg_rank = group['rank_num'].mean()
-                win_rate = group['is_win'].mean()
-                place_rate = group['is_place'].mean()
-                race_count = len(group)
-                
-                prev_rank = last_row['rank_num']
-                last_date = last_row['date']
-                
-                avg_last_3f = 37.0
-                if '上り' in group.columns:
-                    nums = pd.to_numeric(group['上り'], errors='coerce')
-                    avg_last_3f = nums.mean()
+        # 厳密に過去のみにする
+        gb = combined.groupby('horse_id')
+        combined['avg_rank'] = gb['rank_num'].transform(lambda x: x.expanding().mean().shift(1))
+        combined['win_rate'] = gb['is_win'].transform(lambda x: x.expanding().mean().shift(1))
+        combined['place_rate'] = gb['is_place'].transform(lambda x: x.expanding().mean().shift(1))
+        combined['race_count'] = gb['rank_num'].transform(lambda x: x.expanding().count().shift(1))
+        combined['prev_rank'] = gb['rank_num'].transform(lambda x: x.shift(1))
+        combined['avg_last_3f'] = gb['last_3f_num'].transform(lambda x: x.expanding().mean().shift(1))
+        combined['interval'] = gb['date'].transform(lambda x: x.diff().dt.days).fillna(20)
 
-                avg_running_style = 0.5
-                if 'running_style' in group.columns:
-                    avg_running_style = group['running_style'].mean()
-                
-                hr_stats_list.append({
-                    'horse_id': horse_id,
-                    'avg_rank': avg_rank,
-                    'win_rate': win_rate,
-                    'place_rate': place_rate,
-                    'race_count': race_count,
-                    'prev_rank': prev_rank,
-                    'last_date': last_date,
-                    'avg_last_3f': avg_last_3f,
-                    'avg_running_style': avg_running_style
-                })
-                
-            else:
-                # 学習モード: Expanding Window + Shift
-                group['avg_rank'] = group['rank_num'].expanding().mean().shift(1)
-                group['win_rate'] = group['is_win'].expanding().mean().shift(1)
-                group['place_rate'] = group['is_place'].expanding().mean().shift(1)
-                group['race_count'] = group['rank_num'].expanding().count().shift(1)
-                group['prev_rank'] = group['rank_num'].shift(1)
-                
-                if '上り' in group.columns:
-                    group['上り_num'] = pd.to_numeric(group['上り'], errors='coerce')
-                    group['avg_last_3f'] = group['上り_num'].expanding().mean().shift(1)
-                
-                if 'running_style' in group.columns:
-                    group['avg_running_style'] = group['running_style'].expanding().mean().shift(1)
-                
-                # Interval
-                group['interval'] = group['date'].diff().dt.days
-                
-                hr_stats_list.append(group)
-                
-        # 4. マージと反映
-        if is_predict_mode:
-            stats_df = pd.DataFrame(hr_stats_list)
-            if stats_df.empty: return df
-            
-            # マージ
-            df = pd.merge(df, stats_df, on='horse_id', how='left', suffixes=('', '_new'))
-            
-            # Interval計算
-            # Interval計算
-            if 'date' in df.columns and 'last_date' in df.columns:
-                df['interval'] = (df['date'] - df['last_date']).dt.days
-            
-            # カラム更新
-            target_cols = ['avg_rank', 'win_rate', 'place_rate', 'race_count', 'prev_rank', 'avg_last_3f', 'avg_running_style']
-            for col in target_cols:
-                if col + '_new' in df.columns:
-                    df[col] = df[col + '_new'].fillna(df[col])
-                    df.drop(columns=[col + '_new'], inplace=True)
-            
-            # 不要カラム削除
-            if 'last_date' in df.columns:
-                df.drop(columns=['last_date'], inplace=True)
-                
-        else:
-            if not hr_stats_list: return df
-            hr_stats = pd.concat(hr_stats_list, ignore_index=True)
-            
-            # キー作成
-            df_working = df.copy()
-            if '枠 番' in hr_stats.columns: hr_stats['枠番_key'] = hr_stats['枠 番']
-            elif '枠番' in hr_stats.columns: hr_stats['枠番_key'] = hr_stats['枠番']
-            else: hr_stats['枠番_key'] = -1
-                
-            if '馬 番' in hr_stats.columns: hr_stats['馬番_key'] = hr_stats['馬 番']
-            elif '馬番' in hr_stats.columns: hr_stats['馬番_key'] = hr_stats['馬番']
-            else: hr_stats['馬番_key'] = -1
-
-            # 型変換
-            for col in ['枠番', '馬番']:
-                if col in df_working.columns:
-                    df_working[col] = pd.to_numeric(df_working[col], errors='coerce').fillna(-1).astype(int)
-                col_key = col + '_key'
-                hr_stats[col_key] = pd.to_numeric(hr_stats[col_key], errors='coerce').fillna(-2).astype(int)
-
-            # マージ
-            # マージ
-            merge_cols = ['horse_id', '枠番_key', '馬番_key',
-                          'avg_rank', 'win_rate', 'place_rate', 'race_count', 
-                          'interval', 'prev_rank', 'avg_last_3f', 'avg_running_style']
-            merge_cols = [c for c in merge_cols if c in hr_stats.columns]
-            
-            # 馬ID, 枠, 馬番でマージ
-            merged = pd.merge(
-                df_working,
-                hr_stats[merge_cols].drop_duplicates(['horse_id', '枠番_key', '馬番_key']),
-                left_on=['horse_id', '枠番', '馬番'],
-                right_on=['horse_id', '枠番_key', '馬番_key'],
-                how='left',
-                suffixes=('', '_new')
-            )
-            
-            # もしdateが消えていたら復元 (基本的には消えないはずだが念のため)
-            if 'date' not in merged.columns and 'date' in df_working.columns:
-                merged['date'] = df_working['date']
-                
-            df = merged
-
-            # 値更新
-            target_cols = ['avg_rank', 'win_rate', 'place_rate', 'race_count', 
-                          'interval', 'prev_rank', 'avg_last_3f', 'avg_running_style']
-            
-            for col in target_cols:
-                new_col = col + '_new'
-                if new_col in df.columns:
-                    # fillnaでデフォルト値を維持
-                    df[col] = df[new_col].fillna(default_values.get(col, 0))
-                    df.drop(columns=[new_col], inplace=True)
-
-            # キー削除
-            for k in ['枠番_key', '馬番_key']:
-                if k in df.columns: df.drop(columns=[k], inplace=True)
-
+        # 3. マージ
+        res_features = combined[combined['_is_target'] == True].copy()
+        
+        w_col = '枠番' if '枠番' in df.columns else '枠 番' if '枠 番' in df.columns else None
+        u_col = '馬番' if '馬番' in df.columns else '馬 番' if '馬 番' in df.columns else None
+        m_keys = ['horse_id', 'date']
+        if w_col: m_keys.append(w_col)
+        if u_col: m_keys.append(u_col)
+        
+        f_cols = m_keys + ['avg_rank', 'win_rate', 'place_rate', 'race_count', 'prev_rank', 'avg_last_3f', 'interval']
+        res_features = res_features[f_cols].drop_duplicates(m_keys)
+        
+        df = df.merge(res_features, on=m_keys, how='left', suffixes=('', '_new'))
+        
+        for col in ['avg_rank', 'win_rate', 'place_rate', 'race_count', 'prev_rank', 'avg_last_3f', 'interval']:
+            new_col = col + '_new'
+            if new_col in df.columns:
+                df[col] = df[new_col].fillna(default_values.get(col, 0))
+                df.drop(columns=[new_col], inplace=True)
+        
         return df
     
     def add_course_suitability_features(self, df: pd.DataFrame, horse_results: pd.DataFrame) -> pd.DataFrame:
