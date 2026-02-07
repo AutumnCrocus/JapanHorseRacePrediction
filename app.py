@@ -613,13 +613,13 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
         method_raw = rec.get('method', 'SINGLE')
         
         # IPAT用のmethod名
-        if method_raw == 'SINGLE':
+        if method_raw in ['SINGLE', '通常']:
             method = '通常'
-        elif method_raw == 'BOX':
+        elif method_raw in ['BOX', 'ボックス']:
             method = 'ボックス'
-        elif method_raw == 'FORMATION':
+        elif method_raw in ['FORMATION', 'フォーメーション']:
             method = 'フォーメーション'
-        elif method_raw == 'NAGASHI':
+        elif method_raw in ['NAGASHI', '流し', '2軸流し']:
             # 流しはフォーメーションに変換して処理する
             method = 'フォーメーション'
         else:
@@ -631,12 +631,12 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
         # フォーメーションの場合は formation_horses を優先
         # formation_horses: [[1着馬], [2着馬], [3着馬]] の形式
         if method == 'フォーメーション':
-            horses = rec.get('formation_horses') or rec.get('horses')
+            horses = rec.get('formation_horses') or rec.get('formation') or rec.get('horses')
             
             # NAGASHI -> Formation 変換
             # 流しの場合は axis/partners 構造をフォーメーション形式に変換
-            if method_raw == 'NAGASHI':
-                nagashi_horses = rec.get('nagashi_horses') or rec.get('horses')
+            if method_raw in ['NAGASHI', '流し', '2軸流し']:
+                nagashi_horses = rec.get('nagashi_horses') or rec.get('formation') or rec.get('horses')
                 axis = rec.get('axis') or rec.get('axis_horses', [])
                 partners = rec.get('partners') or rec.get('partner_horses', [])
                 
@@ -644,19 +644,31 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
                 if isinstance(nagashi_horses, dict):
                     axis = nagashi_horses.get('axis', axis)
                     partners = nagashi_horses.get('partners', partners)
+                # リスト形式の場合 (BettingAllocatorの出力など)
+                elif isinstance(nagashi_horses, list) and len(nagashi_horses) >= 2:
+                    axis = nagashi_horses[0]
+                    partners = nagashi_horses[1]
                 
                 # リスト形式に正規化
                 if not isinstance(axis, list):
-                    axis = [axis]
+                    axis = [axis] if axis is not None else []
                 if not isinstance(partners, list):
-                    partners = [partners]
+                    partners = [partners] if partners is not None else []
                 
                 # 流し -> フォーメーション変換
                 # 3連複 軸1頭流し: [[軸], [相手], [相手]]
+                # 3連複 2軸流し: [[軸1], [軸2], [相手]]
                 # 3連単 軸1頭1着固定: [[軸], [相手], [相手]]
                 # 馬連/ワイド/馬単: [[軸], [相手]]
                 
-                if bet_type in ['3連複', '3連単']:
+                if bet_type == '3連複' and method_raw == '2軸流し':
+                    # 2軸流しの入力[ [a1, a2], [p1, p2...] ] を分解
+                    if len(axis) >= 2:
+                        horses = [[axis[0]], [axis[1]], partners]
+                    else:
+                        horses = [axis, partners, partners]
+                    print(f"Converted 2-axis NAGASHI to Formation: {horses}")
+                elif bet_type in ['3連複', '3連単']:
                     # 軸1頭流し: 軸 + 相手から2頭
                     horses = [axis, partners, partners]
                     print(f"Converted NAGASHI to Formation: {horses}")
@@ -667,7 +679,7 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
                     horses = [axis, partners]
         else:
             # 'horse_numbers'(BettingAllocator)と'horses'(旧形式)の両方をサポート
-            horses = rec.get('horse_numbers') or rec.get('horses')
+            horses = rec.get('horse_numbers') or rec.get('horses') or rec.get('formation')
         
         # 金額決定
         if method == '通常':

@@ -398,3 +398,88 @@ class BettingStrategy:
             results[0]['return'] = int(results[0]['amount'] * results[0]['odds'])
             
         return results
+
+    @staticmethod
+    def optimize_allocation_kelly(recommendations: pd.DataFrame, budget: int, 
+                                  use_half_kelly: bool = True,
+                                  min_edge: float = 0.05,
+                                  max_fraction: float = 0.25) -> list:
+        """
+        Kelly基準による予算配分
+        
+        Args:
+            recommendations: 推奨DataFrame (prob, odds, ev列必須)
+            budget: 総予算
+            use_half_kelly: Half-Kelly（リスク軽減版）を使用するか
+            min_edge: 最小エッジ閾値（これ以下は賭けない）
+            max_fraction: 1ベット最大比率
+            
+        Returns:
+            配分済み推奨リスト
+        """
+        if recommendations.empty or budget <= 0:
+            return []
+        
+        # 期待値(ev)で降順ソート
+        df = recommendations.sort_values('ev', ascending=False)
+        
+        results = []
+        total_allocated = 0
+        
+        for _, row in df.iterrows():
+            prob = row.get('prob', 0)
+            odds = row.get('odds', 0)
+            
+            if prob <= 0 or odds <= 1:
+                continue
+            
+            # 期待値チェック
+            ev = prob * odds
+            if ev < 1 + min_edge:
+                continue
+            
+            # Kelly計算: f* = (p*b - q) / b
+            b = odds - 1
+            q = 1 - prob
+            fraction = (prob * b - q) / b
+            
+            if fraction <= 0:
+                continue
+            
+            # Half-Kelly適用
+            if use_half_kelly:
+                fraction *= 0.5
+            
+            # 最大比率でキャップ
+            fraction = min(fraction, max_fraction)
+            
+            # 賭け金計算（100円単位）
+            amount = int(budget * fraction / 100) * 100
+            
+            if amount < 100:
+                continue
+            
+            results.append({
+                'type': row['type'],
+                'combination': row.get('combination', str(row.get('umaban', ''))),
+                'umaban': row.get('umaban', 0),
+                'name': row.get('name', ''),
+                'odds': odds,
+                'prob': prob,
+                'ev': ev,
+                'kelly_fraction': fraction,
+                'amount': amount,
+                'return': int(amount * odds),
+                'reason': f"Kelly推奨: 期待値{ev:.2f}倍, 配分{fraction*100:.1f}%"
+            })
+            
+            total_allocated += amount
+        
+        # 予算オーバーの場合は比率で調整
+        if total_allocated > budget and results:
+            scale = budget / total_allocated
+            for r in results:
+                r['amount'] = max(100, int(r['amount'] * scale / 100) * 100)
+                r['return'] = int(r['amount'] * r['odds'])
+        
+        return results

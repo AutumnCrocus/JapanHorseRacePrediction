@@ -16,16 +16,17 @@ class BettingAllocator:
     """
     
     @staticmethod
-    def allocate_budget(df_preds, budget: int, odds_data: dict = None, allowed_types: list = None, strategy: str = 'balance') -> list:
+    def allocate_budget(df_preds: pd.DataFrame, budget: int, odds_data: dict = None, allowed_types: list = None, strategy: str = 'balance', bias_info: dict = None) -> list:
         """
-        予算に応じて推奨買い目を生成する
+        予算配分を実行するメインメソッド
         
         Args:
-            df_preds: 予測結果DataFrame (probability, horse_number, etc.)
+            df_preds: 予測結果DataFrame
             budget: 予算総額 (円)
             odds_data: オッズデータ (Optional)
             allowed_types: 許可する券種リスト (例: ['単勝'], ['3連単'])。Noneの場合は予算に応じた最適ミックス。
-            strategy: 戦略 ('balance', 'formation', 'box')
+            strategy: 戦略 ('balance', 'formation', 'box', 'kelly', 'odds_divergence', 'track_bias')
+            bias_info: トラックバイアス情報 (track_bias戦略用)
             
         Returns:
             list: 推奨買い目のリスト
@@ -34,6 +35,26 @@ class BettingAllocator:
             return BettingAllocator._allocate_formation(df_preds, budget)
         elif strategy == 'hybrid_1000':
             return BettingAllocator._allocate_hybrid_1000(df_preds, budget)
+        elif strategy == 'kelly':
+            return BettingAllocator._allocate_kelly(df_preds, budget, odds_data)
+        elif strategy == 'odds_divergence':
+            return BettingAllocator._allocate_odds_divergence(df_preds, budget, odds_data)
+        elif strategy == 'track_bias':
+            return BettingAllocator._allocate_track_bias(df_preds, budget, bias_info)
+        elif strategy == 'formation_flex':
+            return BettingAllocator._allocate_formation_flex(df_preds, budget)
+        elif strategy == 'wide_nagashi':
+            return BettingAllocator._allocate_wide_nagashi(df_preds, budget)
+        elif strategy == 'box4_umaren':
+            return BettingAllocator._allocate_box4_umaren(df_preds, budget)
+        elif strategy == 'box4_sanrenpuku':
+            return BettingAllocator._allocate_box4_sanrenpuku(df_preds, budget)
+        elif strategy == 'umaren_nagashi':
+            return BettingAllocator._allocate_umaren_nagashi(df_preds, budget)
+        elif strategy == 'sanrenpuku_1axis':
+            return BettingAllocator._allocate_sanrenpuku_1axis(df_preds, budget)
+        elif strategy == 'sanrenpuku_2axis':
+            return BettingAllocator._allocate_sanrenpuku_2axis(df_preds, budget)
             
         recommendations = []
         
@@ -636,3 +657,796 @@ class BettingAllocator:
             recommendations.append(rec)
             
         return recommendations
+
+    @staticmethod
+    def _allocate_kelly(df_preds: pd.DataFrame, budget: int, odds_data: dict = None,
+                       use_half_kelly: bool = False, min_edge: float = 0.0) -> list:
+        """
+        Kelly基準に基づく予算配分（馬連・三連複対応版）
+        
+        戦略: 
+        - 上位馬の単勝、馬連、3連複を期待値で比較
+        - 最も期待値が高い券種・組み合わせを選択
+        
+        Args:
+            df_preds: 予測DataFrame
+            budget: 予算
+            odds_data: オッズデータ
+            
+        Returns:
+            推奨リスト
+        """
+        from itertools import combinations
+        
+        recommendations = []
+        
+        if df_preds.empty or budget <= 0:
+            return recommendations
+        
+        # 予測確率でソート、上位5頭に限定（計算量削減）
+        df_sorted = df_preds.sort_values('probability', ascending=False).head(5).copy()
+        
+        # 馬情報を抽出
+        horses = []
+        for _, row in df_sorted.iterrows():
+            prob = row.get('probability', 0)
+            horse_num = int(row.get('horse_number', 0))
+            
+            if prob <= 0 or horse_num == 0:
+                continue
+            
+            # 単勝オッズ取得
+            odds = row.get('odds', 0)
+            if odds <= 1 and odds_data:
+                tan_odds = odds_data.get('tan', {})
+                if horse_num in tan_odds:
+                    odds = tan_odds[horse_num]
+            
+            horses.append({
+                'num': horse_num,
+                'name': row.get('horse_name', row.get('name', f'馬番{horse_num}')),
+                'prob': prob,
+                'odds': odds if odds > 1 else 2.0
+            })
+        
+        if len(horses) < 2:
+            # 馬が足りない場合は単勝のみ
+            if horses:
+                h = horses[0]
+                amount = (budget // 100) * 100
+                ev = h['prob'] * h['odds']
+                recommendations.append({
+                    'bet_type': '単勝', 'type': '単勝', 'method': 'SINGLE',
+                    'horse_numbers': [h['num']], 'formation': [[h['num']]],
+                    'combination': str(h['num']), 'unit_amount': amount,
+                    'total_amount': amount, 'pts': 1, 'odds': h['odds'],
+                    'prob': h['prob'], 'ev': ev,
+                    'reason': f"単勝集中: 期待値{ev:.2f}倍",
+                    'horse_name': h['name']
+                })
+            return recommendations
+        
+        # ========== 全候補の期待値を計算 ==========
+        all_bets = []
+        
+        # 1. 単勝候補（上位3頭）
+        for h in horses[:3]:
+            ev = h['prob'] * h['odds']
+            if ev > 0.8:  # 期待値0.8以上
+                all_bets.append({
+                    'bet_type': '単勝', 'horses': [h],
+                    'odds': h['odds'], 'prob': h['prob'], 'ev': ev,
+                    'combo_str': str(h['num']),
+                    'horse_nums': [h['num']]
+                })
+        
+        # 2. 馬連候補（上位馬の2頭組み合わせ）
+        if odds_data and 'umaren' in odds_data:
+            umaren_odds = odds_data['umaren']
+            for h1, h2 in combinations(horses[:4], 2):
+                key = tuple(sorted([h1['num'], h2['num']]))
+                if key in umaren_odds:
+                    odds = umaren_odds[key]
+                    # 馬連確率: 両馬が上位2着以内に入る確率（簡易推定）
+                    # P(両方上位2) ≒ P(h1) × P(h2) × 調整係数
+                    combo_prob = h1['prob'] * h2['prob'] * 1.5  # 調整係数
+                    combo_prob = min(combo_prob, 0.5)  # 上限50%
+                    ev = combo_prob * odds
+                    if ev > 1.0:
+                        all_bets.append({
+                            'bet_type': '馬連', 'horses': [h1, h2],
+                            'odds': odds, 'prob': combo_prob, 'ev': ev,
+                            'combo_str': f"{h1['num']}-{h2['num']}",
+                            'horse_nums': [h1['num'], h2['num']]
+                        })
+        
+        # 3. 三連複候補（上位馬の3頭組み合わせ）
+        if odds_data and 'sanrenpuku' in odds_data and len(horses) >= 3:
+            sanrenpuku_odds = odds_data['sanrenpuku']
+            for h1, h2, h3 in combinations(horses[:5], 3):
+                key = tuple(sorted([h1['num'], h2['num'], h3['num']]))
+                if key in sanrenpuku_odds:
+                    odds = sanrenpuku_odds[key]
+                    # 三連複確率: 3頭が上位3着以内に入る確率（簡易推定）
+                    combo_prob = h1['prob'] * h2['prob'] * h3['prob'] * 3.0
+                    combo_prob = min(combo_prob, 0.3)  # 上限30%
+                    ev = combo_prob * odds
+                    if ev > 1.2:  # 期待値1.2以上
+                        all_bets.append({
+                            'bet_type': '三連複', 'horses': [h1, h2, h3],
+                            'odds': odds, 'prob': combo_prob, 'ev': ev,
+                            'combo_str': f"{h1['num']}-{h2['num']}-{h3['num']}",
+                            'horse_nums': [h1['num'], h2['num'], h3['num']]
+                        })
+        
+        # ========== 期待値でソート ==========
+        all_bets.sort(key=lambda x: x['ev'], reverse=True)
+        
+        if not all_bets:
+            # 候補がない場合、上位1頭に全額単勝
+            h = horses[0]
+            amount = (budget // 100) * 100
+            ev = h['prob'] * h['odds']
+            recommendations.append({
+                'bet_type': '単勝', 'type': '単勝', 'method': 'SINGLE',
+                'horse_numbers': [h['num']], 'formation': [[h['num']]],
+                'combination': str(h['num']), 'unit_amount': amount,
+                'total_amount': amount, 'pts': 1, 'odds': h['odds'],
+                'prob': h['prob'], 'ev': ev,
+                'reason': f"予測1位集中: 的中時{int(amount * h['odds'])}円",
+                'horse_name': h['name']
+            })
+            return recommendations
+        
+        # ========== 予算配分 ==========
+        # 最高EV候補に60%、2番目に30%、3番目に10%
+        top_bets = all_bets[:3]
+        alloc_ratios = [0.6, 0.3, 0.1] if len(top_bets) >= 3 else \
+                       [0.7, 0.3] if len(top_bets) == 2 else [1.0]
+        
+        for i, bet in enumerate(top_bets):
+            if i >= len(alloc_ratios):
+                break
+            
+            alloc = alloc_ratios[i]
+            amount = int(budget * alloc / 100) * 100
+            
+            if amount < 100:
+                continue
+            
+            profit = int(amount * bet['odds']) - amount
+            horse_names = ', '.join([h['name'] for h in bet['horses']])
+            
+            # formation形式を生成
+            if bet['bet_type'] == '単勝':
+                formation = [[bet['horse_nums'][0]]]
+                method = 'SINGLE'
+            elif bet['bet_type'] == '馬連':
+                formation = [bet['horse_nums']]
+                method = 'BOX'
+            else:  # 三連複
+                formation = [bet['horse_nums']]
+                method = 'BOX'
+            
+            recommendations.append({
+                'bet_type': bet['bet_type'],
+                'type': bet['bet_type'],
+                'method': method,
+                'horse_numbers': bet['horse_nums'],
+                'formation': formation,
+                'combination': bet['combo_str'],
+                'unit_amount': amount,
+                'total_amount': amount,
+                'pts': 1,
+                'odds': bet['odds'],
+                'prob': bet['prob'],
+                'ev': bet['ev'],
+                'reason': f"期待値{bet['ev']:.2f}倍, 的中時+{profit}円",
+                'horse_name': horse_names
+            })
+        
+        return recommendations
+
+    @staticmethod
+    def _allocate_odds_divergence(df_preds: pd.DataFrame, budget: int, odds_data: dict = None) -> list:
+        """
+        オッズ乖離戦略に基づく予算配分
+        
+        戦略:
+        - AIの予測確率 vs 市場オッズの暗示確率を比較
+        - 乖離が大きい（過小評価されている）馬を狙う
+        - 乖離率 = (予測確率 - 暗示確率) / 暗示確率
+        
+        Args:
+            df_preds: 予測DataFrame
+            budget: 予算
+            odds_data: オッズデータ
+            
+        Returns:
+            推奨リスト
+        """
+        from itertools import combinations
+        
+        recommendations = []
+        
+        if df_preds.empty or budget <= 0:
+            return recommendations
+        
+        # 予測確率でソート
+        df_sorted = df_preds.sort_values('probability', ascending=False).copy()
+        
+        # 各馬のオッズ乖離を計算
+        divergence_data = []
+        for _, row in df_sorted.iterrows():
+            model_prob = row.get('probability', 0)
+            horse_num = int(row.get('horse_number', 0))
+            
+            if model_prob <= 0 or horse_num == 0:
+                continue
+            
+            # 単勝オッズ取得
+            tan_odds = row.get('odds', 0)
+            if tan_odds <= 1 and odds_data:
+                tan_odds_dict = odds_data.get('tan', {})
+                if horse_num in tan_odds_dict:
+                    tan_odds = tan_odds_dict[horse_num]
+            
+            if tan_odds <= 1:
+                tan_odds = 2.0  # デフォルト
+            
+            # 市場暗示確率 = 1 / オッズ（控除率考慮で0.8掛け）
+            market_implied_prob = 0.8 / tan_odds
+            
+            # 乖離率 = (予測 - 暗示) / 暗示
+            # 正の値 = AIの方が高く評価 = 市場が過小評価
+            divergence = (model_prob - market_implied_prob) / market_implied_prob if market_implied_prob > 0 else 0
+            
+            # 期待値
+            ev = model_prob * tan_odds
+            
+            divergence_data.append({
+                'num': horse_num,
+                'name': row.get('horse_name', row.get('name', f'馬番{horse_num}')),
+                'model_prob': model_prob,
+                'market_prob': market_implied_prob,
+                'divergence': divergence,
+                'odds': tan_odds,
+                'ev': ev
+            })
+        
+        if not divergence_data:
+            return recommendations
+        
+        # === オッズ乖離でソート（大きい順 = 過小評価順）===
+        divergence_data.sort(key=lambda x: x['divergence'], reverse=True)
+        
+        # === 全券種の期待値を計算 ===
+        all_bets = []
+        
+        # 1. 単勝候補（乖離上位3頭）
+        for h in divergence_data[:3]:
+            if h['divergence'] > 0.1:  # 10%以上の乖離
+                all_bets.append({
+                    'bet_type': '単勝',
+                    'horses': [h],
+                    'odds': h['odds'],
+                    'prob': h['model_prob'],
+                    'ev': h['ev'],
+                    'divergence': h['divergence'],
+                    'combo_str': str(h['num']),
+                    'horse_nums': [h['num']]
+                })
+        
+        # 2. 馬連候補（乖離上位4頭から組み合わせ）
+        top4 = divergence_data[:4]
+        if odds_data and 'umaren' in odds_data and len(top4) >= 2:
+            umaren_odds = odds_data['umaren']
+            for h1, h2 in combinations(top4, 2):
+                key = tuple(sorted([h1['num'], h2['num']]))
+                if key in umaren_odds:
+                    odds = umaren_odds[key]
+                    # 組み合わせの乖離 = 平均乖離
+                    avg_divergence = (h1['divergence'] + h2['divergence']) / 2
+                    combo_prob = h1['model_prob'] * h2['model_prob'] * 1.5
+                    combo_prob = min(combo_prob, 0.5)
+                    ev = combo_prob * odds
+                    
+                    if avg_divergence > 0.05 and ev > 1.0:  # 5%以上の乖離
+                        all_bets.append({
+                            'bet_type': '馬連',
+                            'horses': [h1, h2],
+                            'odds': odds,
+                            'prob': combo_prob,
+                            'ev': ev,
+                            'divergence': avg_divergence,
+                            'combo_str': f"{h1['num']}-{h2['num']}",
+                            'horse_nums': [h1['num'], h2['num']]
+                        })
+        
+        # 3. 三連複候補（乖離上位5頭から組み合わせ）
+        top5 = divergence_data[:5]
+        if odds_data and 'sanrenpuku' in odds_data and len(top5) >= 3:
+            sanrenpuku_odds = odds_data['sanrenpuku']
+            for h1, h2, h3 in combinations(top5, 3):
+                key = tuple(sorted([h1['num'], h2['num'], h3['num']]))
+                if key in sanrenpuku_odds:
+                    odds = sanrenpuku_odds[key]
+                    avg_divergence = (h1['divergence'] + h2['divergence'] + h3['divergence']) / 3
+                    combo_prob = h1['model_prob'] * h2['model_prob'] * h3['model_prob'] * 3.0
+                    combo_prob = min(combo_prob, 0.3)
+                    ev = combo_prob * odds
+                    
+                    if avg_divergence > 0 and ev > 1.2:
+                        all_bets.append({
+                            'bet_type': '3連複',
+                            'horses': [h1, h2, h3],
+                            'odds': odds,
+                            'prob': combo_prob,
+                            'ev': ev,
+                            'divergence': avg_divergence,
+                            'combo_str': f"{h1['num']}-{h2['num']}-{h3['num']}",
+                            'horse_nums': [h1['num'], h2['num'], h3['num']]
+                        })
+        
+        # === 乖離×期待値でスコア計算してソート ===
+        # スコア = 乖離率 × 期待値（両方を考慮）
+        for bet in all_bets:
+            bet['score'] = bet['divergence'] * bet['ev']
+        
+        all_bets.sort(key=lambda x: x['score'], reverse=True)
+        
+        if not all_bets:
+            # 候補がない場合、乖離1位に全額単勝
+            h = divergence_data[0]
+            amount = (budget // 100) * 100
+            recommendations.append({
+                'bet_type': '単勝', 'type': '単勝', 'method': 'SINGLE',
+                'horse_numbers': [h['num']], 'formation': [[h['num']]],
+                'combination': str(h['num']), 'unit_amount': amount,
+                'total_amount': amount, 'pts': 1, 'odds': h['odds'],
+                'prob': h['model_prob'], 'ev': h['ev'],
+                'reason': f"乖離率{h['divergence']*100:.0f}%, AI評価{h['model_prob']*100:.0f}% vs 市場{h['market_prob']*100:.0f}%",
+                'horse_name': h['name']
+            })
+            return recommendations
+        
+        # === 予算配分 ===
+        top_bets = all_bets[:3]
+        alloc_ratios = [0.6, 0.3, 0.1] if len(top_bets) >= 3 else \
+                       [0.7, 0.3] if len(top_bets) == 2 else [1.0]
+        
+        for i, bet in enumerate(top_bets):
+            if i >= len(alloc_ratios):
+                break
+            
+            alloc = alloc_ratios[i]
+            amount = int(budget * alloc / 100) * 100
+            
+            if amount < 100:
+                continue
+            
+            profit = int(amount * bet['odds']) - amount
+            horse_names = ', '.join([h['name'] for h in bet['horses']])
+            
+            # 乖離率表示（単勝の場合は個別、組み合わせの場合は平均）
+            if bet['bet_type'] == '単勝':
+                div_pct = bet['horses'][0]['divergence'] * 100
+            else:
+                div_pct = bet['divergence'] * 100
+            
+            # formation形式を生成
+            if bet['bet_type'] == '単勝':
+                formation = [[bet['horse_nums'][0]]]
+                method = 'SINGLE'
+            else:
+                formation = [bet['horse_nums']]
+                method = 'BOX'
+            
+            recommendations.append({
+                'bet_type': bet['bet_type'],
+                'type': bet['bet_type'],
+                'method': method,
+                'horse_numbers': bet['horse_nums'],
+                'formation': formation,
+                'combination': bet['combo_str'],
+                'unit_amount': amount,
+                'total_amount': amount,
+                'pts': 1,
+                'odds': bet['odds'],
+                'prob': bet['prob'],
+                'ev': bet['ev'],
+                'reason': f"乖離+{div_pct:.0f}%, 期待値{bet['ev']:.2f}倍, 的中時+{profit}円",
+                'horse_name': horse_names
+            })
+        
+        return recommendations
+
+    @staticmethod
+    def _allocate_track_bias(df_preds: pd.DataFrame, budget: int, bias_info: dict = None) -> list:
+        """
+        トラックバイアス特化戦略
+        
+        Args:
+            df_preds: 予測DataFrame
+            budget: 予算
+            bias_info: 当日のバイアス情報 {'frame_bias': ..., 'position_bias': ...}
+            
+        Returns:
+            list: 推奨リスト
+        """
+        if df_preds.empty or budget <= 0 or not bias_info:
+            return []
+            
+        frame_bias = bias_info.get('frame_bias', 'flat')
+        position_bias = bias_info.get('position_bias', 'flat')
+        
+        # バイアスなしの場合は見送り
+        if frame_bias == 'flat' and position_bias == 'flat':
+            return []
+            
+        # 候補馬の抽出とスコアリング
+        candidates = []
+        for _, row in df_preds.iterrows():
+            score = row['probability']
+            h_num = int(row.get('horse_number', 0))
+            waku = int(row.get('枠番', 0))
+            
+            # 1. 枠順バイアス補正
+            if frame_bias == 'inner':
+                if waku <= 4: score *= 1.2
+                elif waku >= 7: score *= 0.8
+            elif frame_bias == 'outer':
+                if waku >= 6: score *= 1.2
+                elif waku <= 3: score *= 0.8
+                
+            # 2. 脚質バイアス補正 (簡易的)
+            # running_styleなどが特徴量にあれば使うが、なければ見送り
+            
+            candidates.append({
+                'num': h_num,
+                'name': row.get('horse_name', row.get('name', f'馬番{h_num}')),
+                'score': score,
+                'prob': row['probability'],
+                'odds': row.get('odds', 0)
+            })
+            
+        # スコア順にソート
+        candidates.sort(key=lambda x: x['score'], reverse=True)
+        
+        # 上位馬を軸にする
+        axis_horse = candidates[0]
+        opponent_horses = candidates[1:6] # 相手5頭
+        
+        # 軸馬の信頼度が低い場合は見送り
+        if axis_horse['score'] < 0.15: # 補正後スコア
+            return []
+            
+        unit_amount = budget // 10
+        if unit_amount < 100: unit_amount = 100
+        
+        recommendations = []
+        
+        # 馬連流し
+        formation_umaren = []
+        for opp in opponent_horses:
+            formation_umaren.append([axis_horse['num'], opp['num']])
+            
+        recommendations.append({
+            'bet_type': '馬連', 'type': '馬連', 'method': 'NAGASHI',
+            'horse_numbers': [axis_horse['num']] + [h['num'] for h in opponent_horses],
+            'formation': formation_umaren,
+            'combination': f"{axis_horse['num']} - {','.join([str(h['num']) for h in opponent_horses])}",
+            'unit_amount': unit_amount,
+            'total_amount': unit_amount * len(opponent_horses),
+            'pts': len(opponent_horses),
+            'odds': axis_horse['odds'], 'prob': axis_horse['prob'], 'ev': 0,
+            'reason': f"バイアス合致: {frame_bias}/{position_bias}, 軸:{axis_horse['name']}",
+            'horse_name': f"軸:{axis_horse['name']} 相手:{len(opponent_horses)}頭"
+        })
+        
+        return recommendations
+
+    @staticmethod
+    def _allocate_formation_flex(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        Formation戦略の改良版 (動的相手選定)
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        all_horses = df_sorted['horse_number'].tolist()
+        probs = df_sorted['probability'].tolist()
+        
+        if len(all_horses) < 6:
+            return BettingAllocator.allocate_budget(df_preds, budget, strategy='balance')
+            
+        axis_horse = all_horses[0]
+        axis_prob = probs[0]
+        
+        # 動的相手選定
+        opponents = []
+        cum_prob = 0
+        candidates = df_sorted.iloc[1:]
+        
+        for _, row in candidates.iterrows():
+            if row['probability'] < 0.02 and len(opponents) >= 5: break
+            opponents.append(int(row['horse_number']))
+            cum_prob += row['probability']
+            if len(opponents) >= 10: break
+            
+            threshold = 0.80 if axis_prob > 0.3 else 0.90
+            # 簡易閾値判定 (累積確率計算は省略、頭数制限と最低確率で制御)
+             
+        while len(opponents) < 5 and len(opponents) + 1 < len(all_horses):
+             opponents.append(all_horses[len(opponents)+1])
+             
+        # 軸信頼度判定
+        bet_type = '3連複'
+        combo_count = len(opponents) * (len(opponents) - 1) // 2
+        unit_cost = 100
+        total_cost = combo_count * unit_cost
+        
+        if budget >= 2000 and axis_prob > 0.25:
+             bet_type = '3連単'
+             combo_count = len(opponents) * (len(opponents) - 1)
+             total_cost_tan = combo_count * unit_cost
+             if total_cost_tan <= budget:
+                 total_cost = total_cost_tan
+             else:
+                 bet_type = '3連複'
+        
+        recommendations = []
+        if total_cost <= budget:
+             rec = {
+                'bet_type': bet_type,
+                'method': '流し' if bet_type == '3連複' else 'FORMATION',
+                'type': bet_type,
+                'horse_numbers': [axis_horse] + opponents,
+                'formation': [[axis_horse], opponents] if bet_type == '3連複' else [[axis_horse], opponents, opponents],
+                'points': combo_count,
+                'unit_amount': 100,
+                'total_amount': total_cost,
+                'combination': f"軸:{axis_horse} 相手:{len(opponents)}頭(動的)",
+                'reason': f"Flex: 軸信頼度{int(axis_prob*100)}%, 相手{len(opponents)}頭"
+             }
+             recommendations.append(rec)
+             
+             remaining = budget - total_cost
+             if remaining >= 200:
+                 rec_win = {
+                     'bet_type': '単勝', 'method': 'SINGLE', 'type': '単勝',
+                     'horse_numbers': [axis_horse], 'formation': [[axis_horse]],
+                     'points': 1, 'unit_amount': remaining, 'total_amount': remaining,
+                     'combination': str(axis_horse), 'reason': '保険'
+                 }
+                 recommendations.append(rec_win)
+        else:
+             return BettingAllocator._allocate_formation(df_preds, budget)
+             
+        return recommendations
+
+    @staticmethod
+    def _allocate_balance_flex(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        Balance戦略の改良版 (比率配分)
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        top = df_sorted['horse_number'].tolist()
+        if len(top) < 5: return BettingAllocator.allocate_budget(df_preds, budget, strategy='balance')
+        
+        recommendations = []
+        b_win = int(budget * 0.20)
+        b_wide = int(budget * 0.40)
+        b_trip = int(budget * 0.40)
+        
+        # 1. Win
+        if b_win >= 100:
+            targets = df_sorted.iloc[:3]
+            total_prob = targets['probability'].sum()
+            for _, row in targets.iterrows():
+                alloc = int((b_win * (row['probability'] / total_prob)) / 100) * 100
+                if alloc >= 100:
+                    recommendations.append({
+                        'bet_type': '単勝', 'type': '単勝', 'method': 'SINGLE',
+                        'horse_numbers': [int(row['horse_number'])], 'formation': [[int(row['horse_number'])]],
+                        'points': 1, 'unit_amount': alloc, 'total_amount': alloc,
+                        'combination': str(int(row['horse_number'])), 'reason': 'Flex Bal: Win'
+                    })
+                    
+        # 2. Wide Box
+        if b_wide >= 1000:
+            pts = 10
+            unit = (b_wide // pts // 100) * 100
+            if unit >= 100:
+                cost = unit * pts
+                recommendations.append({
+                    'bet_type': 'ワイド', 'type': 'ワイド', 'method': 'BOX',
+                    'horse_numbers': top[:5], 'formation': [top[:5]],
+                    'points': pts, 'unit_amount': unit, 'total_amount': cost,
+                    'combination': "Top5 Box", 'reason': 'Flex Bal: Wide'
+                })
+        
+        # 3. 3-Ren-Puku Box
+        if b_trip >= 1000:
+            pts = 10
+            unit = (b_trip // pts // 100) * 100
+            if unit >= 100:
+                cost = unit * pts
+                recommendations.append({
+                    'bet_type': '3連複', 'type': '3連複', 'method': 'BOX',
+                    'horse_numbers': top[:5], 'formation': [top[:5]],
+                    'points': pts, 'unit_amount': unit, 'total_amount': cost,
+                    'combination': "Top5 Box", 'reason': 'Flex Bal: Trip'
+                })
+        
+        if not recommendations:
+             return BettingAllocator.allocate_budget(df_preds, budget, strategy='balance')
+             
+        return recommendations
+
+    @staticmethod
+    def _allocate_wide_nagashi(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        低予算戦略1: ワイド軸1頭流し (400円〜500円)
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 5: return []
+        
+        axis = int(df_sorted.iloc[0]['horse_number'])
+        opponents = df_sorted.iloc[1:6]['horse_number'].astype(int).tolist()
+        
+        # 予算に応じて相手数を調整 (500円未満なら4頭に絞る)
+        if budget < 500:
+            opponents = opponents[:4]
+            
+        points = len(opponents)
+        cost = points * 100
+        
+        if cost > budget: return []
+        
+        return [{
+            'bet_type': 'ワイド', 'method': '流し', 'type': 'ワイド',
+            'horse_numbers': [axis] + opponents,
+            'formation': [[axis], opponents],
+            'points': points, 'unit_amount': 100, 'total_amount': cost,
+            'combination': f"軸:{axis} 相手:{len(opponents)}頭",
+            'reason': 'LowCost: ワイド流し'
+        }]
+
+    @staticmethod
+    def _allocate_box4_umaren(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        低予算戦略2: 馬連4頭BOX (600円)
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 4: return []
+        
+        horses = df_sorted.iloc[:4]['horse_number'].astype(int).tolist()
+        points = 6
+        cost = 600
+        
+        if cost > budget: return []
+        
+        return [{
+            'bet_type': '馬連', 'method': 'BOX', 'type': '馬連',
+            'horse_numbers': horses, 'formation': [horses],
+            'points': points, 'unit_amount': 100, 'total_amount': cost,
+            'combination': "Top4 Box",
+            'reason': 'LowCost: 馬連Box4'
+        }]
+
+    @staticmethod
+    def _allocate_box4_sanrenpuku(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        低予算戦略3: 3連複4頭BOX (400円)
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 4: return []
+        
+        horses = df_sorted.iloc[:4]['horse_number'].astype(int).tolist()
+        points = 4
+        cost = 400
+        
+        if cost > budget: return []
+        
+        return [{
+            'bet_type': '3連複', 'method': 'BOX', 'type': '3連複',
+            'horse_numbers': horses, 'formation': [horses],
+            'points': points, 'unit_amount': 100, 'total_amount': cost,
+            'combination': "Top4 Box",
+            'reason': 'LowCost: 3連複Box4'
+        }]
+
+    @staticmethod
+    def _allocate_umaren_nagashi(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        低予算戦略4: 馬連軸1頭流し (500円)
+        - 1番人気から相手5頭へ流す
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 6: return []
+        
+        axis = int(df_sorted.iloc[0]['horse_number'])
+        opponents = df_sorted.iloc[1:6]['horse_number'].astype(int).tolist() # Top 2-6 (5 horses)
+        
+        points = len(opponents)
+        cost = points * 100
+        
+        if cost > budget:
+             # Reduce to 4 points if budget < 500?
+             if budget >= 400:
+                 opponents = opponents[:4]
+                 points = 4
+                 cost = 400
+             else:
+                 return []
+        
+        return [{
+            'bet_type': '馬連', 'method': '流し', 'type': '馬連',
+            'horse_numbers': [axis] + opponents,
+            'formation': [[axis], opponents],
+            'points': points, 'unit_amount': 100, 'total_amount': cost,
+            'combination': f"軸:{axis} 相手:{len(opponents)}頭",
+            'reason': 'LowCost: 馬連流し'
+        }]
+
+    @staticmethod
+    def _allocate_sanrenpuku_1axis(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        3連複1軸流し: 軸1頭 + 相手6頭 (15点 = 1500円)
+        - Top1を軸に、Top2-7の6頭へ流す
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 7: return []
+        
+        axis = int(df_sorted.iloc[0]['horse_number'])
+        opponents = df_sorted.iloc[1:7]['horse_number'].astype(int).tolist() # 6 horses
+        
+        # 6C2 = 15点
+        points = len(opponents) * (len(opponents) - 1) // 2
+        cost = points * 100
+        
+        if cost > budget:
+             # 相手を5頭に絞る (5C2 = 10点 = 1000円)
+             if budget >= 1000:
+                 opponents = opponents[:5]
+                 points = 10
+                 cost = 1000
+             else:
+                 return []
+        
+        return [{
+            'bet_type': '3連複', 'method': '流し', 'type': '3連複',
+            'horse_numbers': [axis] + opponents,
+            'formation': [[axis], opponents],
+            'points': points, 'unit_amount': 100, 'total_amount': cost,
+            'combination': f"軸:{axis} 相手:{len(opponents)}頭",
+            'reason': '3連複1軸流し'
+        }]
+
+    @staticmethod
+    def _allocate_sanrenpuku_2axis(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        3連複2軸流し: 軸2頭 + 相手5頭 (5点 = 500円)
+        - Top1-2を軸に、Top3-7の5頭へ流す
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 7: return []
+        
+        axis1 = int(df_sorted.iloc[0]['horse_number'])
+        axis2 = int(df_sorted.iloc[1]['horse_number'])
+        opponents = df_sorted.iloc[2:7]['horse_number'].astype(int).tolist() # 5 horses
+        
+        # 2軸流し = 相手頭数 (5点)
+        points = len(opponents)
+        cost = points * 100
+        
+        if cost > budget:
+             return []
+        
+        return [{
+            'bet_type': '3連複', 'method': '2軸流し', 'type': '3連複',
+            'horse_numbers': [axis1, axis2] + opponents,
+            'formation': [[axis1, axis2], opponents],
+            'points': points, 'unit_amount': 100, 'total_amount': cost,
+            'combination': f"軸:{axis1}-{axis2} 相手:{len(opponents)}頭",
+            'reason': '3連複2軸流し'
+        }]
