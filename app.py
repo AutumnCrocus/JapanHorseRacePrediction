@@ -245,239 +245,166 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
     """共通予測ロジック"""
     
     # キャッシュのチェック (推論結果が入っているか)
+    results = None
     if race_id and race_id in PREDICTION_CACHE and 'results' in PREDICTION_CACHE[race_id]:
         print(f"Using cached inference results for Race ID: {race_id}")
         cached_data = PREDICTION_CACHE[race_id]
         results = cached_data['results']
-        # メタデータもキャッシュから取得（attrsが失われている可能性に備える）
         race_name = cached_data.get('race_name', race_name_default)
         race_data01 = cached_data.get('race_data01', '')
         race_data02 = cached_data.get('race_data02', '')
-        # 共通項目の抽出
-    else:
+    
+    if results is None:
         # キャッシュがない場合は通常通り推論を実行
         model = get_model()
         if model is None:
             return jsonify({'error': 'モデルの読み込みに失敗しました'}), 500
         
-        # 特徴量を準備（モデルが期待する形式に）
-    feature_names = model.feature_names
-    
-    # 欠損している特徴量はデフォルト値で埋める (Simplified for brevity)
-    for col in feature_names:
-        if col not in df.columns:
-            # Default values (same as before)
-            if col in ['枠番', '馬番', '人気']: df[col] = df.index + 1
-            elif col in ['斤量']: df[col] = 56.0
-            elif col in ['単勝']: df[col] = 10.0
-            elif col in ['年齢']: df[col] = 4
-            elif col in ['体重']: df[col] = 480
-            elif col in ['体重変化']: df[col] = 0
-            elif col in ['course_len']: df[col] = 2000
-            elif col in ['avg_rank']: df[col] = 5.0
-            elif col in ['win_rate']: df[col] = 0.1
-            elif col in ['place_rate']: df[col] = 0.3
-            elif col in ['race_count']: df[col] = 10
-            elif col in ['jockey_avg_rank']: df[col] = 5.0
-            elif col in ['jockey_win_rate']: df[col] = 0.1
-            elif col in ['性', 'race_type']: df[col] = 0
-            elif col in ['avg_last_3f']: df[col] = 37.0
-            elif col in ['avg_running_style']: df[col] = 0.5
-            elif col in ['venue_id', 'kai', 'day', 'race_num']: df[col] = 0
-            else: df[col] = 0
-    
-    # 予測
-    X = df[feature_names].copy()
-    for col in X.columns:
-        X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0)
-    X = X.fillna(0)
-    
-    # Feature columns for categorical
-    # LightGBM requires categories to match training data exactly.
-    # Training data likely contains all waku (1-8) and umaban (1-18).
-    # We explicitly define categories to avoid mismatch when inference data has fewer categories (e.g. 16 horses).
-    
-    # Feature columns for categorical
-    # LightGBM requires categories to match training data exactly.
-    # We retrieve the category definitions directly from the model to ensure perfect match.
-    
-    # モデルからカテゴリ定義を取得
-    categorical_applied = False
-    try:
-        debug_info = model.debug_info()
-        model_cats = debug_info.get('pandas_categorical', [])
+        feature_names = model.feature_names
         
-        # 学習スクリプト(train_production.py)では 枠番, 馬番 の順で astype('category') している
-        # 特徴量リストの順序的にも 枠番, 馬番 が先頭に来ているため、
-        # model_cats[0] -> 枠番, model_cats[1] -> 馬番 となるのが確実。
+        # 欠損している特徴量はデフォルト値で埋める (Simplified for brevity)
+        for col in feature_names:
+            if col not in df.columns:
+                if col in ['枠番', '馬番', '人気']: df[col] = df.index + 1
+                elif col in ['斤量']: df[col] = 56.0
+                elif col in ['単勝']: df[col] = 10.0
+                elif col in ['年齢']: df[col] = 4
+                elif col in ['体重']: df[col] = 480
+                elif col in ['体重変化']: df[col] = 0
+                elif col in ['course_len']: df[col] = 2000
+                elif col in ['avg_rank']: df[col] = 5.0
+                elif col in ['win_rate']: df[col] = 0.1
+                elif col in ['place_rate']: df[col] = 0.3
+                elif col in ['race_count']: df[col] = 10
+                elif col in ['jockey_avg_rank']: df[col] = 5.0
+                elif col in ['jockey_win_rate']: df[col] = 0.1
+                elif col in ['性', 'race_type']: df[col] = 0
+                elif col in ['avg_last_3f']: df[col] = 37.0
+                elif col in ['avg_running_style']: df[col] = 0.5
+                elif col in ['venue_id', 'kai', 'day', 'race_num']: df[col] = 0
+                else: df[col] = 0
         
-        if model_cats and len(model_cats) >= 2:
-             # Apply correct categories
-             if '枠番' in X.columns:
-                 X['枠番'] = pd.Categorical(X['枠番'], categories=model_cats[0])
-             if '馬番' in X.columns:
-                 X['馬番'] = pd.Categorical(X['馬番'], categories=model_cats[1])
-             categorical_applied = True
-             print("Applied categorical definitions from model.")
-                 
-    except Exception as e:
-        print(f"Error applying categorical definitions: {e}")
-    
-    # カテゴリ定義が取得できなかった場合、数値型として扱う（LightGBMは数値型も受け付ける）
-    if not categorical_applied:
-        print("Warning: Could not retrieve categorical definitions. Using numeric type for 枠番/馬番.")
-        # カテゴリではなく数値として扱う（int型）
-        if '枠番' in X.columns:
-            X['枠番'] = X['枠番'].astype(int)
-        if '馬番' in X.columns:
-            X['馬番'] = X['馬番'].astype(int)
+        X = df[feature_names].copy()
+        for col in X.columns:
+            X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0)
+        X = X.fillna(0)
         
-    try:
-        probs = model.predict(X)
-    except Exception as e:
-        # 具体的なエラーを出力して500
-        raise e
-    
-    # SHAP logic ... (omitted for brevity, assume present or error handled)
-    explanations_list = []
-    try:
-         # SHAP calc can be heavy, skip if performance is issue
-         # explanation_result = model.explain_prediction(X, num_samples=100)
-         # explanations_list = explanation_result.get('explanations', [])
-         pass
-    except: pass
-    
-    results = []
-    for i, (_, row) in enumerate(df.iterrows()):
-        # data_loader returns standardized columns 'odds' and 'popularity'
-        odds = row.get('odds', 0.0)
-        popularity = row.get('popularity', 0)
+        categorical_applied = False
+        try:
+            debug_info = model.debug_info()
+            model_cats = debug_info.get('pandas_categorical', [])
+            if model_cats and len(model_cats) >= 2:
+                 if '枠番' in X.columns: X['枠番'] = pd.Categorical(X['枠番'], categories=model_cats[0])
+                 if '馬番' in X.columns: X['馬番'] = pd.Categorical(X['馬番'], categories=model_cats[1])
+                 categorical_applied = True
+        except Exception as e:
+            print(f"Error applying categorical definitions: {e}")
         
-        # Fallback to Japanese if english not found (though data_loader should provide english)
-        if odds == 0.0 and '単勝' in row:
-             odds = row.get('単勝', 0.0)
-        if popularity == 0 and '人気' in row:
-             popularity = row.get('人気', 0)
+        if not categorical_applied:
+            if '枠番' in X.columns: X['枠番'] = X['枠番'].astype(int)
+            if '馬番' in X.columns: X['馬番'] = X['馬番'].astype(int)
+            
+        try:
+            probs = model.predict(X)
+        except Exception as e:
+            raise e
+        
+        explanations_list = []
+        # SHAP calculation omitted for brevity
+        
+        results = []
+        for i, (_, row) in enumerate(df.iterrows()):
+            odds = row.get('odds', 0.0)
+            popularity = row.get('popularity', 0)
+            if odds == 0.0 and '単勝' in row: odds = row.get('単勝', 0.0)
+            if popularity == 0 and '人気' in row: popularity = row.get('人気', 0)
+            if pd.isna(odds): odds = 0.0
+            if pd.isna(popularity): popularity = 0
+            
+            reasoning = explanations_list[i] if i < len(explanations_list) else {'positive': [], 'negative': []}
+            item = row.to_dict()
+            if 'horse_name' not in df.columns:
+                df['horse_name'] = df['馬名'] if '馬名' in df.columns else df.index.map(lambda x: f"馬{x}")
+            
+            for k, v in item.items():
+                if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
+                    item[k] = None
+                    
+            item.update({
+                'horse_number': int(row.get('馬番', i + 1)),
+                'horse_name': str(row.get('馬名', f'馬{i+1}')),
+                'probability': float(probs[i]),
+                'odds': float(odds),
+                'popularity': int(popularity),
+                'expected_value': float(probs[i] * float(odds)),
+                'reasoning': reasoning
+            })
+            results.append(item)
+        
+        results.sort(key=lambda x: x['probability'], reverse=True)
+        for rank, res in enumerate(results, 1):
+            res['predicted_rank'] = rank
+            score = res['probability']
+            ev = res['expected_value']
+            if ev >= 1.0 and score >= 0.4:
+                res['strategy_decision'] = 'BUY'
+                res['analysis'] = {'type': 'recommended', 'message': '★ 推奨馬'}
+            else:
+                res['strategy_decision'] = 'PASS'
+                if score >= 0.4: res['analysis'] = {'type': 'info', 'message': '好走期待'}
+                elif ev >= 1.0: res['analysis'] = {'type': 'info', 'message': '期待値あり'}
+                else: res['analysis'] = {'type': 'normal', 'message': ''}
 
-        if pd.isna(odds): odds = 0.0
-        if pd.isna(popularity): popularity = 0
-        
-        reasoning = explanations_list[i] if i < len(explanations_list) else {'positive': [], 'negative': []}
-        
-        # Use all row data (features) for strategy reason generation
-        item = row.to_dict()
-        
-        # Ensure horse_name is in df for Allocator
-        if 'horse_name' not in df.columns:
-            df['horse_name'] = df['馬名'] if '馬名' in df.columns else df.index.map(lambda x: f"馬{x}")
+        race_name = df.attrs.get('race_name', race_name_default)
+        race_data01 = df.attrs.get('race_data01', '')
+        race_data02 = df.attrs.get('race_data02', '')
 
-        # Clean up NaN/inf values which might break JSON parsing in frontend
-        for k, v in item.items():
-            if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
-                item[k] = None
-                
-        # Explicitly update with prediction results
-        item.update({
-            'horse_number': int(row.get('馬番', i + 1)),
-            'horse_name': str(row.get('馬名', f'馬{i+1}')),
-            'probability': float(probs[i]),
-            'odds': float(odds),
-            'popularity': int(popularity),
-            'expected_value': float(probs[i] * float(odds)),
-            'reasoning': reasoning
-        })
-        results.append(item)
-    
-    results.sort(key=lambda x: x['probability'], reverse=True)
-    for rank, res in enumerate(results, 1):
-        res['predicted_rank'] = rank
-        
-        # Simple analysis
-        score = res['probability']
-        ev = res['expected_value']
-        
-        if ev >= 1.0 and score >= 0.4:
-            res['strategy_decision'] = 'BUY'
-            res['analysis'] = {'type': 'recommended', 'message': '★ 推奨馬'}
-        else:
-            res['strategy_decision'] = 'PASS'
-            if score >= 0.4: res['analysis'] = {'type': 'info', 'message': '好走期待'}
-            elif ev >= 1.0: res['analysis'] = {'type': 'info', 'message': '期待値あり'}
-            else: res['analysis'] = {'type': 'normal', 'message': ''}
+        if race_id:
+            print(f"Caching results for Race ID: {race_id}")
+            PREDICTION_CACHE[race_id] = {
+                'df': df,
+                'results': results,
+                'race_name': race_name,
+                'race_data01': race_data01,
+                'race_data02': race_data02,
+                'timestamp': datetime.now()
+            }
 
-    # Meta Data
-    race_name = df.attrs.get('race_name', race_name_default)
-    race_data01 = df.attrs.get('race_data01', '')
-    race_data02 = df.attrs.get('race_data02', '')
-
-    # 結果をキャッシュに保存 (race_idがある場合のみ)
-    if race_id and (race_id not in PREDICTION_CACHE or 'results' not in PREDICTION_CACHE[race_id]):
-        print(f"Caching results for Race ID: {race_id}")
-        PREDICTION_CACHE[race_id] = {
-            'df': df,
-            'results': results,
-            'race_name': race_name,
-            'race_data01': race_data01,
-            'race_data02': race_data02,
-            'timestamp': datetime.now()
-        }
-
-    # Betting Allocation using BettingAllocator
+    # ここからは、キャッシュの有無に関わらず実行（予算や戦略が変わる可能性があるため）
     recommendations = []
     odds_warning = None
-    
     if race_id and budget > 0:
         try:
-             # Real-time odds are fetched via fetch_and_process_race_data logic if possible
-             # But here we might need to fetch manually or pass it?
-             # BettingAllocator needs DataFrame.
-             
-             # Convert results list back to DF for Allocator
              df_preds_alloc = pd.DataFrame(results)
-             
-             # Call Allocator
-             # Fetch Odds Data for Allocator explicitly to support BOX EV calculation
              odds_data = None
              try:
                  odds_data = Odds.scrape(race_id)
              except Exception as oe:
                  print(f"Failed to fetch detailed odds data: {oe}")
-             
              recommendations = BettingAllocator.allocate_budget(df_preds_alloc, budget, odds_data=odds_data, strategy=strategy)
-             
              if not recommendations:
                  odds_warning = "推奨条件を満たす組み合わせが見つかりませんでした (予算不足または確度不足)"
-                 
         except Exception as e:
              import traceback
              print(f"Allocation Error: {e}")
              traceback.print_exc()
 
-    # Calculate Confidence Level
     confidence_level = 'D'
-    if not results:
-        confidence_level = '-'
-    else:
+    if results:
         top_prob = results[0]['probability']
         top_ev = results[0]['expected_value']
-        
-        if top_prob >= 0.5 or top_ev >= 1.5:
-            confidence_level = 'S'
-        elif top_prob >= 0.4 or top_ev >= 1.2:
-            confidence_level = 'A'
-        elif top_prob >= 0.3 or top_ev >= 1.0:
-            confidence_level = 'B'
-        elif top_prob >= 0.2:
-            confidence_level = 'C'
-        else:
-            confidence_level = 'D'
+        if top_prob >= 0.5 or top_ev >= 1.5: confidence_level = 'S'
+        elif top_prob >= 0.4 or top_ev >= 1.2: confidence_level = 'A'
+        elif top_prob >= 0.3 or top_ev >= 1.0: confidence_level = 'B'
+        elif top_prob >= 0.2: confidence_level = 'C'
+        else: confidence_level = 'D'
 
     return jsonify({
         'success': True,
         'race_id': race_id,
         'predictions': results,
         'recommendations': recommendations,
-        'confidence_level': confidence_level, # Added
+        'confidence_level': confidence_level,
         'odds_warning': odds_warning,
         'race_name': race_name,
         'race_info': race_info_default,
@@ -872,4 +799,4 @@ def launch_ipat_browser():
 
 if __name__ == '__main__':
     load_model()
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001, debug=False)
