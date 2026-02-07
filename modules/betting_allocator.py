@@ -650,7 +650,7 @@ class BettingAllocator:
                  rec['combination'] = f"1着:{main_bet['g1']} - 2着:{main_bet['g2']} - 3着:{main_bet['g3']}"
                  rec['formation'] = [main_bet['g1'], main_bet['g2'], main_bet['g3']]
             else:
-                 rec['combination'] = f"軸:{main_bet['g1']} - 相手:{main_bet['g2']}"
+                 rec['combination'] = f"軸:{','.join(map(str, main_bet['g1']))} - 相手:{','.join(map(str, main_bet['g2']))}"
                  rec['formation'] = [main_bet['g1'], main_bet['g2']]
 
             rec['horse_numbers'] = list(set(rec['horse_numbers'])) # Unique
@@ -1204,7 +1204,7 @@ class BettingAllocator:
                 'points': combo_count,
                 'unit_amount': 100,
                 'total_amount': total_cost,
-                'combination': f"軸:{axis_horse} 相手:{len(opponents)}頭(動的)",
+                'combination': f"軸:{axis_horse} 相手:{','.join(map(str, opponents))}",
                 'reason': f"Flex: 軸信頼度{int(axis_prob*100)}%, 相手{len(opponents)}頭"
              }
              recommendations.append(rec)
@@ -1307,7 +1307,7 @@ class BettingAllocator:
             'horse_numbers': [axis] + opponents,
             'formation': [[axis], opponents],
             'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis} 相手:{len(opponents)}頭",
+            'combination': f"軸:{axis} 相手:{','.join(map(str, opponents))}",
             'reason': 'LowCost: ワイド流し'
         }]
 
@@ -1384,7 +1384,7 @@ class BettingAllocator:
             'horse_numbers': [axis] + opponents,
             'formation': [[axis], opponents],
             'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis} 相手:{len(opponents)}頭",
+            'combination': f"軸:{axis} 相手:{','.join(map(str, opponents))}",
             'reason': 'LowCost: 馬連流し'
         }]
 
@@ -1418,7 +1418,7 @@ class BettingAllocator:
             'horse_numbers': [axis] + opponents,
             'formation': [[axis], opponents],
             'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis} 相手:{len(opponents)}頭",
+            'combination': f"軸:{axis} 相手:{','.join(map(str, opponents))}",
             'reason': '3連複1軸流し'
         }]
 
@@ -1447,6 +1447,6 @@ class BettingAllocator:
             'horse_numbers': [axis1, axis2] + opponents,
             'formation': [[axis1, axis2], opponents],
             'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis1}-{axis2} 相手:{len(opponents)}頭",
+            'combination': f"軸:{axis1}-{axis2} 相手:{','.join(map(str, opponents))}",
             'reason': '3連複2軸流し'
         }]
