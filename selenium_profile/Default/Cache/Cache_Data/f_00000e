@@ -1,0 +1,2768 @@
+
+/**
+ * 掲示板カテゴリ一覧を表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _type      一覧の種類(1:全て 2:おすすめ)
+ */
+function showBBSCategoryList( _show_id, _type )
+{
+  var _data = { pid : 'api_get_bbs_category_list' };
+
+  _data.output     = 'jsonp';
+  _data.type       = _type;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 掲示板スレッド数、投稿数を表示
+ *
+ * @param  string  _show_id   表示ID
+ */
+function showBBSCounter( _show_id )
+{
+  var _data = { pid : 'api_get_bbs_counter' };
+
+  _data.output     = 'jsonp';
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 掲示板ピックアップを表示
+ *
+ * @param  string  _show_id   表示ID
+ */
+function showBBSPickup( _show_id )
+{
+  var _data = { pid : 'api_get_pickup' };
+
+  _data.output     = 'jsonp';
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 掲示板ジャンル一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ */
+function showBBSAllGenre( _show_id )
+{
+  var _data = { pid : 'api_get_all_genre' };
+
+  _data.output       = 'jsonp';
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 掲示板スレッド一覧を表示(スレッドID指定)
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _ids            スレッドID(複数指定の場合はカンマ区切り)
+ * @param  integer _disp_type      ディスプレイタイプ（ 0(デフォルト):もっと見る無し 1:もっと見る）
+ */
+function showThreadListByIds( _show_id, _ids, _disp_type, _loading_area_id )
+{
+  var _data = { pid : 'api_get_thread_list_by_ids' };
+
+  _data.output       = 'jsonp';
+  _data.ids          = _ids;
+
+  if ( undefined != _disp_type )
+  {
+    _data.disp_type = _disp_type;
+  }
+
+  if( _disp_type == 1 )
+  {
+    $( '#' + _loading_area_id ).removeClass( 'disp_none' );
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         if( _disp_type == 1 )
+                         {
+                            $( '#' + _loading_area_id ).addClass( 'disp_none' );
+                            jQuery( '#' + _show_id ).append( data );
+                         }
+                         else
+                         {
+                            jQuery( '#' + _show_id ).html( data );
+                         }
+                       }
+          } );
+}
+
+/**
+ * 掲示板スレッド一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:新着投稿順 2:人気順[アクセス数順] 3:盛り上がり順[投稿数順] 4:新着写真投稿順 5:新着スレッド順)
+ * @param  string  _filter         小カテゴリフィルター名
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  integer _icon_type      リスト行先頭のアイコンのタイプ(1:通常 2:ランキングNo)
+ * @param  integer _fields         表示項目(title, text, text_short, count, datetimeのうち表示したいものを指定)
+ * @param  string  _link_type      リンクの種類('m':もっと見る 'p':ページャー 'ap':'もっと見る+ページャー')
+ * @param  string  _link_url       リンクURL
+ * @param  string  _disp_type      表示種類(1:もっと見る[もっと見るボタンがリンクではなく、非同期追加形式])
+ * @param  string  _loader_tag_id もっと見る押下時のローダーのタグ
+ * @param  integer _more_limit     もっと見る押下時に取得するリストの数 
+ */
+function showThreadList( _show_id, _sort, _filter, _grouping_type, _id, _limit, _page, _icon_type, _fields, _link_type, _link_url, _disp_type, _loader_tag_id, _more_limit )
+{
+  var _data = { pid : 'api_get_thread_list' };
+
+  _data.output       = 'jsonp';
+  _data.sort         = _sort;
+  _data.filter       = _filter;
+  _data.type         = _grouping_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _icon_type )
+  {
+    _data.icon_type = _icon_type;
+  }
+
+  if ( undefined != _fields )
+  {
+    _data.fields = _fields;
+  }
+
+  if ( undefined != _link_type )
+  {
+    _data.link_type = _link_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  if ( undefined != _disp_type )
+  {
+    _data.disp_type = _disp_type;
+  }
+
+  if ( undefined != _more_limit )
+  {
+    _data.more_limit = _more_limit;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         if( _disp_type == 1 )
+                         {
+                            jQuery( '#' + _show_id ).append( data );
+                         }
+                         else
+                         {
+                            jQuery( '#' + _show_id ).html( data );
+                         }
+                       }
+          } );
+}
+
+/*****************************************************************************/
+/**
+ * 掲示板スレッド一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:新着投稿順 2:人気順[アクセス数順] 3:盛り上がり順[投稿数順] 4:新着写真投稿順 5:新着スレッド順)
+ * @param  string  _filter         小カテゴリフィルター名
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  integer _icon_type      リスト行先頭のアイコンのタイプ(1:通常 2:ランキングNo)
+ * @param  integer _fields         表示項目(title, text, text_short, count, datetimeのうち表示したいものを指定)
+ * @param  string  _link_type      リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url       リンクURL
+ * @param  string  _disp_type      表示種類(1:もっと見る[もっと見るボタンがリンクではなく、非同期追加形式])
+ * @param  string  _loader_tag_id もっと見る押下時のローダーのタグ
+* @param  integer _more_limit    ページャーと連携しない場合にもっと見る押下時に読み込む件数     
+ */
+function showThreadList( _show_id, _sort, _filter, _grouping_type, _id, _limit, _page, _icon_type, _fields, _link_type, _link_url, _disp_type, _loader_tag_id, _more_limit ){
+	showThreadListWithPostFunc( _show_id, _sort, _filter, _grouping_type, _id, _limit, _page, _icon_type, _fields, _link_type, _link_url, null, _disp_type, _loader_tag_id, _more_limit );
+}
+
+/*****************************************************************************/
+/**
+ * 掲示板スレッド一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:新着投稿順 2:人気順[アクセス数順] 3:盛り上がり順[投稿数順] 4:新着写真投稿順 5:新着スレッド順)
+ * @param  string  _filter         小カテゴリフィルター名
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  integer _icon_type      リスト行先頭のアイコンのタイプ(1:通常 2:ランキングNo)
+ * @param  integer _fields         表示項目(title, text, text_short, count, datetimeのうち表示したいものを指定)
+ * @param  string  _link_type      リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url       リンクURL
+ * @param funciton _post_function  スレッド一覧取得後に実行する関数
+ */
+function showThreadListWithPostFunc( _show_id, _sort, _filter, _grouping_type, _id, _limit, _page, _icon_type, _fields, _link_type, _link_url, _post_function, _disp_type, _loader_tag_id, _more_limit  )
+{
+
+  var _data = { pid : 'api_get_thread_list' };
+
+  _data.output       = 'jsonp';
+  _data.sort         = _sort;
+  _data.filter       = _filter;
+  _data.type         = _grouping_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _icon_type )
+  {
+    _data.icon_type = _icon_type;
+  }
+
+  if ( undefined != _fields )
+  {
+    _data.fields = _fields;
+  }
+
+  if ( undefined != _link_type )
+  {
+    _data.link_type = _link_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  if ( undefined != _disp_type )
+  {
+    _data.disp_type = _disp_type;
+  }
+
+  if( _disp_type == 1)
+  {
+    $( '#' + _loader_tag_id ).removeClass( 'disp_none' );
+  }
+
+  if ( undefined != _more_limit )
+  {
+    _data.more_limit = _more_limit;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+
+                         if( _disp_type == 1 )
+                         {
+                            $( '#' + _loader_tag_id ).addClass( 'disp_none' );
+                            jQuery( '#' + _show_id ).append( data );
+                         }
+                         else
+                         {
+
+                            jQuery( '#' + _show_id ).html( data );
+
+			                if( _post_function != null )
+                            {
+				                _post_function(_show_id);
+
+			                }
+                         }
+                       }
+          } );
+}
+
+/**
+ * 掲示板スレッド一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:新着投稿順 2:人気順[アクセス数順] 3:盛り上がり順[投稿数順] 4:新着写真投稿順 5:新着スレッド順)
+ * @param  string  _filter         小カテゴリフィルター名
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  integer _icon_type      リスト行先頭のアイコンのタイプ(1:通常 2:ランキングNo)
+ * @param  integer _fields         表示項目(title, text, text_short, count, datetimeのうち表示したいものを指定)
+ * @param  string  _link_type      リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url       リンクURL
+ */
+function showThreadRankList( _show_id, _sort, _filter, _grouping_type, _id, _limit, _page, _icon_type, _fields, _link_type, _link_url )
+{
+  var _data = { pid : 'api_get_thread_rank_list' };
+
+  _data.output       = 'jsonp';
+  _data.sort         = _sort;
+  _data.filter       = _filter;
+  _data.type         = _grouping_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _icon_type )
+  {
+    _data.icon_type = _icon_type;
+  }
+
+  if ( undefined != _fields )
+  {
+    _data.fields = _fields;
+  }
+
+  if ( undefined != _link_type )
+  {
+    _data.link_type = _link_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/******************************************************************************/
+
+/**
+ * 掲示板スレッド詳細のコメントリストを表示
+ */
+function showCommentList( _show_id, _thread_id, _limit )
+{
+    var _data = { pid : 'api_get_comment_list' };
+
+    _data.output       = 'jsonp';
+    _data.thread_id    = _thread_id;
+
+    if ( undefined != _limit )
+    {
+        _data.limit = _limit;
+    }
+
+    jQuery.ajax( { type     : 'GET',
+            url      : _nifty_bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+            {
+                jQuery( '#' + _show_id ).html( data );
+            }
+     } );
+
+}
+
+/**
+ * あわせて読まれている掲示板リストを追加
+ *
+ * @param  string  _show_id             表示ID
+ * @param  string  _thread_id           スレッドID
+ * @param  integer _append_page         追加するページ  
+ * @param  string  _loading_area_id     ロード中エリアID  
+ */
+function appendThreadRecommendList( _show_id, _thread_id, _append_page, _loading_area_id, _limit, _more_limit )
+{
+  var _data = { pid : 'api_get_thread_recommend' };
+
+  _data.output       = 'jsonp';
+
+  if ( undefined != _append_page )
+  {
+    _data.page = _append_page;
+  }
+
+  if ( undefined != _thread_id )
+  {
+    _data.id = _thread_id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _more_limit )
+  {
+    _data.more_limit = _more_limit;
+  }
+
+  $( '#' + _loading_area_id ).removeClass( 'disp_none' );
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                        $( '#' + _loading_area_id ).addClass( 'disp_none' );
+                         jQuery( '#' + _show_id ).append( data );
+                       }
+          } );
+}
+
+/**
+ * 関連度の高い掲示板リストを追加
+ *
+ * @param  string  _show_id             表示ID
+ * @param  string  _thread_id           スレッドID
+ * @param  integer _append_page         追加するページ  
+ * @param  string  _loading_area_id     ロード中エリアID  
+ */
+function appendRelatedThreadList( _show_id, _thread_id, _append_page, _loading_area_id )
+{
+  var _data = { pid : 'api_get_related_thread_list' };
+
+  _data.output       = 'jsonp';
+
+  if ( undefined != _append_page )
+  {
+    _data.page = _append_page;
+  }
+
+  if ( undefined != _thread_id )
+  {
+    _data.thread_id = _thread_id;
+  }
+
+
+  $( '#' + _loading_area_id ).removeClass( 'disp_none' );
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                        $( '#' + _loading_area_id ).addClass( 'disp_none' );
+                         jQuery( '#' + _show_id ).append( data );
+                       }
+          } );
+}
+
+
+/**
+ * スレッドブックマーク一覧を表示(ユーザー指定)
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:登録順)
+ * @param  integer _sns_user_id    ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  integer _fields         表示項目(title, text, text_short, count, datetimeのうち表示したいものを指定)
+ * @param  string  _pager_type      リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url       リンクURL
+ */
+function showUserBookmarkList( _show_id, _sns_user_id, _sort, _limit, _page, _fields, _pager_type, _link_url )
+{
+  var _data = { pid : 'api_get_user_bookmark_list' };
+
+  _data.output       = 'jsonp';
+  _data.sns_user_id  = _sns_user_id;
+  _data.sort         = _sort;
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _fields )
+  {
+    _data.fields = _fields;
+  }
+
+  if ( undefined != _pager_type )
+  {
+    _data.pager_type = _pager_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 掲示板投稿履歴の取得
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sns_user_id    本人user_id
+ * @param  integer _id             他人user_id
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  string  _pager_type      リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url       リンクURL
+ */
+function showPostHistList( _show_id, _sns_user_id, _id, _limit, _page, _pager_type, _link_url )
+{
+  var _data = { pid : 'api_get_post_hist_list' };
+
+  _data.output       = 'jsonp';
+
+  if ( undefined != _sns_user_id )
+  {
+    _data.sns_user_id = _sns_user_id;
+  }
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_type )
+  {
+    _data.pager_type = _pager_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * スレッドブックマークランキング一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:ユーザー数順 2:新着登録順)、省略時は2
+ * @param  string  _filter         小カテゴリフィルター名、省略時はbase
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)、省略時は1
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit          表示件数
+ * @param  integer _page           ページ番号
+ * @param  integer _icon_type      リスト行先頭のアイコンのタイプ(1:通常 2:ランキングNo)
+ * @param  integer _fields         表示項目(title, text, text_short, count, datetimeのうち表示したいものを指定)
+ * @param  integer  _location_type 表示する場所のタイプ（1:メイン　2:サイド）指定無しの場合もメイン
+ * @param  string  _link_type      リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url       リンクURL
+ * @param  string  _disp_type      表示種類(1:もっと見る[もっと見るボタンがリンクではなく、非同期追加形式])
+ * @param  string  _loader_tag_id もっと見る押下時のローダーのタグ
+ */
+function showBookmarkList( _show_id, _sort, _filter, _grouping_type, _id, _limit, _page, _icon_type, _fields, _location_type, _link_type, _link_url, _disp_type, _loader_tag_id  )
+{
+  var _data = { pid : 'api_get_bookmark_list' };
+
+  _data.output       = 'jsonp';
+  _data.sort         = _sort;
+
+  if ( undefined != _filter )
+  {
+    _data.filter = _filter;
+  }
+
+  if ( undefined != _grouping_type )
+  {
+    _data.grouping_type = _grouping_type;
+  }
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _icon_type )
+  {
+    _data.icon_type = _icon_type;
+  }
+
+  if ( undefined != _location_type )
+  {
+    _data.location_type = _location_type;
+  }
+
+
+  if ( undefined != _fields )
+  {
+    _data.fields = _fields;
+  }
+
+  if ( undefined != _link_type )
+  {
+    _data.link_type = _link_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  if ( undefined != _disp_type )
+  {
+    _data.disp_type = _disp_type;
+  }
+
+  if( _disp_type == 1 )
+  {
+    $( '#' + _loader_tag_id ).removeClass( 'disp_none' );
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         if( _disp_type == 1 )
+                         {
+
+                            $( '#' + _loader_tag_id ).addClass( 'disp_none' );
+
+                            jQuery( '#' + _show_id ).append( data );
+                         }
+                         else
+                         {
+
+                            jQuery( '#' + _show_id ).html( data );
+                         }
+                       }
+          } );
+}
+
+/**
+ * スレッドブックマークランキング一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  string  _thread_id      スレッドID
+ * @param  string  _replace_html   置き換えるhtml
+ */
+function addBookmark( _show_id, _thread_id, _replace_html )
+{
+
+}
+
+
+/**
+ * 掲示板スレッド一覧を表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _sort           ソート(1:人気順[アクセス数順] 2:新着順 3:盛り上がり順)
+ * @param  integer _subcategory_id 小カテゴリーID
+ * @param  integer _mark           ランキングマーク(順位・絵文字)の表示有無(0:表示なし、1:表示あり)
+ * @param  integer _limit          取得件数
+ * @param  integer _page           ページ番号
+ * @param  string  _pager_url      ページャーURL
+ */
+function showBBSThreadList( _show_id, _sort, _type, _subcategory_id, _limit, _page, _pager_url )
+{
+  var _data = { pid : 'api_get_bbs_thread_list' };
+
+  _data.output     = 'jsonp';
+  _data.sort       = _sort;
+  _data.type       = _type;
+
+  if ( undefined != _subcategory_id )
+  {
+    _data.subcategory_id = _subcategory_id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+
+
+/**
+ * 掲示板スレッドランキングを表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _rank           ランキングの種類(1:人気順[アクセス数順] 2:新着順
+ * @param  integer _subcategory_id サブカテゴリーID
+ * @param  integer _limit          取得件数
+ * @param  integer _page           ページ番号
+ * @param  string  _pager_url      ページャーURL
+ */
+function showBBSThreadRankList( _show_id, _rank, _subcategory_id, _limit, _page, _pager_url )
+{
+  var _data = { pid : 'api_get_bbs_rank_list' };
+
+  _data.output     = 'jsonp';
+  _data.rank       = _rank;
+
+  if ( undefined != _subcategory_id )
+  {
+    _data.subcategory_id = _subcategory_id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 掲示板スレッドバンチを表示
+ *
+ * @param  string  _show_id        表示ID
+ * @param  integer _rank           ランキングの種類(1:人気順[アクセス数順] 2:新着順
+ * @param  integer _subcategory_id サブカテゴリーID
+ * @param  integer _limit          取得件数
+ * @param  integer _page           ページ番号
+ * @param  string  _pager_url      ページャーURL
+ */
+function showBBSBunchThreadList( _show_id, _rank, _bunch_id, _limit, _page, _pager_url )
+{
+  var _data = { pid : 'api_get_bunch_bbs_list' };
+
+  _data.output     = 'jsonp';
+  _data.rank       = _rank;
+  _data.bunch_id   = _bunch_id;
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+
+/**
+ * 投稿ランキングを表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _subcategory_id サブカテゴリーID
+ * @param  integer _type      新着の種類(1:新着投稿 2:新着画像 3:新着スレッド)
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  string  _pager_url ページャーURL
+ */
+function showBBSContRankList( _show_id, _type, _limit, _page, _pager_url )
+{
+  var _data = { pid : 'api_get_newly_arrived_bbs_list' };
+
+  _data.output     = 'jsonp';
+  _data.type       = _type;
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+
+/**
+ * 投稿者ランキングを表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _rank      ランキングの種類(1:いいね数 2:投稿数 3:写真いいね数)
+ * @param  string  _filter    小カテゴリフィルター名
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  string  _pager_url ページャーURL
+ */
+function showBBSUserRankList( _show_id, _rank, _filter, _limit, _page, _pager_url )
+{
+  var _data = { pid : 'api_get_user_rank_list' };
+
+  _data.output     = 'jsonp';
+  _data.rank       = _rank;
+  _data.filter     = _filter;
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿者ランキングを表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _rank      ランキングの種類(1:いいね数 2:投稿数 3:写真いいね数)
+ * @param  string  _filter    小カテゴリフィルター名
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  string  _link_type リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url  ページャーURL
+ */
+function showBBSUserRankList2( _show_id, _rank, _filter, _grouping_type, _id,_limit, _page, _link_type, _link_url )
+{
+  var _data = { pid : 'api_get_user_rank_list2' };
+
+  _data.output     = 'jsonp';
+  _data.rank       = _rank;
+  _data.filter     = _filter;
+  _data.type         = _grouping_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _link_type )
+  {
+    _data.link_type = _link_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿者ランキングを表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _rank      ランキングの種類(1:いいね数 2:投稿数 3:写真いいね数)
+ * @param  string  _filter    小カテゴリフィルター名
+ * @param  integer _grouping_type  グルーピングタイプ(1:全体, 2:複数小カテゴリ, 3:単一小カテゴリ)
+ * @param  integer _id             ID(_type=1のときは不要、_type=2のときは小カテゴリグループ番号、_type=3のときは小カテゴリID);
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  string  _link_type リンクの種類('m':もっと見る 'p':ページャー)
+ * @param  string  _link_url  ページャーURL
+ */
+function showBBSUserRankList2( _show_id, _rank, _filter, _grouping_type, _id,_limit, _page, _link_type, _link_url )
+{
+  var _data = { pid : 'api_get_user_rank_list2' };
+
+  _data.output     = 'jsonp';
+  _data.rank       = _rank;
+  _data.filter     = _filter;
+  _data.type         = _grouping_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _link_type )
+  {
+    _data.link_type = _link_type;
+  }
+
+  if ( undefined != _link_url )
+  {
+    _data.link_url = _link_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * TOPページ用投稿者ランキングを表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _rank      ランキングの種類(1:いいね数 2:投稿数 3:写真いいね数)
+ * @param  string  _filter    小カテゴリフィルター名
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  string  _pager_url ページャーURL
+ */
+function showTopBBSUserRankList( _show_id, _rank, _filter, _limit, _page, _pager_url )
+{
+  var _data = { pid : 'api_get_top_user_rank_list' };
+
+  _data.output     = 'jsonp';
+  _data.rank       = _rank;
+  _data.filter     = _filter;
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿写真(一枚)取得「スライドショー用」
+ *
+ * @param  string  _show_id  表示ID
+ * @param  integer _id       スレッドID
+ * @param  integer _con_id   投稿ID
+ */
+function showSlideShowPhoto( _show_id, _id, _con_id )
+{
+  var _data = { pid : 'api_get_slideshow_photo' };
+
+  _data.output       = 'jsonp';
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _con_id )
+  {
+    _data.con_id = _con_id;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿された最新の画像を_limit数表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  string  _display_type   表示タイプ
+ * @param  string  _satelite_category   サテライトカテゴリー
+ * @param  integer _group_type  グループタイプ(1:全体, 2:大カテゴリ, 3:小カテゴリ, 4:スレッド)
+ * @param  integer _id   ID(_group_type=1のときは不要);
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  integer _pager_type ページ種別
+ */
+function showNewPhotoList( _show_id, _display_type,  _satelite_category, _group_type, _id, _limit, _page, _pager_type, _pager_url, _post_function )
+{
+	showNewPhotoListWithPostFunc( _show_id, _display_type,  _satelite_category, _group_type, _id, _limit, _page, _pager_type, _pager_url, null );
+}
+
+/**
+ * 投稿された最新の画像を_limit数表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  string  _display_type   表示タイプ
+ * @param  string  _satelite_category   サテライトカテゴリー
+ * @param  integer _group_type  グループタイプ(1:全体, 2:大カテゴリ, 3:小カテゴリ, 4:スレッド)
+ * @param  integer _id   ID(_group_type=1のときは不要);
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param  integer _pager_type ページ種別
+ * @param  string  _pager_url ページURL
+ * @param funciton _post_function 写真取得後に実行する関数
+ */
+function showNewPhotoListWithPostFunc( _show_id, _display_type,  _satelite_category, _group_type, _id, _limit, _page, _pager_type, _pager_url, _post_function )
+{
+  var _data = { pid : 'api_get_new_photo_list' };
+
+  _data.output             = 'jsonp';
+  _data.show_id            = _show_id;
+  _data.display_type       = _display_type;
+  _data.satelite_category  = _satelite_category;
+  _data.group_type         = _group_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  if ( undefined != _pager_type )
+  {
+    _data.pager_type = _pager_type;
+  }
+
+  if ( undefined != _pager_url )
+  {
+    _data.pager_url = _pager_url;
+  }
+
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+			if( _post_function != null ){
+				_post_function();
+			}
+                       }
+          } );
+}
+
+/**
+ * 掲示板詳細に表示する画像ギャリ―用
+ *
+ * @param  string  _show_id   表示ID
+ * @param  string  _display_type   表示タイプ
+ * @param  string  _satelite_category   サテライトカテゴリー
+ * @param  integer _group_type  グループタイプ(1:全体, 2:大カテゴリ, 3:小カテゴリ, 4:スレッド)
+ * @param  integer _id   ID(_group_type=1のときは不要);
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ * @param funciton _post_function 写真取得後に実行する関数
+ */
+function showPhotoList( _show_id, _display_type,  _satelite_category, _group_type, _id, _limit, _page, _post_function )
+{
+  var _data = { pid : 'api_get_photo_list' };
+
+  _data.output             = 'jsonp';
+  _data.display_type       = _display_type;
+  _data.satelite_category  = _satelite_category;
+  _data.group_type         = _group_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+			if( _post_function != null ){
+				_post_function();
+			}
+                       }
+          } );
+}
+
+function showGallery( _show_id )
+{
+  var _data = { pid : 'api_get_gallery' };
+
+  _data.output     = 'jsonp';
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿された最新の画像を_limit数表示
+ *
+ * @param integer  _thread_id       スレッドID
+ * @param integer  _contribution_id 投稿ID
+ * @param integer  _limit           取得件数
+ * @param integer  _start           取得開始番号
+ * @param funciton _post_function   写真取得後に実行する関数
+ * @param array    _user_param      写真取得後に実行する関数に渡すパラメータ
+ */
+function getGallerySlide(  _thread_id, _contribution_id, _direction, _limit, _start, _post_function, _user_param )
+{
+  var _data = { pid : 'api_get_gallery_slide' };
+  var user_param = _user_param;
+
+  _data.output             = 'jsonp';
+  _data.thread_id          = _thread_id;
+  _data.contribution_id    = _contribution_id;
+  _data.direction          = _direction;
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _start )
+  {
+    _data.start = _start;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                            if( _post_function != null ){
+                                _post_function(data, user_param);
+                            }
+                       }
+          } );
+}
+
+
+
+/**
+ * 投稿された画件像数表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  string  _satelite_category   サテライトカテゴリー
+ * @param  integer _group_type  グループタイプ(1:全体, 2:大カテゴリ, 3:小カテゴリ, 4:スレッド)
+ * @param  integer _id   ID(_group_type=1のときは不要);
+ */
+function showPhotoCount( _show_id, _satelite_category, _group_type, _id )
+{
+  var _data = { pid : 'api_get_photo_count' };
+
+  _data.output             = 'jsonp';
+  _data.satelite_category  = _satelite_category;
+  _data.group_type         = _group_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * idで指定したスレッドに投稿した人数を表示する 
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _id        スレッドID
+ */
+function showContributorCount( _show_id,  _id )
+{
+  var _data = { pid : 'api_get_contributor_count' };
+
+  _data.output             = 'jsonp';
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿された最新のアバターを_limit数表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  string  _satelite_category   サテライトカテゴリー
+ * @param  integer _group_type  グループタイプ(1:全体, 2:大カテゴリ, 3:小カテゴリ, 4:スレッド)
+ * @param  integer _id   ID(_group_type=1のときは不要);
+ * @param  integer _limit     取得件数
+ * @param  integer _page      ページ番号
+ */
+function showNewAvatarList( _show_id, _satelite_category, _group_type, _id, _limit, _page )
+{
+  var _data = { pid : 'api_get_new_avatar_list' };
+
+  _data.output             = 'jsonp';
+  _data.satelite_category  = _satelite_category;
+  _data.group_type         = _group_type;
+
+  if ( undefined != _id )
+  {
+    _data.id = _id;
+  }
+
+  if ( undefined != _limit )
+  {
+    _data.limit = _limit;
+  }
+
+  if ( undefined != _page )
+  {
+    _data.page = _page;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+
+/**
+ * ペナルティメッセージ取得
+ *
+ * @param string  _penalty_status	ペナルティステータス
+ * @param string  _sns_user_id		ユーザID
+ */
+function showPenaltyMessage( _show_id, _penalty_status, _sns_user_id )
+{
+  var _data = { pid : 'api_show_penalty_message' };
+
+  _data.input          = 'UTF-8';
+  _data.output         = 'jsonp';
+  _data.penalty_status = _penalty_status;
+  _data.sns_user_id    = _sns_user_id;
+
+  jQuery.ajax( { type     : 'POST',
+            url      : _nifty_bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * コメント投稿
+ *
+ */
+function postComment( _thread_id, _ticket, _handle )
+{
+
+  var post_btn = $('#btnPost');
+  post_btn.attr('disabled', 'disabled');
+  
+  var _cmmnt_text = $( '#comment_area' ).val();
+
+  if ( 0 == _cmmnt_text.length && !$('#photo_upload_btn')[0].files.length )
+  {
+    alert( 'コメントを入力してください。' );
+    post_btn.removeAttr( 'disabled' );
+    return;
+  }
+  else if ( 1000 < _cmmnt_text.length )
+  {
+    alert( "コメントは1,000文字以内で入力してください。\n現在の入力文字数：" + _number_format( _cmmnt_text.length ) + "文字" );
+    post_btn.removeAttr( 'disabled' );
+    return;
+  }
+  else if ( _is_ngword( _cmmnt_text ) )
+  {
+    alert( 'コメントに不適切な表現が含まれております。ご確認ください。' );
+    post_btn.removeAttr( 'disabled' );
+    return;
+  }
+
+  var _is_anonymous = 1;
+  if(! $('#anonymous_checkbox').prop("checked") )
+  {
+    _is_anonymous = 0;
+  }
+
+  var _data = { pid : 'api_post_comment' };
+
+  _data.input     = 'UTF-8';
+  _data.output    = 'jsonp';
+  _data.thread_id = _thread_id;
+  _data.ticket    = _ticket;
+  _data.handle    = _handle;
+  _data.text      = _cmmnt_text;
+  _data.anonymous = _is_anonymous;
+
+  jQuery.ajax( { type     : 'POST',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+			   post_btn.removeAttr( 'disabled' );
+			   document.location.reload(true);
+                       }
+          } );
+
+}
+
+/**
+ * コメント投稿
+ * @param string  _thread_id	            スレッドID
+ * @param string  _handle	                ハンドル
+ * @param string  _comment_area_id	        コメントエリアのID
+ * @param string  _anoanymous_checkbox_id	匿名チェックボックスのID
+ * @param string  _is_refresh_list	        コメントリストを更新するかどうか
+ * @param string  _refresh_limit	        コメントリストを更新した後に表示するコメント数
+ *
+ */
+function postThreadComment( _thread_id, _handle, _comment_area_id, _anoanymous_checkbox_id, _is_refresh_list, _refresh_limit )
+{
+
+  var _cmmnt_text = $( '#' + _comment_area_id ).val();
+
+  if ( 0 == _cmmnt_text.length )
+  {
+    alert( 'コメントを入力してください。' );
+    return;
+  }
+  else if ( 1000 < _cmmnt_text.length )
+  {
+    alert( "コメントは1,000文字以内で入力してください。\n現在の入力文字数：" + _number_format( _cmmnt_text.length ) + "文字" );
+    return;
+  }
+  else if ( _is_ngword( _cmmnt_text ) )
+  {
+    alert( 'コメントに不適切な表現が含まれております。ご確認ください。' );
+    return;
+  }
+
+  var _is_anonymous = 1;
+  if(! $('#' + _anoanymous_checkbox_id ).prop("checked") )
+  {
+    _is_anonymous = 0;
+  }
+
+  var _data = { pid : 'api_post_comment' };
+
+  _data.input     = 'UTF-8';
+  _data.output    = 'jsonp';
+  _data.thread_id = _thread_id;
+  _data.handle    = _handle;
+  _data.text      = _cmmnt_text;
+  _data.anonymous = _is_anonymous;
+
+  jQuery.ajax( { type     : 'POST',
+            url      : _nifty_bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                            if( _is_refresh_list == 1 )
+                            {
+                                showCommentList( 'comment_list', _thread_id, _refresh_limit );
+                            }
+                       }
+         } );
+}
+
+
+/**
+ * 投稿された画件像数表示
+ *
+ * @param  string  _show_id   表示ID
+ * @param  integer _thread_id スレッドID 
+ * @param  integer _contribution_id  投稿ID 
+ */
+function showContributionDetail( _show_id, _thread_id, _contribution_id )
+{
+  var _data = { pid : 'api_get_contribution_detail' };
+  _data.output = 'jsonp';
+
+  if ( undefined != _thread_id )
+  {
+    _data.thread_id = _thread_id;
+  }
+
+  if ( undefined != _contribution_id )
+  {
+    _data.contribution_id = _contribution_id;
+  }
+
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * 投稿にいいねをする
+ *
+ * @param integer _thread_id        スレッドID
+ * @param integer _contribution_id  投稿ID
+ * @param string  _notify_title     通知タイトル
+ * @param string  _notify_url       通知URL
+ * @param string  _replace_word     置換文字列
+ */
+// function postContributionLikeComment( _thread_id, _contribution_id, _notify_title, _notify_url, _replace_word, _with_photo )
+// {
+//   var _data = { pid : 'api_post_contribution_like_comment' };
+
+//   _data.input           = 'UTF-8';
+//   _data.output          = 'jsonp';
+//   _data.thread_id       = _thread_id;
+//   _data.contribution_id = _contribution_id;
+//   _data.notify_title    = _notify_title;
+//   _data.notify_url      = _notify_url;
+
+//   if ( undefined != _with_photo )
+//   {
+//     _data.with_photo = _with_photo;
+//   }
+
+//   jQuery.ajax( { type     : 'GET',
+//             url      : _bbs_action_api_url,
+//             data     : _data,
+//             dataType : _data.output,
+//             success  : function( data )
+//                        {
+//                          jQuery( 'span.like_comment_' + _thread_id + '_' + _contribution_id ).html( _replace_word );
+//                          jQuery( 'span.like_count_' + _thread_id + '_' + _contribution_id ).html( _number_format( _intval( jQuery( 'span.like_count_' + _thread_id + '_' +_contribution_id ).html() ) + 1 ) );
+//                        }
+//           } );
+// }
+
+/**
+ * 投稿にFightをする
+ *
+ * @param integer _thread_id        投稿ID
+ * @param integer _contribution_id  投稿ID
+ * @param string  _notify_title     通知タイトル
+ * @param string  _notify_url       通知URL
+ * @param string  _replace_word     置換文字列
+ */
+// function postContributionFightComment( _thread_id, _contribution_id, _notify_title, _notify_url, _replace_word )
+// {
+//   var _data = { pid : 'api_post_contribution_fight_comment' };
+
+//   _data.input           = 'UTF-8';
+//   _data.output          = 'jsonp';
+//   _data.thread_id       = _thread_id;
+//   _data.contribution_id = _contribution_id;
+//   _data.notify_title    = _notify_title;
+//   _data.notify_url      = _notify_url;
+
+//   jQuery.ajax( { type     : 'GET',
+//             url      : _bbs_action_api_url,
+//             data     : _data,
+//             dataType : _data.output,
+//             success  : function( data )
+//                        {
+//                          jQuery( 'span.fight_comment_' + _thread_id + '_' + _contribution_id ).html( _replace_word );
+//                          jQuery( 'span.fight_count_' + _thread_id + '_' + _contribution_id ).html( _number_format( _intval( jQuery( 'span.fight_count_' + _thread_id + '_' +_contribution_id ).html() ) + 1 ) );
+//                        }
+//           } );
+// }
+
+
+/**
+ * 非表示投票をする
+ *
+ * @param string  _thread_id       スレッドID
+ * @param integer _contribution_id 投稿ID
+ * @param string  _replace_word    置換文字列
+ * @param string  _category_id     カテゴリーID
+ */
+function postHiddenComment( _thread_id, _contribution_id, _replace_word, _category_id )
+{
+  var _data = { pid : 'api_post_hidden_comment' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.thread_id       = _thread_id;
+  _data.contribution_id = _contribution_id;
+
+  if ( ! _empty( _category_id ) )
+  {
+    _data.category_id = _category_id;
+  }
+
+  jQuery.ajax( { type     : 'POST',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         $( 'span.hidden_comment_' + _contribution_id ).html( _replace_word );
+                       }
+          } );
+}
+
+/**
+ * 非表示投票を取消す
+ *
+ * @param string  _thread_id       スレッドID
+ * @param integer _contribution_id 投稿ID
+ * @param string  _replace_word    置換文字列
+ * @param string  _category_id     カテゴリーID
+ */
+function cancelHiddenComment( _thread_id, _contribution_id, _replace_word, _category_id )
+{
+  var _data = { pid : 'api_cancel_hidden_comment' };
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.thread_id       = _thread_id;
+  _data.contribution_id = _contribution_id;
+
+  if ( ! _empty( _category_id ) )
+  {
+    _data.category_id = _category_id;
+  }
+
+  jQuery.ajax( { type     : 'POST',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         $( 'span.hidden_comment_' + _contribution_id ).html( _replace_word );
+                       }
+          } );
+}
+
+/**
+ * 新着スレッドを加算する
+ *
+ * @param integer _thread_id        投稿ID
+ */
+function addNewThreadRanking( _thread_id )
+{
+  var _data = { pid : 'api_add_new_thread_ranking' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.thread_id       = _thread_id;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                       }
+          } );
+}
+
+/**
+ * スレッドの投稿数を加算する
+ *
+ * @param integer _thread_id        投稿ID
+ */
+function addContributionCount( _thread_id, _contribution_id, _sns_user_id, _with_photo )
+{
+  var _data = { pid : 'api_add_contribution_count' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.thread_id       = _thread_id;
+  _data.contribution_id = _contribution_id;
+
+  if ( undefined != _sns_user_id )
+  {
+    _data.sns_user_id = _sns_user_id;
+  }
+
+  if ( undefined != _with_photo )
+  {
+    _data.with_photo = _with_photo;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                       }
+          } );
+}
+
+/**
+ * コメントフォームを表示する
+ */
+function showCommentForm( _show_id, _thread_id, _limit )
+{
+
+    var _data = { pid : 'api_get_comment_form' };
+
+    _data.input = 'UTF-8';
+    _data.output = 'jsonp';
+
+    if( undefined != _thread_id )
+    {
+        _data.thread_id = _thread_id;
+    }
+
+    if( undefined != _limit )
+    {
+        _data.limit = _limit;
+    }
+
+    jQuery.ajax({
+            type    :   'GET', 
+            url     :   _nifty_bbs_action_api_url,
+            data    :   _data, 
+            dataType    :   'jsonp', 
+            success :   function( data )
+            {
+                $( '#' + _show_id ).html( data );
+            },
+            error   :   function( jqXHR, textStatus,  errorThrown )
+            {
+                console.log( 'error' + errorThrown);
+                console.log( 'jqXHR' + jqXHR);
+                console.log( 'textStatus' + textStatus);
+            }
+        }
+    );
+
+}
+
+/**
+ * 文字列を数値にする
+ *
+ * @param  string  _str 文字列
+ * @return integer      数値
+ */
+function _intval( _str )
+{
+  return eval( _str.replace( /,/g, '' ) );
+}
+
+/**
+ * 数値を3桁で区切り文字列にする
+ *
+ * @param  integer _num 数値
+ * @return string       文字列
+ */
+function _number_format( _num )
+{
+  return _num.toString().replace( /([0-9]+?)(?=(?:[0-9]{3})+$)/g, '$1,' );
+}
+
+/**
+ * NGワードが含まれているかどうか
+ *
+ * @param  string  _str 文字列
+ * @return boolean      true=NGワードあり false=NGワードなし
+ */
+function _is_ngword( _str )
+{
+  var _data = { pid : 'api_get_ngword' };
+
+  _data.input  = 'UTF-8';
+  _data.output = 'jsonp';
+
+  var _ngword = false;
+
+  jQuery.ajax( { type     : 'POST',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            async    : false,
+            success  : function( json )
+                       {
+                         jQuery.each( json.data.list, function( _key, _value ) {
+                           var _reg = new RegExp( _value );
+                           if ( _str.match( _reg ) )
+                           {
+                             _ngword = true;
+                             return;
+                           }
+                         } );
+                       }
+          } );
+
+  return _ngword;
+}
+
+
+/*------------------------------------------------------------
+ * ここから2014.12リニューアルでの追加				
+ *------------------------------------------------------------*/
+
+/**
+ * スレッドのアクセスランキングに加算する
+ *
+ * @param integer _thread_id        投稿ID
+ */
+function postThreadAccess( _thread_id )
+{
+  var _data = { pid : 'api_post_thread_access' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.thread_id       = _thread_id;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }
+                       }
+          } );
+}
+
+/**
+ * ユーザー投稿ランキングを加算する
+ *
+ * @param integer _sns_user_id      SNSユーザーID
+ * @param integer _type             '1':コメント投稿 '2': いいね '3':ファイト
+ * @param integer _thread_id        スレッドID
+ * @param integer _post_id          投稿ID
+ * @param integer _with_photo       '0': 通常の投稿 '1':写真付きの投稿
+ */
+function postUserRank( _sns_user_id, _type, _thread_id, _post_id, _with_photo, _replace_str )
+{
+  var _data = { pid : 'api_post_user_rank' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.sns_user_id     = _sns_user_id;
+  _data.type            = _type;
+  _data.thread_id       = _thread_id;
+  _data.post_id         = _post_id;
+  _data.with_photo      = _with_photo;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+			   if(undefined != _replace_str){
+			       jQuery( 'span.like_comment_' + _thread_id + '_' + _post_id ).html( _replace_str );
+			       jQuery( 'span.like_count_' + _thread_id + '_' + _post_id ).html( _number_format( _intval( jQuery( 'span.like_count_' + _thread_id + '_' +_post_id ).html() ) + 1 ) );
+			   }
+                       }
+          } );
+}
+
+/**
+ * 新着情報の更新(コメント投稿、新規スレッド作成)
+ *
+ * @param integer _sns_user_id      SNSユーザーID
+ * @param integer _type             '1':コメント投稿 '2':新規スレッド作成
+ * @param integer _thread_id        スレッドID
+ * @param integer _post_id          投稿ID (_type='1'の場合)
+ */
+function postUserNewest( _sns_user_id, _type, _thread_id, _post_id )
+{
+  var _data = { pid : 'api_post_user_newest' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.sns_user_id     = _sns_user_id;
+  _data.type            = _type;
+  _data.thread_id       = _thread_id;
+  _data.post_id         = _post_id;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }
+                       }
+          } );
+}
+
+/**
+ * 各種ユーザーランキング一覧の表示
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _rank_type       1:投稿 2:いいね 3:ファイト 4:写真がいいね
+ * @param  integer _rank_ym         yyyymm ランキング年月 (default:now)
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit
+ * @param  integer _page
+ * @param  integer _pager_type      'more_inner-n': 更に読み込む(n回で more_outer) 
+ *                                  'more_outer'  : もっと見る(別ページリンク)
+ *                                  'pager'       : ページャ
+ * @param  integer _pager_url       'more_xxx'の際にリンクページおおびパラメータ
+ */
+function showUserRanking( _show_id, _rank_type, _rank_ym, _category_id, _subcategory_id, _limit, _page, _pager_type, _pager_url, _pid_suffix )
+{
+  var _data = { pid : 'api_get_user_rank' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.show_id         = _show_id;
+  _data.rank_type       = _rank_type;
+  _data.rank_ym         = _rank_ym;
+  _data.category_id     = _category_id;
+  _data.subcategory_id  = _subcategory_id;
+  _data.limit           = _limit;
+  _data.page            = _page;
+  _data.pager_type      = _pager_type;
+  _data.pager_url       = _pager_url;
+  if ( undefined != _pid_suffix ){
+      _data._pid_suffix = _pid_suffix;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * スレッド一覧の表示(1)
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _rank_type       1:新規作成スレッド順 2:人気順(アクセス順)
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit
+ * @param  integer _page
+ * @param  integer _pager_type        'more_inner-n': 更に読み込む(n回で more_outer) 
+ *                                    'more_outer'  : もっと見る(別ページリンク)
+ *                                    'pager'       : ページャ
+ * @param  integer _pager_url         'more_xxx'の際にリンクページおおびパラメータ
+ */
+function showThreadRanking( _show_id, _rank_type, _category_id, _subcategory_id, _limit, _page, _pager_type, _pager_url, _pid_suffix )
+{
+  var _data = { pid : 'api_get_thread_rank' };
+
+  _data.input             = 'UTF-8';
+  _data.output            = 'jsonp';
+  _data.show_id           = _show_id;
+  _data.rank_type         = _rank_type;
+  _data.category_id       = _category_id;
+  _data.subcategory_id    = _subcategory_id;
+  _data.limit             = _limit;
+  _data.page              = _page;
+  _data.pager_type        = _pager_type;
+  _data.pager_url         = _pager_url;
+  if ( undefined != _pid_suffix ){
+      _data._pid_suffix = _pid_suffix;
+  }
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * スレッドTOP10取得(SP TOP用)
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _rank_type       1:新規作成スレッド順 2:人気順(アクセス順)
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit
+ */
+function showThreadSpTopTen( _show_id, _rank_type, _category_id, _subcategory_id, _limit, _pid_suffix )
+{
+  var _data = { pid : 'api_get_thread_sp_top_ten' };
+
+  _data.input             = 'UTF-8';
+  _data.output            = 'jsonp';
+  _data.show_id           = _show_id;
+  _data.rank_type         = _rank_type;
+  _data.category_id       = _category_id;
+  _data.subcategory_id    = _subcategory_id;
+  _data.limit             = _limit;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * スレッドTOP10取得
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _rank_type       1:新規作成スレッド順 2:人気順(アクセス順)
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit
+ */
+function showThreadTopTen( _show_id, _rank_type, _category_id, _subcategory_id, _limit, _pid_suffix )
+{
+  var _data = { pid : 'api_get_thread_top_ten' };
+
+  _data.input             = 'UTF-8';
+  _data.output            = 'jsonp';
+  _data.show_id           = _show_id;
+  _data.rank_type         = _rank_type;
+  _data.category_id       = _category_id;
+  _data.subcategory_id    = _subcategory_id;
+  _data.limit             = _limit;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * (競馬pc top)ユーザーランキング　ランダム10名取得
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _rank_type       1:投稿 2:いいね 3:ファイト 4:写真がいいね
+ * @param  integer _rank_ym         yyyymm ランキング年月 (default:now)
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit
+ */
+function showUserRankingRandom( _show_id, _rank_type, _rank_ym, _category_id, _subcategory_id, _limit )
+{
+  var _data = { pid : 'api_get_user_rank_random' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.show_id         = _show_id;
+  _data.rank_type       = _rank_type;
+  _data.rank_ym         = _rank_ym;
+  _data.category_id     = _category_id;
+  _data.subcategory_id  = _subcategory_id;
+  _data.limit           = _limit;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+
+/**
+ * スレッド一覧の表示(2)
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _rank_type       '1':新規コメント '2':新規写真投稿
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit           表示行数
+ * @param  integer _page            開始ページ
+ * @param  integer _pager_type      'more_inner-n': 更に読み込む(n回で more_outer) 
+ *                                  'more_outer'  : もっと見る(別ページリンク)
+ *                                  'pager'       : ページャ
+ * @param  integer _pager_url       'more_xxx'の際にリンクページおおびパラメータ
+ */
+function showThreadNewest( _show_id, _rank_type, _category_id, _subcategory_id, _limit, _page, _pager_type, _pager_url, _pid_suffix )
+{
+  var _data = { pid : 'api_get_thread_newest' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.show_id         = _show_id;
+  _data.rank_type       = _rank_type;
+  _data.category_id     = _category_id;
+  _data.subcategory_id  = _subcategory_id;
+  _data.limit           = _limit;
+  _data.page            = _page;
+  _data.pager_type      = _pager_type;
+  _data.pager_url       = _pager_url;
+  if ( undefined != _pid_suffix ){
+    _data._pid_suffix = _pid_suffix;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * 他人視点でのメダル表示(FIND獲得ランキング)
+ *
+ * @param  string  _show_id      表示ID
+ * @param  integer _sns_user_id  SNSユーザーID
+ */
+function showMedalUser( _show_id, _sns_user_id, _pager_type, _pid_suffix )
+{
+  var _data = { pid : 'api_get_medal_user_digest' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.show_id         = _show_id;
+  _data.sns_user_id     = _sns_user_id;
+  _data.pager_type      = _pager_type;
+  if ( undefined != _pid_suffix ){
+    _data._pid_suffix = _pid_suffix;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * 自分視点でのランキング一覧
+ *
+ * @param  string  _show_id      表示ID
+ * @param  integer _sns_user_id  SNSユーザーID
+ */
+function showMedalOwner( _show_id, _sns_user_id, _pager_type, _pid_suffix )
+{
+  var _data = { pid : 'api_get_medal_user' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.show_id         = _show_id;
+  _data.sns_user_id     = _sns_user_id;
+  _data.pager_type      = _pager_type;
+  if ( undefined != _pid_suffix ){
+    _data._pid_suffix = _pid_suffix;
+  }
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+                           jQuery( '#' + _show_id ).html( data );
+                         } 
+                       }
+          } );
+}
+
+/**
+ * 掲示板スレッド詳細を表示
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _thread_id       スレッドID
+ * @param  integer _anchor_id       返信用アンカーID
+ * @param  integer _limit           表示行数
+ * @param  integer _page            開始ページ
+ * @param  integer _pager_type      'more_inner-n': 更に読み込む(n回で more_outer) 
+ *                                  'more_outer'  : もっと見る(別ページリンク)
+ *                                  'pager'       : ページャ
+ * @param  integer _pager_url       'more_xxx'の際にリンクページおおびパラメータ
+ * @param  integer _sort            'd': 最新から(default) 'a': 古い投稿から
+ */
+function showThreadDetail( _show_id, _thread_id, _anchor_id, _limit, _page, _pager_type, _pager_url, _sort )
+{
+  var _data = { pid : 'api_get_thread_detail' };
+
+  _data.output       = 'jsonp';
+  _data.show_id      = _show_id;
+  _data.thread_id    = _thread_id;
+  _data.anchor_id    = _anchor_id;
+  _data.limit = _limit;
+  _data.page = _page;
+  _data.pager_type = _pager_type;
+  _data.pager_url = _pager_url;
+  _data.sort = _sort;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+
+/**
+ * 掲示板スレッド詳細を表示
+ *
+ * @param  string  _show_id 表示ID
+ * @param  integer _id      ユーザーID
+ * @param  integer _self_id 自分ユーザーID
+ * @param  integer _mode    on-offフラグ
+ */
+function getUserBBSList( _show_id, _id, _self_id, _mode )
+{
+  var _data = { pid : 'api_get_user_bbs_list' };
+
+  _data.output   = 'jsonp';
+  _data.show_id  = _show_id;
+  _data.id       = _id;
+  _data.self_id  = _self_id;
+  _data.mode     = _mode;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : 'jsonp',
+            success  : function( data )
+                       {
+                         jQuery( '#' + _show_id ).html( data );
+                       }
+          } );
+}
+
+/**
+ * スレッドランキング(新着投稿順) 2015.11.30 Y.S
+ *
+ * @param  string  _show_id         表示ID
+ * @param  integer _category_id     中カテゴリID(新設)
+ * @param  integer _subcategory_id  小カテゴリID
+ * @param  integer _limit
+ * @param  integer _page
+ * @param  integer _pager_type        'more_inner-n': 更に読み込む(n回で more_outer) 
+ *                                    'more_outer'  : もっと見る(別ページリンク)
+ *                                    'pager'       : ページャ
+ * @param  integer _pager_url         'more_xxx'の際にリンクページおおびパラメータ
+ */
+function showThreadRankingNewest( _show_id, _category_id, _subcategory_id, _limit, _page, _pager_type, _pager_url )
+{
+    var _data = { pid : 'api_get_thread_rank_newest' };
+
+    _data.input             = 'UTF-8';
+    _data.output            = 'jsonp';
+    _data.show_id           = _show_id;
+    _data.category_id       = _category_id;
+    _data.subcategory_id    = _subcategory_id;
+    _data.limit             = _limit;
+    _data.page              = _page;
+    _data.pager_type        = _pager_type;
+    _data.pager_url         = _pager_url;
+    $.ajax( { type     : 'GET',
+              url      : _bbs_action_api_url,
+              data     : _data,
+              dataType : _data.output,
+              success  : function( data )
+              {
+                  if(data.status == 'NG'){
+                      console.log('status:NG reason:'+ data.reason);
+                  }else{
+                      $( '#' + _show_id ).html( data );
+                  } 
+              },
+              error  : function(XMLHttpRequest, textStatus, errorThrown)
+              {
+                  console.log('textStatus='+textStatus);
+              }
+            } );
+}
+
+/**
+ * いいね！ユーザーリスト 2015.12.1 Y.S
+ */
+function listLikeUsers( _thread_id, _ary_post_id, _limit, _callback )
+{
+    console.log('listLikeUsers(%s,%s,%s,%O)',_thread_id, _ary_post_id, _limit, _callback );
+
+    var _data = { pid : 'api_get_comment_like_user' };
+
+    _data.input             = 'UTF-8';
+    _data.output            = 'jsonp';
+    _data.thread_id         = _thread_id;
+    _data.post_id           = _ary_post_id;
+    _data.limit             = _limit;
+    $.ajax( { type     : 'POST',
+              url      : _bbs_action_api_url,
+              data     : _data,
+              dataType : 'json',	// !
+              success  : function( data )
+              {
+                  if(data.status == 'NG'){
+                      console.log('status:NG reason:'+ data.reason);
+                  }else{
+		      if(undefined != _callback){
+			  _callback( data.data );
+		      }
+                  } 
+              },
+              error  : function(XMLHttpRequest, textStatus, errorThrown)
+              {
+                  console.log('textStatus='+textStatus);
+              }
+
+            } );
+}
+
+/**
+ *  掲示板投稿者一覧 2015.12.1 Y.S
+ */
+function listThreadContributor( _show_id, _action, _thread_id, _initial_line, _increment_line, _page )
+{
+    console.log('listThreadContributor(%s,%s,%s,%s,%s,%s)',_show_id, _action, _thread_id, _initial_line, _increment_line, _page);
+
+    var _data = { pid : 'api_get_thread_contributor' };
+
+    _data.input             = 'UTF-8';
+    _data.output            = 'jsonp';
+    _data.show_id           = _show_id;
+    _data.action            = _action;
+    _data.thread_id         = _thread_id;
+    _data.initial           = _initial_line;
+    _data.increment         = _increment_line;
+    _data.page              = _page;
+    $.ajax( { type     : 'GET',
+              url      : _bbs_action_api_url,
+              data     : _data,
+              dataType : _data.output,
+              success  : function( data )
+              {
+                  if(data.status == 'NG'){
+                      console.log('status:NG reason:'+ data.reason);
+                  }else{
+                      $('#'+_show_id).html( data );
+                  } 
+              },
+              error  : function(XMLHttpRequest, textStatus, errorThrown)
+              {
+                  console.log('textStatus='+textStatus);
+              }
+
+            } );
+}
+
+/**
+ *  掲示板履歴の取得
+ */
+function showThreadHistory( _show_id )
+{
+    var _data = { pid : 'api_get_thread_clip' };
+
+    _data.input             = 'UTF-8';
+    _data.output            = 'jsonp';
+    _data.show_id           = _show_id;
+    $.ajax( { type     : 'GET',
+              url      : _bbs_action_api_url,
+              data     : _data,
+              dataType : _data.output,
+              success  : function( data )
+              {
+                  if(data.status == 'NG'){
+                      console.log('status:NG reason:'+ data.reason);
+                  }else{
+                      $('#'+_show_id).html( data );
+                  } 
+              },
+              error  : function(XMLHttpRequest, textStatus, errorThrown)
+              {
+                  console.log('textStatus='+textStatus);
+              }
+
+            } );
+}
+
+/**
+ * 掲示板フィード通知する・しない設定
+ *
+ * @param integer _sns_user_id      SNSユーザーID
+ * @param integer _thread_id        スレッドID
+ * @param integer _chk              チェック
+ */
+function postSetClipThread( _sns_user_id, _thread_id, _chk )
+{
+  var _data = { pid : 'api_post_set_clip_thread' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.sns_user_id     = _sns_user_id;
+  _data.thread_id       = _thread_id;
+  _data.chk             = _chk;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }
+                       }
+          } );
+}
+
+/**
+ * 掲示板Bookmarkの登録
+ *
+ * @param integer _sns_user_id      SNSユーザーID
+ * @param integer _thread_id        スレッドID
+ */
+function postBookmarkRegist( _sns_user_id, _thread_id )
+{
+  var _data = { pid : 'api_post_bookmark_regist' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.sns_user_id     = _sns_user_id;
+  _data.thread_id       = _thread_id;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            async    : false,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         document.location.reload(true);
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }
+                       }
+          } );
+}
+
+/**
+ * 掲示板Bookmarkの削除
+ *
+ * @param integer _sns_user_id      SNSユーザーID
+ * @param integer _thread_id        スレッドID
+ */
+function postBookmarkDel( _sns_user_id, _thread_id )
+{
+  var _data = { pid : 'api_post_bookmark_del' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.sns_user_id     = _sns_user_id;
+  _data.thread_id       = _thread_id;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         document.location.reload(true);
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }
+                       }
+          } );
+}
+
+/**
+ * 掲示板コメント数取得
+ *
+ * @param integer _thread_id        スレッドID
+ */
+function getThreadCommentCount( _show_id, _thread_id )
+{
+  var _data = { pid : 'api_get_thread_comment_count' };
+
+  _data.input           = 'UTF-8';
+  _data.output          = 'jsonp';
+  _data.show_id         = _show_id;
+  _data.thread_id       = _thread_id;
+
+  jQuery.ajax( { type     : 'GET',
+            url      : _bbs_action_api_url,
+            data     : _data,
+            dataType : _data.output,
+            success  : function( data )
+                       {
+                         if(data.status == 'NG'){
+                             console.log('status:NG reason:'+ data.reason);
+                         }else{
+       　                     $('#'+_show_id).html( data );
+                         }
+                       }
+          } );
+}
+
+/*
+ * ミュートチェックAPI
+ */
+function mute_check( api_url, ary_param, fn ){
+    var param = {
+        pid: 'api_post_mute',
+        input: 'UTF-8',
+        output: 'jsonp',
+    };
+    for(var key in ary_param){
+        param[key] = ary_param[key];
+    }
+    console.log('mute_check param: %O',param);
+    $.ajax({
+        url: api_url,
+        data: param,
+        dataType: param['output'],
+        success: function( data ){
+            if(undefined !== fn){
+                fn( data );
+            }
+        },
+        error: function(XMLHttpRequest, textStatus, errorTrhown){
+            console.log('textStatus: ',textStatus);
+            console.log('errorThrown: ',errorThrown);
+        },
+    });
+}
+
+/**
+ * 空であるかどうか
+ *
+ * @param  mixd    _var 変数
+ * @return boolean      true=空である false=空ではない
+ */
+function _empty( _var )
+{
+  if ( undefined == _var || null == _var || '' == _var )
+  {
+    return true;
+  }
+
+  return false;
+}

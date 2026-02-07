@@ -62,3 +62,7 @@ debug_screenshots/
 # Debug snapshots (IPAT automation)
 debug_*.html
 debug_*.png
+
+scripts/debug/netkeiba_secrets.json
+
+scripts/debug/ipat_secrets.json

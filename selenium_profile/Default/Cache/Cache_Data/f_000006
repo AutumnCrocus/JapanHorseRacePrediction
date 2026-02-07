@@ -1,0 +1,1883 @@
+@charset "euc-jp";
+
+/* =======================================================
+【共通指定】	common.css
+目次
+1.共通指定	a .fc
+2.ヘッダー指定	#header
+3.共通フッター指定	#footer
+4.共通コンテンツ指定	#contents #main #side
+5.共通フォント設定
+6.ユーザー投稿・表彰系のリスト表示 .user_report_list
+10.アイコン設定
+*.その他の共通指定
+======================================================= */
+
+/* =======================================================
+1.共通指定
+======================================================= */
+body {
+	text-align			:	center;
+	color	:	#333;
+	font-family	:	"ＭＳ Ｐゴシック", "Osaka";
+}
+img {
+	border	:	0;
+}
+li {
+	list-style-type: none;  
+}
+/*----- .リンク共通指定 -----*/
+a {
+	color	:	#03a;
+	text-decoration	:	none;
+}
+a:hover {
+	text-decoration	:	underline;
+}
+
+
+/*----- .float解除 .fc -----*/
+
+.fc:after {
+	content:	".";
+	display:	block;
+	clear:	both;
+	height:	0;
+	visibility:	hidden;
+}
+.fc{
+	zoom:	100%;
+	/*\*//*/
+	display:	inline-table;
+	/**/
+}
+/* =================== */
+
+/* ==== テキストとばし ==== */
+span.none {
+	display				:	block;
+	text-indent			:	-9633em;
+}
+
+/**
+ * フォントサイズ
+ */
+body {
+	font: 13px "ＭＳ Ｐゴシック",arial,helvetica,clean,sans-serif;
+	/* for IE6/7 */ 
+	*font-size: small;
+	/* for IE Quirks Mode */
+	*font:x-small; 
+}
+
+/* for IE8 font size */
+html>/**/body {
+	font-size /*\**/: small\9;
+}
+
+/**
+ * Bump up IE to get to 13px equivalent for these fixed-width elements
+ */
+pre,
+code,
+kbd,
+samp,
+tt {
+	font-family	:	monospace;
+	*font-size	:	108%;
+	line-height	:	100%;
+}
+table {
+	font-size	:	inherit;
+	font	:	100%;
+}
+
+
+/**
+ * マウスオーバー画像
+ */
+
+a:hover img.imgover {
+	/* IE */
+	filter	:	alpha(opacity=65);
+	/* Safari Opera */
+	opacity	:	0.65;
+	/* Firefox Netscape */
+	-moz-opacity	:	0.65;
+}
+
+/* ==== 表組設定 ==== */
+table.nk_tb_common {
+	border-collapse	:	separate;
+	border-spacing	:	1px;
+	background-color: #999;
+}
+* html table.nk_tb_common {
+	border	:	none; /* ie6 */
+}
+*:first-child+html table.nk_tb_common {
+	border	:	none; /* ie7 */
+}
+
+table.nk_tb_common th {
+	background	:	#efefd9;
+}
+
+img.inline_img {
+	display	:	inline;
+	vertical-align	:	middle;
+}
+/* ==== pngIEバグ ==== */
+.png_img,
+.png_bg {
+	position	:	static;
+}
+/* =======================================================
+2.ヘッダー指定	#header
+======================================================= */
+#header {
+	position	:	relative;
+	width	:	960px;
+	text-align	:	left;
+	margin	:	0 auto;
+	padding	:	7px 0 0;
+}
+#header h2 {
+	position	:	absolute;
+	top	:	8px;
+	left	:	0;
+	width	:	178px;
+	height	:	65px;
+}
+/* ========= ユーザーガイド ======== */
+#header .user_guide {
+	font-size	:	13px;
+	margin	:	0 0 6px;
+}
+#header .user_guide ul {
+	display	:	block;
+	height	:	20px;
+	float	:	right;
+}
+#header .user_guide ul li {
+	float	:	left;
+	line-height	:	18px;
+	border-right	:	1px solid #b2b2b2;
+	padding	:	0 10px;
+}
+#header .user_guide ul li.head_user_guide_login a {
+	background	:	url("../image/head_login_icon_01.png") no-repeat left center;
+	padding	:	2px 0 2px 24px;
+}
+#header .user_guide ul li.head_user_guide_logout a {
+	padding	:	2px 0;
+}
+#header .user_guide ul li.head_user_guide_mypage a {
+	background	:	url("../image/head_mypage_icon_01.png") no-repeat left center;
+	padding	:	2px 0 2px 18px;
+}
+#header .user_guide ul li.head_user_guide_regist a {
+	background	:	url("../image/head_mypage_icon_01.png") no-repeat left center;
+	padding	:	2px 0 2px 18px;
+}
+#header .user_guide ul li a:hover{
+	background-color	:	#eef7ff ;
+}
+
+/*----- netkeibaヘッダー マイページ新着アラート -----*/
+#header .user_guide li.head_user_guide_mypage a:hover {
+	text-decoration	:	none;
+}
+#header .user_guide li.head_user_guide_mypage a:hover em {
+	text-decoration	:	underline;
+}
+#header .user_guide li.head_user_guide_mypage span {
+	color	:	#c00;
+}
+#header .user_guide li.head_user_guide_mypage a span {
+
+}
+
+/* ========= フォントサイズ変更ボタン ======== */
+#header ul#fnt-s {
+	width	:	113px;
+	height	:	39px;
+	float	:	right;
+}
+#header ul#fnt-s li {
+	height	:	39px;
+	margin	:	0;
+}
+#header ul#fnt-s li a{
+	display	:	block;
+	width	:	113px;
+	display	:	block ;
+	height	:	0pt;
+	overflow	:	hidden;
+	padding-top	:	39px;
+}
+
+ul li#big a{
+	display	:	block;
+	background	:	url("../image/font_icon_big.png") no-repeat 0 0;
+}
+ul li#mid{
+	display	:	none;
+}
+ul.b_select li#mid {
+	display	:	block;
+}
+ul.b_select li#mid a{
+	background	:	url("../image/font_icon_mid.png") no-repeat 0 0;
+}
+ul.m_select li#mid {
+	display	:	none;
+}
+ul.b_select li#big {
+	display	:	none;
+}
+
+#header .fontsize_change ul li a:hover{
+	background-position	:	0 -39px !important;
+}
+
+/* ========= ヘッダー検索入力 ======== */
+#header .head_search {
+	width	:	570px;
+	height	:	39px;
+	background	:	url("../image/form_head_search_bg_01.png") no-repeat 0 0;
+	margin	:	5px 0 0;
+	position	:	absolute;
+	top	:	28px;
+	right	:	124px;
+}
+
+#header .head_search form {
+	position	:	relative;
+}
+#header .head_search form input.field {
+	position	:	absolute;
+	top	:	7px;
+	left	:	36px;
+	width	:	326px;
+	background	:	url("../image/form_head_search_input_bg_01.png") no-repeat 0 0;
+	border	:	none;
+	padding	:	6px 10px 8px;
+	color	:	#444;
+}
+#header .head_search form select.select_search {
+	position	:	absolute;
+	top	:	7px;
+	left	:	388px;
+	width	:	100px;
+	height	:	24px;
+	border	:	1px solid #ccc;
+	padding:0 0 0 10px;
+	color	:	#444;
+}
+
+#header .head_search form input.form_head_btn {
+	position	:	absolute;
+	top	:	7px;
+	left	:	498px;
+}
+/* ========= グローバルナビ ======== */
+.menu_block {
+}
+.global_menu {
+	background	:	url("../image/head_navi_gnavi_bg.png") repeat-x 0 0;
+	height	:	35px;
+	margin	:	10px 0 0;
+}
+.global_menu ul {
+	width	:	961px;
+	margin	:	auto;
+}
+.global_menu ul li {
+	float	:	left;
+	height	:	30px;
+	display	:	block;
+}
+.global_menu ul li a {
+	display	:	block ;
+	height	:	0pt;
+	overflow	:	hidden;
+	padding-top	:	30px;
+}
+
+/* ========= グローバルナビボタン ======== */
+.global_menu ul li.home a {
+	background	:	url("../image/head_gnavi_btn_home.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.race a {
+	background	:	url("../image/head_gnavi_btn_race.png") no-repeat 0 0;
+	width	:	70px;
+}
+.global_menu ul li.news a {
+	background	:	url("../image/head_gnavi_btn_news.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.yoso a {
+	background	:	url("../image/head_gnavi_btn_yoso.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.column a {
+	background	:	url("../image/head_gnavi_btn_column.png") no-repeat 0 0;
+	width	:	70px;
+}
+.global_menu ul li.db a {
+	background	:	url("../image/head_gnavi_btn_db.png") no-repeat 0 0;
+	width	:	102px;
+}
+.global_menu ul li.local a {
+	background	:	url("../image/head_gnavi_btn_local.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.yosocs a {
+	background	:	url("../image/head_gnavi_btn_yosocs.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.community a {
+	background	:	url("../image/head_gnavi_btn_community.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.owner a {
+	background	:	url("../image/head_gnavi_btn_owner.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.pog a {
+	background	:	url("../image/head_gnavi_btn_pog.png") no-repeat 0 0;
+	width	:	70px;
+}
+.global_menu ul li.newspaper a {
+	background	:	url("../image/head_gnavi_btn_paper.png") no-repeat 0 0;
+	width	:	81px;
+}
+.global_menu ul li.game a {
+	background	:	url("../image/head_gnavi_btn_game.png") no-repeat 0 0;
+	width	:	65px;
+}
+.global_menu ul li a:hover {
+	background-position	:	0 -30px;
+}
+
+/* ========= グローバルナビボタン(active) ======== */
+body.home .global_menu ul li.home a,
+body.race .global_menu ul li.race a,
+body.news .global_menu ul li.news a,
+body.yoso .global_menu ul li.yoso a,
+body.yosocs .global_menu ul li.yosocs a,
+body.column .global_menu ul li.column a,
+body.community .global_menu ul li.community a,
+body.db .global_menu ul li.db a,
+body.local .global_menu ul li.local a,
+body.owner .global_menu ul li.owner a,
+.global_menu.owner ul li.owner a,
+body.pog .global_menu ul li.pog a,
+body.newspaper .global_menu ul li.newspaper a,
+body.game .global_menu ul li.game a {
+	position	:	relative;
+	overflow	:	hidden;
+	padding-top	:	39px;
+	margin-top	:	-4px;
+}
+
+body.home .global_menu ul li.home a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_home_active.png") no-repeat 0 0;
+}
+body.news .global_menu ul li.news a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_news_active.png") no-repeat 0 0;
+}
+body.race .global_menu ul li.race a {
+	width	:	70px;
+	background	:	url("../image/head_gnavi_btn_race_active.png") no-repeat 0 0;
+}
+body.yoso .global_menu ul li.yoso a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_yoso_active.png") no-repeat 0 0;
+}
+body.column .global_menu ul li.column a {
+	width	:	70px;
+	background	:	url("../image/head_gnavi_btn_column_active.png") no-repeat 0 0;
+}
+body.db .global_menu ul li.db a {
+	width	:	102px;
+	background	:	url("../image/head_gnavi_btn_db_active.png") no-repeat 0 0;
+}
+body.local .global_menu ul li.local a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_local_active.png") no-repeat 0 0;
+}
+body.yosocs .global_menu ul li.yosocs a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_yosocs_active.png") no-repeat 0 0;
+}
+body.community .global_menu ul li.community a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_community_active.png") no-repeat 0 0;
+}
+body.owner .global_menu ul li.owner a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_owner_active.png") no-repeat 0 0;
+}
+.global_menu.owner  ul li.owner a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_owner_active.png") no-repeat 0 0;
+}
+body.pog .global_menu ul li.pog a {
+	width	:	70px;
+	background	:	url("../image/head_gnavi_btn_pog_active.png") no-repeat 0 0;
+}
+body.newspaper .global_menu ul li.newspaper a {
+	width	:	81px;
+	background	:	url("../image/head_gnavi_btn_paper_active.png") no-repeat 0 0;
+}
+body.game .global_menu ul li.game a {
+	width	:	65px;
+	background	:	url("../image/head_gnavi_btn_game_active.png") no-repeat 0 0;
+}
+/* ========= 白線調整 ======== */
+body.home .global_menu ul li.race a,
+body.race .global_menu ul li.race a,
+body.race .global_menu ul li.news a,
+body.news .global_menu ul li.news a,
+body.news .global_menu ul li.yoso a,
+body.yoso .global_menu ul li.yoso a,
+body.yoso .global_menu ul li.column a,
+body.column .global_menu ul li.column a,
+body.column .global_menu ul li.db a,
+body.db .global_menu ul li.db a,
+body.db .global_menu ul li.local a,
+body.local .global_menu ul li.local a,
+body.local .global_menu ul li.pog a,
+body.pog .global_menu ul li.pog a,
+body.pog .global_menu ul li.newspaper a,
+body.newspaper .global_menu ul li.newspaper a,
+body.newspaper .global_menu ul li.game a,
+body.game .global_menu ul li.game a {
+	margin-left	:	-1px;
+}
+
+/* ========= ジャンルナビ ======== */
+.genre_menu {
+	background	:	#f0f0f0 url("../image/head_navi_genre_menu_bg.png") repeat-x left bottom;
+	line-height	:	1.4;
+}
+.genre_menu ul {
+	width	:	960px;
+	margin	:	auto auto 0;
+}
+.genre_menu ul li {
+	float	:	left;
+	margin	:	3px 20px 0 0;
+}
+.genre_menu ul li.active {
+	background	:	url("../image/head_genre_navi_list_bg_02.png") no-repeat right top;
+	padding-right	:	20px;
+}
+.genre_menu ul li.active a {
+	color	:	#333;
+	text-decoration	:	none;
+	background	:	url("../image/head_genre_navi_list_bg_01.png") no-repeat left top;
+	padding-left	:	20px;
+}
+.genre_menu ul li a {
+	display	:	block;
+	font-weight	:	bold;
+	padding	:	2px 6px;
+}
+/*----- netkeibaヘッダー マイページ新着アラート -----*/
+#header .user_guide li.head_user_guide_li_03 span {
+	color	:	#c00;
+}
+
+/* =======================================================
+3.共通フッター指定	#footer
+======================================================= */
+#footer img{
+	display	:	inline;
+	vertical-align	:	middle;
+}
+#footer ul {
+	background	:	url("../image/foot_ul_bg_01.png") repeat 0 0;
+	text-align	:	center;
+	line-height	:	30px;
+}
+#footer ul li {
+	display	:	inline;
+	color	:	#ccc;
+	margin	:	0 7px 0 0;
+}
+#footer .foot_txt p {
+	font-size	:	.8em;
+	margin	:	.8em 0 0;
+}
+#footer .foot_txt p a {
+	color	:	#555;
+}
+#footer .foot_txt {
+	padding	:	6px 8px;
+}
+* html #footer img{
+	margin	:	9px 4px 9px 0;
+}
+/* =======================================================
+4.共通コンテンツ指定	#contents #main #side
+======================================================= */
+#contents {
+	width	:	960px;
+	min-width	:	430px;
+	padding	:	0;
+	margin	:	14px auto;
+}
+
+/*----- 左メインカラム #main -----*/
+#main {
+	float	:	left;
+	width	:	720px;
+	text-align	:	left;
+	line-height	:	1.5;
+}
+
+/*----- 右サイドカラム #side -----*/
+#side {
+	float	:	right;
+	width	:	220px;
+	padding	:	0 0 15px 0;
+	text-align	:	left;
+}
+#side p.info_link {
+	text-align	:	right;
+	margin	:	0 8px;
+	padding	:	0 0 10px;
+	font-size	:	.95em;
+	color	:	#666;
+}
+#side p.info_link a {
+	color	:	#666;
+}
+/*----- 右サイドカラムフォーム #side form.form_side_01 -----*/
+#side form.form_side_01 {
+	position	:	relative;
+	height	:	30px;
+}
+#side form.form_side_01 input.field {
+	position	:	absolute;
+	width	:	132px;
+	background	:	url("../image/form_search_bg_02.png") no-repeat 0 0;
+	border	:	none;
+	color	:	#444;
+	font-size	:	14px;
+	padding	:	6px 10px 8px;
+}
+#side form.form_side_01 input.form_side_btn {
+	position	:	absolute;
+	top	:	0;
+	left	:	139px;
+}
+
+/*----- もっと見るリンク -----*/
+.more_link{
+  text-align:right;
+}
+
+#main p.detail_link img,
+#side p.score img,
+#side p.score img,
+#side p.detail_link img,
+#side p.rank_to_link img,
+.more_link img{
+	display	:	inline;
+	vertical-align	:	middle;
+}
+#side p.score,
+#side p.detail_link {
+	text-align	:	right;
+	margin	:	2px 0;
+	font-size	:	12px;
+}
+#side .side_rank p.detail_link {
+	margin	:	0 6px;
+	padding	:	0 0 6px;
+}
+#side p.rank_to_link {
+	text-align	:	right;
+	margin	:	0 8px 4px;
+	
+}
+/*----- 右サイドカラムランキング #side -----*/
+
+#side .side_rank {
+	margin	:	0 0 10px;
+	font-size	:	13px;
+	position	:	relative;
+}
+#side .side_rank p.ListSortInfo,
+#side .side_hit_data_01 p.ListSortInfo,
+#side .side_hit_data_02 p.ListSortInfo {
+	color	:	#666;
+	margin	:	4px 10px 12px;
+	line-height	:	1.2;
+}
+
+#side .side_box_01{
+	background	:	url("../image/side_rank_01_bg.png") repeat 0 0;
+	border-bottom	:	1px solid #0F56D0;
+	margin	:	0 0 20px;
+}
+#side .side_box_02,
+#side .side_box_03 {
+	background	:	url("../image/side_rank_02_bg.png") no-repeat left bottom;
+	zoom	:	1;
+	padding	:	0 0 6px;
+}
+#side .side_box_01 .head_box {
+	background	:	url("../image/side_rank_01_head_bg.png") repeat 0 0
+}
+#side .side_box_02 .head_box,
+#side .side_box_03 .head_box {
+	background	:	url("../image/side_rank_02_head_bg.png") repeat 0 0;
+}
+#side .side_hit_data_01 .head_box{
+	background	:	url("../image/side_hit_01_head_bg.png") repeat 0 0
+}
+#side .side_hit_data_02 .head_box{
+	background	:	url("../image/side_hit_02_head_bg.png") repeat 0 0
+}
+#side .side_rank h2{
+	text-align	:	center;
+	font-family: "ＭＳ Ｐゴシック", "Osaka";
+	margin	:	0 0 2px;
+}
+#side .side_rank ul {
+	margin	:	0 3px;
+}
+#side .side_rank ul li {
+	border-bottom	:	1px dotted #999;
+	margin	:	0 0 10px;
+}
+
+#side .side_rank dl.rank_name dt{
+	float	:	left;
+	width	:	20px;
+	padding-left:5px;
+}
+#side .side_rank dl.rank_name dd{
+	float	:	left;
+	width	:	110px;
+}
+#side .side_box_01 dl.rank_name dd p.name,
+#side .side_box_02 dl.rank_name dd p.name {
+	font-size	:	13px;
+	margin	:	0 0 3px;
+}
+
+#side img.abt_img {
+	border	:	1px solid #999;
+	float	:	left;
+	margin	:	0 4px;
+	display	:	inline;
+}
+#side p.score em{
+	color	:	#c00;
+	font-weight	:	bold;
+}
+#main p.detail_link img,
+#side p.score img,
+#side p.score img,
+#side p.detail_link img,
+#side p.rank_to_link img {
+	display	:	inline;
+	vertical-align	:	middle;
+}
+#side p.score,
+#side p.detail_link {
+	text-align	:	right;
+	margin	:	2px 0;
+	font-size	:	12px;
+}
+#side .side_rank p.detail_link {
+	margin	:	0 6px;
+	padding	:	0 0 6px;
+}
+#side p.rank_to_link {
+	text-align	:	right;
+	margin	:	0 8px 4px;
+	
+}
+/*----- コンテンツエリア ..Contents_Area 罫線指定 -----*/
+.Contents_Area{
+  border-bottom:1px solid #c6c9d5;
+  border-left:1px solid #c6c9d5;
+  border-right:1px solid #c6c9d5;
+  margin-bottom:20px;
+  position:relative;
+}
+.Contents_Area .Hd_Box{
+  position:relative;
+  background:url("../image/h_content_bg_03.png") no-repeat 0 0;
+  height:27px;
+  margin-bottom:5px;
+}
+.Contents_Area .Side_Hd_Box{
+  position:relative;
+  background:url("../image/h_content_bg_04.png") no-repeat 0 0;
+  height:27px;
+  margin-bottom:5px;
+}
+.Contents_Area .Inner_Box{
+  margin:0 10px 6px;
+}
+
+/*----- 右カラム リアルタイム的中情報 2012.1.26 -----*/
+.Side_YosokaHit_Area .Side_Hd_Box{
+  height:42px !important;
+  margin-bottom:5px !important;
+  background:none !important;
+}
+.Side_YosokaHit_Area .Side_Hd_Box h2{
+  position:absolute;
+  top:0;
+  left:-1px;
+}
+.Side_YosokaHit_Area *{
+  font-size:12px;
+}
+.Side_YosokaHit_Area h3{
+  margin-bottom:4px;
+  background:url("../image/bg_h_SideListArea_subbar.png") 0 0 repeat-x;
+  text-align:center;
+  vertical-align:bottom;
+}
+.Side_YosokaHit_Area h3 img{
+  display:inline;
+}
+.Side_YosokaHit_Area .Inner_Box ul li:first-child{
+  padding-top:0 !important;
+}
+.Side_YosokaHit_Area li div{
+  padding-left:4px;
+}
+
+/*----- 右カラム ランキング 2012.1.26 -----*/
+.Side_Hd_Tab_Box{
+  position:relative;
+	margin:2px;
+	margin-bottom:0;
+	background-color:#004eca;
+	border-bottom:1x solid #ccc;
+}
+.Side_Hd_Tab_Box h2{
+	position:absolute;
+	top:-4px;
+	left:-3px;
+}
+.Side_Hd_Tab_Box ul.Sort_Tab{
+	padding:40px 0 0 1px;
+}
+.Side_Hd_Tab_Box ul.Sort_Tab li{
+	display:inline;
+	float:left;
+	margin-left:4px;
+	width:65px;
+	height:27px;
+}
+.Side_Hd_Tab_Box ul.Sort_Tab li a{
+	display:block;
+	width:65px;
+	height:27px;
+	line-height:27px;
+	text-align:center;
+	background:url("../image/bg_side_3tab.png") 0 0 no-repeat;
+}
+.Side_Hd_Tab_Box ul.Sort_Tab li a:hover,
+.Side_Hd_Tab_Box ul.Sort_Tab li a:active{
+	background-position:0 -27px;
+}
+.Side_Hd_Tab_Box ul.Sort_Tab li a.active{
+	background-position:0 -54px;
+	color:#444;
+	font-weight:bold;
+}
+.Side_List_Area *{
+  font-size:12px;
+  line-height:1.4;
+}
+.Side_List_Area .Inner_Box{
+  margin:6px !important;
+}
+.Side_List_Area ol,
+.Side_List_Area ul{
+	margin:4px 0;
+}
+.Side_List_Area .Inner_Box ol li,
+.Side_List_Area .Inner_Box ul li{
+	padding:5px 0;
+	border-bottom: 1px dotted #999;
+}
+.Side_List_Area .Inner_Box ol li:first-child,
+.Side_List_Area .Inner_Box ul li:first-child{
+	background-color:#fffad2;
+}
+.Side_List_Area ol li .Left_Box,
+.Side_List_Area ul li .Left_Box{
+	float:left;
+	width:30px;
+}
+.Side_List_Area ol li .Right_Box,
+.Side_List_Area ul li .RightBox{
+	float:right;
+	width:175px;
+}
+.Side_List_Area li img.abt_img{
+	float:left;
+	margin:0 6px 0 0;
+}
+.Side_List_Area li dl dt a{
+	font-size:13px !important;
+	font-weight:bold;
+}
+.Side_List_Area li dl dd img{
+	display:inline;
+	vertical-align:middle;
+}
+.Side_List_Area li dl dd strong{
+	color:#c00;
+	font-size:15px !important;
+	font-weight:bold;
+}
+
+/*----- サイドカラム インセンティブ -----*/
+#side .no1_present {
+	margin	:	0 6px;
+}
+#side .no1_present p {
+	font-size	:	90%;
+	line-height	:	14px;
+	padding	:	6px;
+	background-color	:	#f4f9eb;
+	border	:	1px solid #d8e1bf;
+	color	:	#666;
+}
+
+/*----- サイドカラム ソートメニュー #side ul.sort_menu_tab -----*/
+
+#side ul.sort_menu_tab {
+	height	:	26px;
+	background	:	url("../image/side_rank_02_head_bg.png") repeat left bottom;
+	padding	:	0 0 0 2px;
+}
+#side ul.sort_menu_tab li {
+	float	:	left;
+	margin	:	0 2px 0 0;
+	padding	:	0 !important;
+	border	:	none;
+}
+#side ul.sort_menu_tab li a {
+	display	:	block;
+	width	:	103px;
+	line-height	:	26px;
+	background	:	url("../image/side_tab_rank_bg.gif") no-repeat 0 0;
+	text-align	:	center;
+	font-size	:	12px;
+}
+#side ul.sort_menu_tab li a img {
+	display	:	inline;
+	vertical-align	:	middle;
+	margin	:	0 3px 0 0;
+}
+#side ul.sort_menu_tab li a:hover {
+	background-position	:	0 -26px;
+}
+#side ul.sort_menu_tab li a.active {
+	background-position	:	0 -52px !important;
+	text-decoration	:	none;
+	color	:	#222;
+}
+
+* html #side ul.sort_menu_tab li a img {
+	margin	:	4px 3px 6px 0;
+}
+
+
+/*----- ソート画像 ul.sort_rank_tab -----*/
+ul.sort_rank_tab {
+	height	:	30px;
+	margin	:	0 3px;
+	padding	:	0 0 0 12px;
+	position	:	relative;
+}
+
+#main .user_rank_block ul.sort_rank_tab {
+	margin	:	0 3px;
+	padding	:	18px 0 0 12px;
+}
+
+ul.nk_rank {
+	background	:	url("../image/tab_nk_bg_01.png") repeat-x left bottom;
+}
+ul.user_rank {
+	background	:	url("../image/tab_user_bg_01.png") repeat-x left bottom;
+}
+ul.sort_rank_tab li {
+	float	:	left;
+	margin	:	0 5px 0 0;
+}
+ul.sort_rank_tab li a {
+	display	:	block;
+	width	:	140px;
+	line-height	:	30px;
+	text-align	:	center;
+	font-size	:	14px;
+	font-weight	:	bold;
+}
+
+ul.sort_rank_tab li a:hover {
+	background-position	:	0 -30px;
+}
+
+ul.nk_rank li a {
+	background	:	url("../image/tab_nk_image_bg_01.png") no-repeat 0 0;
+}
+ul.user_rank li a {
+	background	:	url("../image/tab_user_image_bg_01.png") no-repeat 0 0;
+}
+ul.sort_rank_tab li a.active,
+ul.sort_rank_tab li a.selected {
+	background-position	:	0 -60px !important;
+	text-decoration	:	none;
+	color	:	#333;
+}
+ul.sort_rank_tab li a img {
+	display	:	inline;
+	vertical-align	:	middle;
+	margin	:	0 4px 2px 0;
+}
+/*----- ie6 -----*/
+* html ul.sort_rank_tab li img {
+	margin	:	7px 4px 7px 0;
+}
+
+
+/*----- 新UI タブ -----*/
+.Common_Tab_Box{
+  margin-bottom:6px;
+}
+
+.UserContents_Box .Common_Tab_Box{
+  margin:0 3px;/*----- コミュニティボックス内の指定 -----*/
+}
+
+.Common_Tab_Box ul{
+  padding:0 10px;
+  background:url(../image/common/bg_CommonTab_Box.gif) left bottom repeat-x;
+}
+.Common_Tab_Box ul li{
+  float:left;
+}
+.Common_Tab_Box ul li img{
+  display:inline;
+}
+.Common_Tab_Box ul li a{
+  display:block;
+  margin-top:4px;
+  padding:0 12px;
+  border-top:1px solid #c5d2ea;
+  border-right:1px solid #c5d2ea;
+  background:url(../image/common/bg_CommonTab_li.gif) left top repeat-x;
+  line-height:25px;
+}
+.Common_Tab_Box ul.IconTab li a{
+  padding:0 12px 0 5px !important;
+}
+* html .Common_Tab_Box ul li a{
+  background-position:0 1px;
+}
+.Common_Tab_Box ul li a.active{
+  margin-top:0 !important;
+  border-top:none !important;
+  background:url(../image/common/bg_CommonTab_li_a.gif) left top repeat-x;
+  line-height:31px !important;
+  color:#333;
+}
+.Common_Tab_Box ul li.firstchild a{
+  border-left:1px solid #c5d2ea;
+}
+
+/*-- タブ内アイコン表示 --*/
+.Common_Tab_Box ul li a span{
+  display:block;
+  line-height:25px !important;
+  padding-left:25px;
+}
+.Common_Tab_Box ul li a.active span{
+  display:block;
+  line-height:31px !important;
+  padding-left:25px;
+}
+
+span.Icon{
+  background:url(../image/common/bg_icon.png) 0 0 no-repeat;
+}
+
+span.Icon_New{
+  background-position:0 5px !important;
+}
+a.active span.Icon_New{
+  background-position:0 8px !important;
+}
+span.Icon_Chumoku{
+  background-position:0 -35px !important;
+}
+a.active span.Icon_Chumoku{
+  background-position:0 -32px !important;
+}
+span.Icon_Ninki{
+  background-position:0 -75px !important;
+}
+a.active span.Icon_Ninki{
+  background-position:0 -72px !important;
+}
+span.Icon_Like{
+  background-position:0 -115px !important;
+}
+a.active span.Icon_Like{
+  background-position:0 -112px !important;
+}
+span.Icon_Comment{
+  background-position:0 -155px !important;
+}
+a.active span.Icon_Comment{
+  background-position:0 -152px !important;
+}
+span.Icon_Kansha{
+  background-position:0 -195px !important;
+}
+a.active span.Icon_Kansha{
+  background-position:0 -192px !important;
+}
+span.Icon_Kaishu{
+  background-position:0 -235px !important;
+}
+a.active span.Icon_Kaishu{
+  background-position:0 -232px !important;
+}
+span.Icon_hit{
+  background-position:0 -275px !important;
+}
+a.active span.Icon_hit{
+  background-position:0 -272px !important;
+}
+span.Icon_review{
+  background-position:0 -315px !important;
+}
+a.active span.Icon_review{
+  background-position:0 -312px !important;
+}
+
+
+/*-- サムネイル+記事リンク --*/
+.BoxList_Box ul li{
+  margin-bottom:5px;
+  padding-bottom:5px;
+  border-bottom:1px dotted #ccc;
+}
+.BoxList_Box ul li dl dt{
+
+}
+.BoxList_Box ul li a strong{
+  font-size:110%;
+}
+.BoxList_Box .Left_Box,
+.BoxList_Box .Left_Thumb{
+  display:inline;
+  float:left;
+  width:47px:
+}
+.BoxList_Box .Right_Box,
+.BoxList_Box .Right_Txt{
+  margin-left:52px;
+}
+
+
+
+
+/*----- 投稿フォーム .form_area -----*/
+.form_area{
+	width	:	600px;
+	margin	:	8px auto 0;
+	text-align	:	left;
+}
+
+.form_area h2{
+	background-color	:	#80a20d;
+	font-weight	:	bold;
+	padding	:	2px 10px;
+	margin-bottom	:	8px;
+	color	:	#fff;
+	font-size	:	115%;
+}
+
+.form_area .inner_box {
+	margin	:	0	10px;
+}
+
+.form_area p.readtxt {
+	margin-bottom	:	1em;
+	padding-bottom	:	8px;
+	border-bottom	:	1px #888 dotted;
+	font-size	:	12px;
+	line-height	:	1.2;
+}
+.form_area p.readtxt span {
+	color	:	#666;
+	font-size	:	12px;
+}
+
+.form_area dl.input_data_dl {
+	border-bottom	:	1px #888 dotted;
+	padding	:	0;
+	background	:	#f4f9eb;
+}
+
+.form_area dl.input_data_dl dt{
+	font-weight	:	bold;
+	float	:	left;
+	width	:	200px;
+	padding	:	6px 0;
+	margin	:	0;
+	text-indent	:	1em;
+}
+
+.form_area dl.input_data_dl dt span{
+	font-size	:	80%;
+}
+.form_area dl.input_data_dl dd{
+	padding	:	6px 0 6px 10px;
+	margin	:	0 0 0 210px;
+	background	:	#fff;
+}
+
+.form_area p.form_kakunin_txt_01 {
+	margin-bottom	:	14px;
+	font-size	:	115%;
+}
+.form_area dl.comment_dl{
+	margin-bottom	:	20px;
+}
+
+.form_area dl.comment_dl dt{
+	font-weight	:	bold;
+	font-size	:	115%;
+}
+
+.form_area dl.comment_dl dt span{
+	font-size	:	80%;
+}
+
+.form_area textarea{
+	display	:	block;
+	width	:	570px;
+	border	:	1px solid #ccc;
+	padding	:	3px 5px ;
+}
+
+.form_area .img_check_area{
+}
+
+.form_area .img_check_area .img_check_img{
+	float	:	left;
+	width	:	250px;
+}
+
+.form_area .img_check_area .img_check_input{
+	margin-left	:	270px;
+}
+
+.form_area .img_check_area .img_check_input dl dt{
+	padding	:	10px 0 5px;
+}
+
+.form_area .img_check_area .img_check_input dl dt span{
+	background-color	:	#80a20d;
+	color	:	#fff;
+	padding	:	4px;
+}
+
+.form_area .img_check_area .img_check_input input{
+	width	:	280px;
+	padding	:	3px 5px ;
+}
+
+.form_area .form_submit_area{
+	clear	:	both;
+	border-top	:	1px dotted #ccc;
+	margin-top	:	15px;
+	padding-top	:	8px;
+	text-align	:	center;
+}
+
+.form_area .form_submit_area p{
+	text-align	:	left;
+	margin-bottom	:	8px;
+}
+
+.form_area .form_submit_area input{
+	display	:	inline;
+}
+
+
+/*----- 確認画面 -----*/
+.form_area .form_area_confirm dl.comment_dl dd{
+	background-color	:	#f5f8ea;
+	margin-top	:	10px;
+	padding	:	5px 10px;
+	font-size	:	110%;
+}
+
+
+
+/*----- 投稿フォーム #write_form_01 -----*/
+#write_form_01 table.form_table_01 {
+	width	:	560px;
+	border-collapse	:	separate;
+	border-spacing	:	3px;
+	margin	:	1em auto;
+}
+#write_form_01 table.form_table_01 th {
+	background	:	#efefef;
+	padding	:	8px;
+	vertical-align	:	top;
+}
+#write_form_01 table.form_table_01 td {
+	width	:	440px;
+	background	:	#f5f5f5;
+	padding	:	8px;
+	text-align	:	left;
+	vertical-align	:	top;
+}
+#write_form_01 table.form_table_01 td em{
+	color	:	#c00;
+}
+#write_form_01 table.form_table_01 th.contri_title {
+	font-weight	:	bold;
+	background	:	#e8f9e8;
+}
+#write_form_01 table.form_table_01 td input,
+#write_form_01 table.form_table_01 td textarea {
+	display	:	block;
+}
+
+#write_form_01 input,
+#write_form_01 textarea{
+	display	:	block;
+	width	:	400px;
+	border	:	1px solid #ddd;		
+	padding	:	3px 5px ;
+}
+#write_form_01 .submit_area {
+	text-align	:	center;
+	margin	:	6px;
+}
+#write_form_01 .submit_area input.submit_btn_01 {
+	width	:	auto;
+	height	:	28px;
+	margin	:	auto;
+	line-height	:	28px;		
+	border-top	:	1px solid #999;
+	border-left	:	1px solid #999;
+	border-right	:	1px solid #333;
+	border-bottom	:	1px solid #333;
+	padding	:	0 25px 0 25px;
+	color	:	#333;
+	cursor	:	pointer;
+	font-weight	:	bold;
+}
+#write_form_01 .captcha_img {
+	width	:	310px ;
+	float	:	left;
+}
+#write_form_01 .captcha_form {
+	float	:	left;
+	width	:	200px ;
+}
+#write_form_01 .captcha_form input {
+	width	:	150px ;
+}
+#write_form_01 .kakunin_area {
+	width	:	224px;
+	text-align	:	center;
+	margin	:	auto;
+}
+#write_form_01 .kakunin_area input {
+	width	:	100px;
+	float	:	left;
+	margin	:	0 6px;
+	display	:	inline;
+	border-top	:	1px solid #999;
+	border-left	:	1px solid #999;
+	border-right	:	1px solid #333;
+	border-bottom	:	1px solid #333;
+	padding	:	3px auto;
+}
+
+/* =======================================================
+5.フォント共通指定
+======================================================= */
+.txt_666{
+	color	:#666;
+}
+
+.txt_r{
+	text-align	:	right;
+}
+
+
+/* ----- 見出しフォント指定 ----- */
+.hdtxt{
+	font-family:'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック',sans-serif;
+}
+
+.sun{
+	color:#d00 !important;
+}
+.sat{
+	color:#0154ec !important;
+}
+.other{
+	color:#333 !important;
+}
+
+
+/* ----- 画像の枠(角丸) ※jquery.corner.js ----- */
+.imgframe {
+	background-color:#333;
+	padding:5px;
+}
+
+
+/* 435行目にこの数値を足しました */
+#side .side_rank ul li {
+	padding-bottom:5px;
+}
+
+
+/*----- ヘルプ dl.faq_detail_01 -----*/
+dl.faq_detail_01 {
+	border	:	1px solid #c2d3ef;
+	text-align	:	left;
+	margin	:	10px;
+}
+dl.faq_detail_01 dt {
+	border	:	1px solid #fff;
+	background	:	#e4ecf8 ;
+	padding	:	5px 18px;
+	font-weight	:	bold;
+}
+dl.faq_detail_01 dt span {
+	font-weight	:	bold;
+}
+dl.faq_detail_01 dd {
+	border-top	:	1px solid #c2d3ef;
+	padding	:	10px 18px;
+}
+
+
+
+
+/* =======================================================
+6.ユーザー投稿・表彰系のリスト表示 .user_report_list
+======================================================= */
+ul.user_report_list {
+	margin	:	20px 14px 0 14px;
+}
+p.ListSortInfo {
+	margin	:	0 14px 1em;
+	padding	:	10px 0 0;
+}
+ul.user_report_list li{
+	margin	:	0 0 10px 0;
+}
+
+ul.user_report_list li.dotted{
+	border-bottom: 1px dotted #999999;
+	padding-bottom:0.5em;
+}
+dl.entry_rank{
+	margin	:	0 0 0;
+	padding	:	0;
+}
+dt.rank_order {
+	float	:	left;
+	width	:	50px;
+}
+dt.rank_order span {
+	display	:	block;
+	background	:	#ddd;
+	width	:	36px;
+	text-align	:	center;
+	font-weight	:	bold;
+	padding	:	2px 0;
+}
+dd.rank_detail {
+	float	:	left;
+	width	:	642px;
+}
+.entrylist_area .user_name_area,
+.entrylist_area .thread_name_area{
+	background-color	:	#f4f9eb;
+	border	:	1px solid #d8e1bf;
+	line-height	:	26px;
+	margin-bottom	:	5px;
+}
+.entrylist_area .user_name_area img,
+.entrylist_area .thread_name_area img{
+}
+.user_name_area .user_name,
+.thread_name_area .thread_name{
+	float	:left;
+	display	:	inline;
+	margin	:	0 0 0 5px;
+	font-size	:	100%;
+}
+.user_name_area .respect,
+.thread_name_area .respect{
+	float	:left;
+	display:inline;
+	margin-left	:	1.0em;
+}
+.entrylist_area .user_name_area .entry_time,
+.entrylist_area .thread_name_area .entry_time{
+	float	:	right;
+	margin-right	:	5px;
+	color	:	#555;
+}
+.comment_txt dd.entry_action .entry_time,
+.comment_txt dd.entry_action .entry_time p {
+	display	:	inline;
+}
+.user_comment_area img.abt_img{
+	float:left;
+	margin:0 10px 0 0;
+}
+.user_comment_area .comment_txt{
+	padding-left	:	60px;
+}
+.user_comment_area .comment_txt dl dt a{
+	margin	:	0 0 3px 0;
+	padding	:	0 0 0 17px;
+	font-size	:	110%;
+	background	:	url("../image/mark_arrow_green_01.gif") no-repeat left center;
+}
+.user_comment_area .comment_txt dl dt .respect {
+	display	:	inline;
+}
+.user_comment_area .comment_txt dl dt .respect a{
+	padding	:	0;
+	margin	:	0;
+	background	:	none;
+}
+.user_comment_area .comment_txt dl dd.entry_action{
+display:inline;
+float:right;
+width	:	500px;
+text-align	:	right;
+line-height	:	1.0;
+}
+.user_comment_area .comment_txt dl dd.entry_action strong {
+	color	:	#c00;
+	background-color	:	#fff2f2;
+	font-size:110%;
+}
+.user_comment_area .comment_txt dl dd.entry_action img,
+.user_comment_area .comment_txt dl dd.entry_action p img {
+	display	:	inline;	
+	vertical-align	:	bottom;
+}
+.user_comment_area .comment_txt dl dd.entry_action span.exist{
+	background-color	:	#c00;
+	color	:	#fff;
+	padding	:	1px;
+	width	:	1.5em;
+	height	:	1.5em;
+	line-height	:	1.5em;
+}
+
+p.tarekomiInfo {
+	margin	:	0 12px;
+	padding	:	10px 0 2px;
+}
+
+.user_report_list_box p.detail_link {
+	margin	:	0 20px 0 10px;
+	padding	:	0 0 0 ;
+	text-align	:	right;
+	font-size	:	100%;
+}
+
+#main .user_report_list_box p.nonedata{
+	margin	:	15px;
+}
+
+/*--メインカラム用のページャー*/
+.common_pager{
+	text-align:center;
+	margin:0 14px;
+	padding:10px 0 0 0;
+	border-top:1px dotted #ccc;
+}
+body.db .common_pager{
+	border-top:none;
+}
+.common_pager ul{
+	margin:0 auto;
+}
+.common_pager ul li{
+	display:inline;
+	margin:0 .2em 0 0;
+}
+.common_pager ul li a{
+	padding:0 .4em;
+}
+.common_pager ul li.active{
+	font-weight:bold;
+	padding:0 .4em;
+}
+
+
+/* =======================================================
+7. メインカラムnetkeibaブロック(青・角マル枠)	.nk_block
+======================================================= */
+/*--横線の背景*/
+.nk_block_side {
+	margin	:	0 0 30px;
+	background	:	url("../image/bg_nk_block_side.png") repeat-y 0 0;
+}
+/*--下背景*/
+.nk_block_bottom {
+	padding:0 0 10px 0;
+	background	:	url("../image/bg_nk_block_bottom.png") no-repeat bottom left;
+}
+/*--上背景*/
+.nk_block_top{
+	position	:	relative;
+	background	:	url("../image/bg_nk_block_top.png") no-repeat 0 0;
+	height	:	52px;
+}
+
+/*--見出しの指定(位置指定のみ - アイコン画像は個々に)*/
+.nk_block_top h2{
+	color: #ffffff;
+	padding:15px 0 0 90px;
+	font-size:19px;
+	font-weight: bold;
+}
+.nk_block_top h2 span{
+	color: #ffff00;
+} 
+.nk_block_top p {
+	position	:	absolute;
+	top	:	38px;
+	right	:	10px;
+	font-size	:	13px;
+}
+.nk_block_top p span {
+	color	:	#ffcc3e;
+	font-weight	:	bold;
+}
+
+/* =======================================================
+7. メインカラムユーザーブロック(緑・角マル枠)	.user_block
+======================================================= */
+/*--横線の背景*/
+.user_block_side {
+	background	:	url("../image/bg_user_block_side.png") repeat-y 0 0;
+}
+/*--下背景*/
+.user_block_bottom {
+	padding:0 0 10px 0;
+	background	:	url("../image/bg_user_block_bottom.png") no-repeat bottom left;
+}
+/*--上背景*/
+.user_block_top{
+	position	:	relative;
+	background	:	url("../image/bg_user_block_top.png") no-repeat 0 0;
+	height	:	50px;
+}
+/*--見出しの指定(フォント指定のみ - アイコン画像、位置は個々に)*/
+.user_block_top h2{
+	color: #ffffff;
+	padding:16px 0 0 75px;
+	font-size:19px;
+	font-weight: bold;
+}
+/*--見出し内サブテキスト*/
+.user_block_top h2 span{
+	color: #ffff00;
+}
+/*--見出し内サブテキスト(集計日付など)*/
+.user_block_top p{
+	position	:	absolute;
+	top	:	38px;
+	right	:	10px;
+	font-size	:	13px;
+	margin:0;
+}
+.user_block_top p span {
+	color	:	#ffcc3e;
+	font-weight	:	bold;
+}
+/*--見出し内コメント投稿ボタン*/
+.user_block_top a.btn{
+	display	:	block;
+	position	:	absolute;
+	top	:	-4px;
+	right	:	4px;
+	font-size	:	15px;
+	width	:	262px;
+	height	:	37px;
+	background	:	url("../image/btn_icon_bbs_kakikomi_bg.png") no-repeat 0 0;
+}
+.user_block_top a:hover{
+	background	:	url("../image/btn_icon_bbs_kakikomi_bg.png") no-repeat 0 -37px;
+}
+.user_block_top a.btn span{
+	display	:	block;
+	padding	:	12px 0 0 60px;
+}
+
+
+/* =======================================================
+8. 白地のコンテンツバー .cate_bar
+======================================================= */
+.cate_bar{
+	position:relative;
+	background: url(../image/cate_h_bg_01.png) no-repeat 100% 0%;
+	height: 40px;
+	text-align: left;
+	margin-bottom	:	12px;
+}
+.cate_bar h2,
+.cate_bar h3{
+	background: url(../image/cate_h_bg_left_01.png) no-repeat 0px 0px;
+	font-size: 128%;
+	font-weight: bold;
+	padding: 0 0 0 24px;
+	line-height: 40px;
+}
+.cate_bar p.cate_bar_sub{
+	position	:	absolute;
+	top:2px;
+	right:12px;
+}
+/*--細いサブバー*/
+.cate_bar_s{
+	position:relative;
+	background: url(../image/cate_h_bg_01_s.png) no-repeat 100% 0%;
+	height: 25px;
+	text-align: left;
+	margin-bottom	:	12px;
+}
+.cate_bar_s h2,
+.cate_bar_s h3{
+	background: url(../image/cate_h_bg_left_01_s.png) no-repeat 0px 0px;
+	font-size: 116%;
+	font-weight: bold;
+	padding: 0 0 0 20px;
+	line-height: 25px;
+}
+.cate_bar_s p.cate_bar_sub{
+	position	:	absolute;
+	top:2px;
+	right:12px;
+}
+
+/* =======================================================
+9.広告用指定	.ad_box_on_int
+======================================================= */
+.adnet_nk_side_01 {
+	margin-bottom	:	20px;
+}
+.adnet_nk_main_01 {
+	margin	:	20px 0;
+}
+
+#side .side_ad {
+	margin-bottom:10px;
+}
+#side .side_promo {
+	margin-bottom:10px;
+}
+/*-- yahooテキスト広告 --*/
+.ad_box_on_int {
+	margin	:	0 0 20px;
+	line-height	:	18px;
+	text-align	:	left;
+}
+
+.user_news_block .ad_box_on_int{
+	margin:0 15px;
+}
+
+.ad_box_on_int ul.ad_defbox_int li {
+	margin	:	0 0 4px 0;
+	padding	:	0 0 0 17px;
+	background	:	url("../image/mark_arrow_red_01.gif") no-repeat 0 5px;
+}
+.ad_box_on_int ul.ad_defbox_int li a {
+	cursor	:	pointer;
+	text-decoration	:	none;
+	font-size	:	14px;
+	font-weight	:	bold;
+}
+.ad_box_on_int ul.ad_defbox_int li span.host {
+	margin	:	0 0 0 5px;
+	font-size	:	10px;
+	color	:	#666;
+	overflow	:	hidden;
+	font-weight	:	normal;
+}
+.ad_box_on_int ul.ad_defbox_int li span.descr {
+	display	:	block;
+	overflow	:	hidden;
+	font-size	:	12px;
+	width	:	100%;
+	color	:	#373737;
+	font-weight	:	normal;
+}
+.ad_box_on_int ul.ad_label {
+	text-align	:	right;
+}
+.ad_box_on_int ul.ad_label li {
+	display	:	inline;
+	color	:	#888;
+}
+.ad_box_on_int ul.ad_label li a {
+	color	:	#888;
+	text-decoration	:	underline;
+}
+#side iframe {
+	margin	:	0 0 10px;
+}
+
+
+/*-- 楽天アフェリエイト .rakuten_affi --*/
+.rakuten_affi {
+	margin	:	0 0 20px;
+}
+.rakuten_affi dl dt {
+	position	:	relative;
+	background	:	url("../image/cate_h_bg_01_s.png") no-repeat 100% 0%;
+	text-align	:	left;
+}
+.rakuten_affi dl dt div {
+	background	:	url("../image/cate_h_bg_left_01_s.png") no-repeat 0px 0px;
+	font-size	:	14px;
+	font-weight	:	bold;
+	padding	:	0 0 0 20px;
+	line-height	:	25px;
+	display	:	block;
+}
+.rakuten_affi dl dt img {
+	float	:	right;
+	margin	:	2px 2px 0 0;
+}
+.rakuten_affi dl dd {
+	border	:	1px solid #c6c9d5;
+	border-top	:	0 none;
+}
+.rakuten_affi dl dd div {
+	width	:	200px;
+	margin	:	0 auto;
+	padding	:	10px 0 0;
+}
+
+
+
+/* =======================================================
+9.サムネイル画像動画リンクの設定
+======================================================= */
+.MovieThumb{
+  position:relative;
+}
+.MovieThumb a.OverMovie{
+  position:absolute;
+  top:0;
+  left:0;
+  background:url("../image/common/bg_movie_o.png") no-repeat 50% 50%;
+  display:none;
+}
+
+
+/* =======================================================
+10.アイコン設定　(12/01/09)
+======================================================= */
+/*----- .プロフ関連 -----*/
+p.icon_friend_01,
+.icon_friend_01 {
+	background	:	url("../image/prof/prof_icon_friend_01.png") no-repeat left center;
+	padding	:	2px 0 2px 18px;
+}
+p.icon_follow_01,
+.icon_follow_01 {
+	background	:	url("../image/prof/prof_icon_follow_01.png") no-repeat left center;
+	padding	:	2px 0 2px 18px;
+}
+p.icon_follower_01,
+.icon_follower_01 {
+	background	:	url("../image/prof/prof_icon_follower_01.png") no-repeat left center;
+	padding	:	2px 0 2px 22px;
+}
+
+
+
+/*----- .float解除 .fc -----*/
+
+.floathack:after {
+	content:	".";
+	display:	block;
+	clear:	both;
+	height:	0;
+	visibility:	hidden;
+}
+.floathack {
+	zoom:	100%;
+	/*\*//*/
+	display:	inline-table;
+	/**/
+}
+
+/*---------------------------------------
+馬名にお気に入り馬登録ボタン設置
+---------------------------------------*/
+td.horsename div{
+	position	:	relative;
+	padding-right	:	1.5em;
+}
+td.horsename img.horsebookmark{
+	position	:	absolute;
+	top	:	3px;
+	right	:	2px;
+}
+
+/*---------------------------------------
+p.old_nk_btn 旧netkeiba.comへ
+---------------------------------------*/
+#header p.old_nk_btn {
+	position	:	absolute;
+	top	:	28px;
+	left	:	190px;
+	width	:	172px;
+	height	:	44px;
+}
+#header p.sp_nk_btn {
+	position	:	absolute;
+	top	:	36px;
+	left	:	190px;
+	width	:	172px;
+	height	:	35px;
+}

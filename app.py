@@ -217,8 +217,9 @@ def predict_by_url():
         race_name = f"Netkeiba Race {race_id}"
         race_info = "URLからの取得データ"
         
-        # 予算取得
-        budget = int(data.get('budget', 0))
+        # 予算取得 (空文字列の場合は0として扱う)
+        budget_raw = data.get('budget', 0)
+        budget = int(budget_raw) if budget_raw not in (None, '') else 0
         strategy = data.get('strategy', 'balance')
         
         return run_prediction_logic(df, race_name, race_info, race_id=race_id, budget=budget, strategy=strategy)
@@ -278,6 +279,7 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
     # We retrieve the category definitions directly from the model to ensure perfect match.
     
     # モデルからカテゴリ定義を取得
+    categorical_applied = False
     try:
         debug_info = model.debug_info()
         model_cats = debug_info.get('pandas_categorical', [])
@@ -286,24 +288,26 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
         # 特徴量リストの順序的にも 枠番, 馬番 が先頭に来ているため、
         # model_cats[0] -> 枠番, model_cats[1] -> 馬番 となるのが確実。
         
-        if len(model_cats) >= 2:
+        if model_cats and len(model_cats) >= 2:
              # Apply correct categories
              if '枠番' in X.columns:
                  X['枠番'] = pd.Categorical(X['枠番'], categories=model_cats[0])
              if '馬番' in X.columns:
                  X['馬番'] = pd.Categorical(X['馬番'], categories=model_cats[1])
-        else:
-             # Fallback (should not happen with production model)
-             print("Warning: Could not retrieve categorical definitions from model.")
-             if '枠番' in X.columns:
-                 X['枠番'] = pd.Categorical(X['枠番'], categories=list(range(1, 9)))
-             if '馬番' in X.columns:
-                 X['馬番'] = pd.Categorical(X['馬番'], categories=list(range(1, 19)))
+             categorical_applied = True
+             print("Applied categorical definitions from model.")
                  
     except Exception as e:
         print(f"Error applying categorical definitions: {e}")
-        # Fallback
-        pass
+    
+    # カテゴリ定義が取得できなかった場合、数値型として扱う（LightGBMは数値型も受け付ける）
+    if not categorical_applied:
+        print("Warning: Could not retrieve categorical definitions. Using numeric type for 枠番/馬番.")
+        # カテゴリではなく数値として扱う（int型）
+        if '枠番' in X.columns:
+            X['枠番'] = X['枠番'].astype(int)
+        if '馬番' in X.columns:
+            X['馬番'] = X['馬番'].astype(int)
         
     try:
         probs = model.predict(X)
@@ -603,8 +607,9 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
     bets = []
     
     for rec in recommendations:
-        # method変換: SINGLE -> '通常', BOX/FORMATION -> 'ボックス' (IPAT上はボックスで一括投票)
+        # method変換: SINGLE -> '通常', BOX -> 'ボックス', FORMATION -> 'フォーメーション'
         # BettingAllocatorの出力形式: method='BOX', horse_numbers=[1, 2, 3]
+        # またはmethod='FORMATION', formation_horses=[[12,9], [12,9,4], [12,9,4,13]]
         method_raw = rec.get('method', 'SINGLE')
         
         # IPAT用のmethod名
@@ -612,14 +617,57 @@ def convert_recommendations_to_bets(recommendations: list) -> list:
             method = '通常'
         elif method_raw == 'BOX':
             method = 'ボックス'
+        elif method_raw == 'FORMATION':
+            method = 'フォーメーション'
+        elif method_raw == 'NAGASHI':
+            # 流しはフォーメーションに変換して処理する
+            method = 'フォーメーション'
         else:
-            method = '通常' # デフォルト
+            method = '通常'  # デフォルト
         
         # BettingAllocatorは'bet_type'を使用するが、後方互換性のため'type'もサポート
         bet_type = rec.get('bet_type') or rec.get('type')
         
-        # 'horse_numbers'(BettingAllocator)と'horses'(旧形式)の両方をサポート
-        horses = rec.get('horse_numbers') or rec.get('horses')
+        # フォーメーションの場合は formation_horses を優先
+        # formation_horses: [[1着馬], [2着馬], [3着馬]] の形式
+        if method == 'フォーメーション':
+            horses = rec.get('formation_horses') or rec.get('horses')
+            
+            # NAGASHI -> Formation 変換
+            # 流しの場合は axis/partners 構造をフォーメーション形式に変換
+            if method_raw == 'NAGASHI':
+                nagashi_horses = rec.get('nagashi_horses') or rec.get('horses')
+                axis = rec.get('axis') or rec.get('axis_horses', [])
+                partners = rec.get('partners') or rec.get('partner_horses', [])
+                
+                # dict形式の場合
+                if isinstance(nagashi_horses, dict):
+                    axis = nagashi_horses.get('axis', axis)
+                    partners = nagashi_horses.get('partners', partners)
+                
+                # リスト形式に正規化
+                if not isinstance(axis, list):
+                    axis = [axis]
+                if not isinstance(partners, list):
+                    partners = [partners]
+                
+                # 流し -> フォーメーション変換
+                # 3連複 軸1頭流し: [[軸], [相手], [相手]]
+                # 3連単 軸1頭1着固定: [[軸], [相手], [相手]]
+                # 馬連/ワイド/馬単: [[軸], [相手]]
+                
+                if bet_type in ['3連複', '3連単']:
+                    # 軸1頭流し: 軸 + 相手から2頭
+                    horses = [axis, partners, partners]
+                    print(f"Converted NAGASHI to Formation: {horses}")
+                elif bet_type in ['馬連', '馬単', 'ワイド']:
+                    horses = [axis, partners]
+                    print(f"Converted NAGASHI to Formation: {horses}")
+                else:
+                    horses = [axis, partners]
+        else:
+            # 'horse_numbers'(BettingAllocator)と'horses'(旧形式)の両方をサポート
+            horses = rec.get('horse_numbers') or rec.get('horses')
         
         # 金額決定
         if method == '通常':

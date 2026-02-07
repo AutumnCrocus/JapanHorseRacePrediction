@@ -422,7 +422,7 @@ class Shutuba:
         """出馬表をスクレイピング"""
         try:
             url = SHUTUBA_URL + str(race_id)
-            response = requests.get(url, headers=HEADERS)
+            response = requests.get(url, headers=HEADERS, timeout=15)
             response.encoding = "EUC-JP"
             
             if response.status_code != 200:

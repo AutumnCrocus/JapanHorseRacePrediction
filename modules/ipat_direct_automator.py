@@ -369,7 +369,187 @@ class IpatDirectAutomator:
             if b_type == 'ワイド': return nCr(n, 2)
             if b_type == '3連複': return nCr(n, 3)
             if b_type == '3連単': return nPr(n, 3)
+        elif b_method == 'フォーメーション':
+            # 3連単: G1 x G2 x G3 (ただし同一馬は除外)
+            # 3連複: G1 x G2 x G3 (ただし同一馬は除外、順序不同)
+            # 馬単: G1 x G2
+            # 馬連: G1 x G2
+            # 枠連: G1 x G2
+            # ワイド: G1 x G2
+            
+            g1 = set(horses) # API仕様次第だが、horsesに[[1,2], [3,4], [5]]のように来る想定か、
+                             # あるいは bet['formation'] = {'1': [..], '2': [..]} か
+            # ここでは calculate_combinations の引数 horses が list[list[int]] であると仮定する
+            # もし list[int] ならばエラー
+            
+            # _calc_combinations は内部メソッドなので、呼び出し元で調整する。
+            # horses = [[1,2], [1,2,3], [1,2,3,4]] のような構造を想定
+            
+            if not horses or not isinstance(horses[0], list):
+                return 0
+                
+            if b_type == '3連単':
+                count = 0
+                g1 = horses[0]
+                g2 = horses[1] if len(horses) > 1 else []
+                g3 = horses[2] if len(horses) > 2 else []
+                for i in g1:
+                    for j in g2:
+                        if i == j: continue
+                        for k in g3:
+                            if k == i or k == j: continue
+                            count += 1
+                return count
+            
+            elif b_type == '3連複':
+                # 3連複フォーメーション (a-b-c)
+                # 組み合わせ (set) としてユニークなもの
+                g1 = horses[0]
+                g2 = horses[1] if len(horses) > 1 else []
+                g3 = horses[2] if len(horses) > 2 else []
+                combos = set()
+                for i in g1:
+                    for j in g2:
+                        if i == j: continue
+                        for k in g3:
+                            if k == i or k == j: continue
+                            # sort tuple to deduplicate order
+                            t = tuple(sorted([i, j, k]))
+                            combos.add(t)
+                return len(combos)
+                
+            elif b_type in ['馬単', '馬連', '枠連', 'ワイド']:
+                g1 = horses[0]
+                g2 = horses[1] if len(horses) > 1 else []
+                count = 0
+                combos = set()
+                for i in g1:
+                    for j in g2:
+                        if i == j: continue
+                        if b_type in ['馬連', '枠連', 'ワイド']:
+                            t = tuple(sorted([i, j]))
+                            if t not in combos:
+                                combos.add(t)
+                                count += 1
+                        else: # 馬単
+                            count += 1
+                return count
+
+        elif b_method == '流し':
+            # 流し (Nagashi/Wheel) ベット
+            # horses = {'axis': [軸馬番号], 'partners': [相手馬番号リスト]}
+            # または horses = [[軸], [相手1, 相手2, ...]]
+            
+            if isinstance(horses, dict):
+                axis = horses.get('axis', [])
+                partners = horses.get('partners', [])
+            elif isinstance(horses, list) and len(horses) >= 2:
+                axis = horses[0] if isinstance(horses[0], list) else [horses[0]]
+                partners = horses[1] if isinstance(horses[1], list) else horses[1:]
+            else:
+                return 0
+            
+            import math
+            def nCr(n, r): return math.comb(n, r) if n >= r else 0
+            
+            n_axis = len(axis)
+            n_partners = len(partners)
+            
+            if b_type == '3連複':
+                # 軸1頭流し: 軸1頭 + 相手n頭から2頭 = nC2
+                # 軸2頭流し: 軸2頭 + 相手n頭から1頭 = n
+                if n_axis == 1:
+                    return nCr(n_partners, 2)
+                elif n_axis == 2:
+                    return n_partners
+                    
+            elif b_type == '3連単':
+                # 軸1頭1着固定流し: 相手n頭から2頭の順列 = nP2
+                # 軸1頭2着固定などもある
+                # ここでは軸1頭1着固定を想定
+                if n_axis == 1:
+                    return n_partners * (n_partners - 1)  # nP2
+                    
+            elif b_type in ['馬連', '馬単', 'ワイド']:
+                # 軸流し: 軸 x 相手 = n_partners
+                return n_partners
+
         return 0
+
+    def _handle_important_notice(self):
+        """
+        「重要なお知らせ」ダイアログを処理する
+        - 「今後はこのお知らせを表示しない」にチェック
+        - 「OK」をクリック
+        """
+        try:
+            # URLに 'announce' が含まれている場合、お知らせ画面にいる可能性が高い
+            if 'announce' in self.driver.current_url or '重要なお知らせ' in self.driver.page_source:
+                print("Important Notice detected. Handling...")
+                
+                # チェックボックスを探す
+                # "今後はこのお知らせを表示しない" のテキストを持つlabel/span、またはその近くのcheckbox
+                checkbox_candidates = [
+                    "//input[@type='checkbox']",  # Generic checkbox
+                    "//label[contains(text(), '今後はこのお知らせを表示しない')]//input",
+                    "//label[contains(text(), '今後はこのお知らせを表示しない')]/preceding-sibling::input",
+                    "//label[contains(text(), '今後はこのお知らせを表示しない')]/following-sibling::input",
+                ]
+                
+                checkbox_found = False
+                for xpath in checkbox_candidates:
+                    try:
+                        checkboxes = self.driver.find_elements(By.XPATH, xpath)
+                        for cb in checkboxes:
+                            if cb.is_displayed() and not cb.is_selected():
+                                cb.click()
+                                print("Checked 'Don't show again' checkbox.")
+                                checkbox_found = True
+                                break
+                        if checkbox_found:
+                            break
+                    except:
+                        pass
+                
+                if not checkbox_found:
+                    # Try label click (might toggle checkbox)
+                    try:
+                        label = self.driver.find_element(By.XPATH, "//*[contains(text(), '今後はこのお知らせを表示しない')]")
+                        label.click()
+                        print("Clicked label for 'Don't show again'.")
+                    except:
+                        print("Could not find 'Don't show again' checkbox/label.")
+                
+                time.sleep(0.3)
+                
+                # OKボタンをクリック
+                ok_btn_candidates = [
+                    "//button[text()='OK']",
+                    "//input[@value='OK']",
+                    "//a[text()='OK']",
+                    "//button[contains(text(), 'OK')]",
+                    "//*[text()='OK']",
+                ]
+                
+                ok_clicked = False
+                for xpath in ok_btn_candidates:
+                    try:
+                        btn = self.driver.find_element(By.XPATH, xpath)
+                        if btn.is_displayed():
+                            btn.click()
+                            print("Clicked 'OK' button on Important Notice.")
+                            ok_clicked = True
+                            break
+                    except:
+                        pass
+                
+                if not ok_clicked:
+                    print("Could not find 'OK' button on Important Notice.")
+                    
+                time.sleep(self.WAIT_SEC_LONG)
+                
+        except Exception as e:
+            print(f"Error handling Important Notice: {e}")
 
     def vote(self, race_id: str, bets: List[Dict[str, Any]], stop_at_confirmation: bool = True) -> tuple[bool, str]:
         """
@@ -379,6 +559,9 @@ class IpatDirectAutomator:
             return False, "Browser not initialized."
             
         try:
+            # 0. 重要なお知らせダイアログを処理
+            self._handle_important_notice()
+            
             # 1. 開催情報の解析
             # race_idから場所、レース番号などを特定
             place_code = race_id[4:6] # 05 -> 東京
@@ -683,143 +866,237 @@ class IpatDirectAutomator:
                         print(f"Method selection error: {e}")
 
                     # 3. 馬番選択 (Label Click)
-                    try:
-                        # 式別変更後のテーブル再描画待ちを含めてWaitを入れる
-                        # 特定の馬ではなく、任意の馬番ラベルが出るまで待つ (class check)
-                        try:
-                            WebDriverWait(self.driver, 10).until(
-                                EC.presence_of_element_located((By.XPATH, "//span[contains(@class, 'ipat-racer-no')]"))
-                            )
-                        except:
-                            print("Timeout waiting for ANY horse label")
-
-                        for horse_num in b_horses:
-                            # IDは 'no' + horse_num (int)
-                            label_for = f"no{horse_num}"
-                            try:
-                                # label click is reliable for checkboxes
-                                label_xpath = f"//label[@for='{label_for}']"
-                                labels = self.driver.find_elements(By.XPATH, label_xpath)
-                                
-                                target_label = None
-                                if labels:
-                                    target_label = labels[0]
-                                else:
-                                    # Fallback: Search by Text
-                                    print(f"Label ID search failed for {horse_num}, trying Text search...")
-                                    # //span[... text()='1']/ancestor::tr//label
-                                    xpath_text = f"//span[contains(@class, 'ipat-racer-no') and normalize-space(text())='{horse_num}']/ancestor::tr//label"
-                                    labels_text = self.driver.find_elements(By.XPATH, xpath_text)
-                                    if labels_text:
-                                        target_label = labels_text[0]
-                                
-                                if target_label:
-                                    # Check input state
-                                    input_id = target_label.get_attribute("for")
-                                    if not input_id:
-                                         # Try to find input inside label or nearby
-                                         # This is tricky, assuming ID is correct
-                                         input_id = label_for
+                    if b_method == 'フォーメーション':
+                        print(f"Formation Selection Mode: {b_horses}")
+                        if not isinstance(b_horses, list) or not isinstance(b_horses[0], list):
+                            print("Error: For formation, 'horses' must be list of lists.")
+                            continue
+                            
+                        ranks = ["1着", "2着", "3着"] 
+                        if b_type in ['馬連', '馬単', '枠連', 'ワイド']:
+                             ranks = ["1頭目", "2頭目"]
+                        
+                        for i, rank_horses in enumerate(b_horses):
+                            if i >= len(ranks): break
+                            target_rank_name = ranks[i]
+                            print(f"selecting rank {i+1} ({target_rank_name}): {rank_horses}")
+                            
+                            for horse_num in rank_horses:
+                                try:
+                                    xpath_no = f"//span[contains(@class, 'ipat-racer-no') and normalize-space(text())='{horse_num}']/ancestor::tr"
+                                    row = self.driver.find_element(By.XPATH, xpath_no)
+                                    inputs = row.find_elements(By.TAG_NAME, "input")
+                                    labels = row.find_elements(By.TAG_NAME, "label")
+                                    valid_inputs = [inp for inp in inputs if inp.get_attribute("type") == "checkbox" or inp.get_attribute("type") == "radio"]
                                     
-                                    try:
-                                        input_elem = self.driver.find_element(By.ID, input_id)
-                                        
-                                        # Scroll into view
-                                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_elem)
-                                        time.sleep(0.1)
+                                    target_input = None
+                                    target_label = None
+                                    if len(valid_inputs) > i:
+                                        target_input = valid_inputs[i]
+                                        inp_id = target_input.get_attribute("id")
+                                        if inp_id:
+                                            for lbl in labels:
+                                                if lbl.get_attribute("for") == inp_id:
+                                                    target_label = lbl
+                                                    break
+                                    
+                                    if target_label:
+                                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_label)
+                                        target_label.click()
+                                    elif target_input:
+                                        self.driver.execute_script("arguments[0].click();", target_input)
+                                    else:
+                                        print(f"Could not find input for Horse {horse_num} Rank {i+1}")
+                                except Exception as e:
+                                    print(f"Error selecting formation horse {horse_num} rank {i+1}: {e}")
 
-                                        if not input_elem.is_selected():
-                                            clicked = False
-                                            try:
-                                                target_label.click()
-                                                clicked = True
-                                            except Exception as ck_ex:
-                                                print(f"Label click failed/intercepted ({ck_ex}), trying JS Click on Label...")
-                                                try:
-                                                    self.driver.execute_script("arguments[0].click();", target_label)
-                                                    clicked = True
-                                                except: pass
-
-                                            # If still not selected, try JS click on INPUT
-                                            if not input_elem.is_selected():
-                                                print(f"Click failed for {horse_num}, trying JS Click on Input...")
-                                                self.driver.execute_script("arguments[0].click();", input_elem)
-                                                time.sleep(0.5)
-                                            
-                                            if input_elem.is_selected():
-                                                print(f"Selected Horse: {horse_num} (Verified)")
-                                                # Force Angular update
-                                                self.driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", input_elem)
-                                                self.driver.execute_script("arguments[0].dispatchEvent(new Event('input'));", input_elem)
-                                                self.driver.execute_script("arguments[0].dispatchEvent(new Event('click'));", input_elem)
-                                                self.driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", input_elem)
-                                            else:
-                                                print(f"FAILED to select Horse: {horse_num}")
-                                        else:
-                                            print(f"Horse {horse_num} already selected.")
-                                    except Exception as ex:
-                                        # Input not found by ID, just click label and hope
-                                        print(f"Input element check failed ({ex}), clicking label blindly.")
-                                        try:
-                                            self.driver.execute_script("arguments[0].click();", target_label)
-                                            print(f"Selected Horse: {horse_num} (Blind JS)")
-                                        except Exception as bex:
-                                            print(f"Blind click failed: {bex}")
-                                        time.sleep(0.5)
-                                else:
-                                     print(f"Horse Label not found for: {horse_num}")
-                                     # DEBUG: Save source inside loop
-                                     debug_loop_path = os.path.join(os.getcwd(), f"debug_vote_loop_fail_{horse_num}.html")
-                                     with open(debug_loop_path, "w", encoding="utf-8") as f:
-                                         f.write(self.driver.page_source)
-                                     print(f"Saved loop debug HTML: {debug_loop_path}")
-
-                            except Exception as ex:
-                                print(f"Error selecting horse {horse_num}: {ex}")
+                    elif b_method == '流し':
+                        # 流し (Nagashi/Wheel) 選択モード
+                        print(f"Nagashi Selection Mode: {b_horses}")
                         
-                        # Wait for Combination Count to update (vm.nTotalNum > 0)
-                        print("Waiting for combination count update (nTotalNum > 0)...")
-                        try:
-                            WebDriverWait(self.driver, 5).until(
-                                lambda d: d.execute_script("""
-                                    var el = document.querySelector('input[ng-model="vm.nUnit"]');
-                                    if(el) {
-                                        var scope = angular.element(el).scope();
-                                        return scope && scope.vm && scope.vm.nTotalNum > 0;
-                                    }
-                                    return false;
-                                """)
-                            )
-                            print("Combination count updated (Verified via JS).")
-                        except:
-                            print("Combination count wait timed out (nTotalNum stayed 0).")
-                            # If timeout, we proceed mostly because sometimes single bet count is 1 immediately?
-                            # But if it stays 0, Set button will be disabled.
-                            
-                        # 馬番選択後、AmountInputが有効になるのを待つ
-                        print("Waiting for Amount Input to become enabled...")
+                        # horses構造: {'axis': [軸], 'partners': [相手]} または [[軸], [相手]]
+                        if isinstance(b_horses, dict):
+                            axis_horses = b_horses.get('axis', [])
+                            partner_horses = b_horses.get('partners', [])
+                        elif isinstance(b_horses, list) and len(b_horses) >= 2:
+                            axis_horses = b_horses[0] if isinstance(b_horses[0], list) else [b_horses[0]]
+                            partner_horses = b_horses[1] if isinstance(b_horses[1], list) else b_horses[1:]
+                        else:
+                            print("Error: Invalid Nagashi horses structure.")
+                            continue
                         
-                        try:
-                            # User pointed out this is vm.nUnit, not vm.cAmount
-                            amount_chk = self.driver.find_element(By.CSS_SELECTOR, "input[ng-model='vm.nUnit']")
-                            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", amount_chk)
-                            
-                            # Explicit wait for enabled
+                        # IPAT流し画面: 「軸」列と「相手」列がある
+                        # 軸馬は軸列のチェックボックス (index 0)
+                        # 相手馬は相手列のチェックボックス (index 1)
+                        
+                        print(f"Axis horses: {axis_horses}")
+                        print(f"Partner horses: {partner_horses}")
+                        
+                        # 軸馬選択 (0番目のチェックボックス)
+                        for horse_num in axis_horses:
                             try:
-                                WebDriverWait(self.driver, 5).until(lambda d: amount_chk.is_enabled())
-                                print("Amount input verified enabled.")
+                                xpath_no = f"//span[contains(@class, 'ipat-racer-no') and normalize-space(text())='{horse_num}']/ancestor::tr"
+                                row = self.driver.find_element(By.XPATH, xpath_no)
+                                inputs = row.find_elements(By.TAG_NAME, "input")
+                                labels = row.find_elements(By.TAG_NAME, "label")
+                                valid_inputs = [inp for inp in inputs if inp.get_attribute("type") in ("checkbox", "radio")]
+                                
+                                if valid_inputs:
+                                    target_input = valid_inputs[0]  # 軸列 (1st column)
+                                    inp_id = target_input.get_attribute("id")
+                                    target_label = None
+                                    if inp_id:
+                                        for lbl in labels:
+                                            if lbl.get_attribute("for") == inp_id:
+                                                target_label = lbl
+                                                break
+                                    
+                                    if target_label:
+                                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_label)
+                                        target_label.click()
+                                        print(f"Selected AXIS horse: {horse_num}")
+                                    elif target_input:
+                                        self.driver.execute_script("arguments[0].click();", target_input)
+                                        print(f"Selected AXIS horse: {horse_num} (JS)")
+                            except Exception as e:
+                                print(f"Error selecting axis horse {horse_num}: {e}")
+                        
+                        # 相手馬選択 (1番目のチェックボックス)
+                        for horse_num in partner_horses:
+                            try:
+                                xpath_no = f"//span[contains(@class, 'ipat-racer-no') and normalize-space(text())='{horse_num}']/ancestor::tr"
+                                row = self.driver.find_element(By.XPATH, xpath_no)
+                                inputs = row.find_elements(By.TAG_NAME, "input")
+                                labels = row.find_elements(By.TAG_NAME, "label")
+                                valid_inputs = [inp for inp in inputs if inp.get_attribute("type") in ("checkbox", "radio")]
+                                
+                                if len(valid_inputs) > 1:
+                                    target_input = valid_inputs[1]  # 相手列 (2nd column)
+                                    inp_id = target_input.get_attribute("id")
+                                    target_label = None
+                                    if inp_id:
+                                        for lbl in labels:
+                                            if lbl.get_attribute("for") == inp_id:
+                                                target_label = lbl
+                                                break
+                                    
+                                    if target_label:
+                                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_label)
+                                        target_label.click()
+                                        print(f"Selected PARTNER horse: {horse_num}")
+                                    elif target_input:
+                                        self.driver.execute_script("arguments[0].click();", target_input)
+                                        print(f"Selected PARTNER horse: {horse_num} (JS)")
+                                else:
+                                    print(f"Warning: Not enough input columns for partner horse {horse_num}")
+                            except Exception as e:
+                                print(f"Error selecting partner horse {horse_num}: {e}")
+
+                    else:
+                        # 通常・BOX (単一リスト)
+                        try:
+                            try:
+                                WebDriverWait(self.driver, 10).until(
+                                    EC.presence_of_element_located((By.XPATH, "//span[contains(@class, 'ipat-racer-no')]"))
+                                )
                             except:
-                                print(f"Amount input still disabled (Attr: {amount_chk.get_attribute('disabled')})")
-                                # User requested to remove re-click logic here
-                                pass
+                                print("Timeout waiting for ANY horse label")
 
+                            for horse_num in b_horses:
+                                label_for = f"no{horse_num}"
+                                try:
+                                    label_xpath = f"//label[@for='{label_for}']"
+                                    labels = self.driver.find_elements(By.XPATH, label_xpath)
+                                    
+                                    target_label = None
+                                    if labels:
+                                        target_label = labels[0]
+                                    else:
+                                        print(f"Label ID search failed for {horse_num}, trying Text search...")
+                                        xpath_text = f"//span[contains(@class, 'ipat-racer-no') and normalize-space(text())='{horse_num}']/ancestor::tr//label"
+                                        labels_text = self.driver.find_elements(By.XPATH, xpath_text)
+                                        if labels_text:
+                                            target_label = labels_text[0]
+                                    
+                                    if target_label:
+                                        input_id = target_label.get_attribute("for")
+                                        if not input_id:
+                                             input_id = label_for
+                                        
+                                        try:
+                                            input_elem = self.driver.find_element(By.ID, input_id)
+                                            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_elem)
+                                            time.sleep(0.1)
+    
+                                            if not input_elem.is_selected():
+                                                try:
+                                                    target_label.click()
+                                                except Exception as ck_ex:
+                                                    print(f"Label click failed/intercepted ({ck_ex}), trying JS Click on Label...")
+                                                    try:
+                                                        self.driver.execute_script("arguments[0].click();", target_label)
+                                                    except: pass
+    
+                                                if not input_elem.is_selected():
+                                                    print(f"Click failed for {horse_num}, trying JS Click on Input...")
+                                                    self.driver.execute_script("arguments[0].click();", input_elem)
+                                                    time.sleep(0.5)
+                                                
+                                                if input_elem.is_selected():
+                                                    print(f"Selected Horse: {horse_num} (Verified)")
+                                                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", input_elem)
+                                                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('input'));", input_elem)
+                                                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('click'));", input_elem)
+                                                    self.driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", input_elem)
+                                                else:
+                                                    print(f"FAILED to select Horse: {horse_num}")
+                                            else:
+                                                print(f"Horse {horse_num} already selected.")
+                                        except Exception as ex:
+                                            print(f"Input element check failed ({ex}), clicking label blindly.")
+                                            try:
+                                                self.driver.execute_script("arguments[0].click();", target_label)
+                                                print(f"Selected Horse: {horse_num} (Blind JS)")
+                                            except Exception as bex:
+                                                print(f"Blind click failed: {bex}")
+                                            time.sleep(0.5)
+                                    else:
+                                         print(f"Horse Label not found for: {horse_num}")
+    
+                                except Exception as ex:
+                                    print(f"Error selecting horse {horse_num}: {ex}")
+                            
+                            print("Waiting for combination count update (nTotalNum > 0)...")
+                            try:
+                                WebDriverWait(self.driver, 5).until(
+                                    lambda d: d.execute_script("""
+                                        var el = document.querySelector('input[ng-model="vm.nUnit"]');
+                                        if(el) {
+                                            var scope = angular.element(el).scope();
+                                            return scope && scope.vm && scope.vm.nTotalNum > 0;
+                                        }
+                                        return false;
+                                    """)
+                                )
+                                print("Combination count updated (Verified via JS).")
+                            except:
+                                print("Combination count wait timed out (nTotalNum stayed 0).")
+                                
+                            print("Waiting for Amount Input to become enabled...")
+                            try:
+                                amount_chk = self.driver.find_element(By.CSS_SELECTOR, "input[ng-model='vm.nUnit']")
+                                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", amount_chk)
+                                try:
+                                    WebDriverWait(self.driver, 5).until(lambda d: amount_chk.is_enabled())
+                                    print("Amount input verified enabled.")
+                                except:
+                                    print(f"Amount input still disabled (Attr: {amount_chk.get_attribute('disabled')})")
+                                    pass
+                            except Exception as e:
+                                print(f"Error checking amount input: {e}")
+    
                         except Exception as e:
-                            print(f"Error checking amount input: {e}")
-
-                        # time.sleep(0.1) # Removed
-
-                    except Exception as e:
-                        print(f"Horse selection error: {e}")
+                            print(f"Horse selection error: {e}")
                     
                     # 4. 金額入力 (Input)
                     try:

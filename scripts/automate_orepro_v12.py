@@ -115,36 +115,34 @@ def parse_report():
                     })
     return bets_by_race
 
-def parse_marks(report_content):
+def parse_marks(report_content, bets_by_race):
+    """Generate marks from bets data - first horse in first bet = Honmei, etc."""
     marks_by_race = {}
-    current_race_id = None
     
-    lines = report_content.split('\n')
-    for line in lines:
-        m_race = re.search(r"## (東京|京都|小倉)(\d+)R", line)
-        if m_race:
-            venue_name = m_race.group(1)
-            race_num = int(m_race.group(2))
-            if venue_name == "東京": base = "2026050103"
-            elif venue_name == "京都": base = "2026080203"
-            elif venue_name == "小倉": base = "2026100105"
-            current_race_id = f"{base}{race_num:02d}"
-            marks_by_race[current_race_id] = {'honmei': None, 'taiko': [], 'tanana': [], 'renka': []}
-            continue
-            
-        if current_race_id:
-            if "**◎ 本命**" in line:
-                m = re.search(r": (\d+)", line)
-                if m: marks_by_race[current_race_id]['honmei'] = m.group(1)
-            elif "**○ 対抗**" in line:
-                m = re.search(r": (\d+)", line)
-                if m: marks_by_race[current_race_id]['taiko'].append(m.group(1))
-            elif "**▲ 単穴**" in line:
-                m = re.search(r": (\d+)", line)
-                if m: marks_by_race[current_race_id]['tanana'].append(m.group(1))
-            elif "**△ 連下**" in line:
-                m = re.search(r": (\d+)", line)
-                if m: marks_by_race[current_race_id]['renka'].append(m.group(1))
+    for race_id, bets in bets_by_race.items():
+        marks = {'honmei': None, 'taiko': [], 'tanana': [], 'renka': []}
+        
+        # Collect all unique horses from bets
+        all_horses = []
+        for bet in bets:
+            for h in bet['horses']:
+                h_clean = str(int(h))
+                if h_clean not in all_horses:
+                    all_horses.append(h_clean)
+        
+        # Assign marks based on position
+        if len(all_horses) >= 1:
+            marks['honmei'] = all_horses[0]  # First = ◎
+        if len(all_horses) >= 2:
+            marks['taiko'].append(all_horses[1])  # Second = ○
+        if len(all_horses) >= 3:
+            marks['tanana'].append(all_horses[2])  # Third = ▲
+        if len(all_horses) >= 4:
+            marks['renka'] = all_horses[3:min(6, len(all_horses))]  # Rest = △
+        
+        marks_by_race[race_id] = marks
+        logger.info(f"[{race_id}] Generated marks: ◎={marks['honmei']}, ○={marks['taiko']}, ▲={marks['tanana']}, △={marks['renka']}")
+    
     return marks_by_race
 
 def handle_popups(driver):
@@ -155,13 +153,34 @@ def handle_popups(driver):
         logger.info("Accepted native alert.")
     except TimeoutException: pass
     
-    # Try finding and clicking default confirm button
+    # Handle "新規で買い目を作成しますか？" confirmation dialog (yellow/gray buttons)
+    try:
+        yes_btns = driver.find_elements(By.XPATH, "//button[contains(text(), 'はい')]")
+        for btn in yes_btns:
+            if btn.is_displayed():
+                btn.click()
+                logger.info("Clicked 'はい' confirmation button.")
+                time.sleep(0.5)
+                return  # Exit after handling
+    except: pass
+    
+    # Try finding and clicking default confirm button (SweetAlert)
     try:
         confirm_btns = driver.find_elements(By.CSS_SELECTOR, ".swal-button--confirm")
         for btn in confirm_btns:
             if btn.is_displayed():
                 btn.click()
                 logger.info("Clicked SweetAlert Confirm button.")
+                time.sleep(0.5)
+    except: pass
+    
+    # Handle jConfirm OK button
+    try:
+        jconfirm_btns = driver.find_elements(By.CSS_SELECTOR, ".jconfirm-buttons button")
+        for btn in jconfirm_btns:
+            if btn.is_displayed() and ("OK" in btn.text or "確認" in btn.text):
+                btn.click()
+                logger.info("Clicked jConfirm button.")
                 time.sleep(0.5)
     except: pass
 
@@ -244,156 +263,316 @@ def set_prediction_marks(driver, race_id, marks):
     for h in marks['renka']: click_mark(h, "Renka")
 
 def perform_betting(driver, race_id, bets):
+    """
+    俺プロ固有のフロー:
+    1. shutuba.html で「買い目を入力する」ボタンをクリック → ipat_sp.html に遷移
+    2. ipat_sp.html で「買い目をセットする」ボタンをクリック
+    3. 確認ダイアログで「はい」をクリック
+    """
     wait = WebDriverWait(driver, 15)
     
-    # 1. Open IPAT
+    # Step 1: Click "買い目を入力する" button on shutuba.html
     try:
         handle_popups(driver)
-        btn = wait.until(EC.presence_of_element_located((By.ID, "act-ipat")))
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
-        time.sleep(1)
         
-        click_success = False
-        for click_attempt in range(3):
+        # Find and click "買い目を入力する" button
+        input_btn = None
+        selectors = [
+            (By.XPATH, "//button[contains(text(), '買い目を入力する')]"),
+            (By.XPATH, "//a[contains(text(), '買い目を入力する')]"),
+            (By.XPATH, "//*[contains(text(), '買い目を入力する')]"),
+            (By.ID, "act-ipat"),
+        ]
+        
+        for sel_type, sel_value in selectors:
             try:
-                # Strategy 1: Standard Click
-                try:
-                    btn.click()
-                    logger.info(f"[{race_id}] Clicked IPAT button (Standard).")
-                except ElementClickInterceptedException:
-                    logger.warning(f"[{race_id}] Click Intercepted! Diagnosing...")
-                    diagnose_interception(driver, btn) # Diagnose and Remove
-                    time.sleep(1)
-                    btn.click() # Retry immediately
-                    logger.info(f"[{race_id}] Clicked IPAT button after removal.")
-                
-                # Check transition
-                try:
-                    WebDriverWait(driver, 5).until(EC.url_contains("ipat_sp.html"))
-                    click_success = True
-                    break 
-                except TimeoutException:
-                    handle_popups(driver)
-                    # Window check
-                    if len(driver.window_handles) > 1:
-                        driver.switch_to.window(driver.window_handles[-1])
-                        if "ipat_sp" in driver.current_url:
-                            click_success = True
-                            break
-                    
-                    # JS Click
-                    logger.warning(f"[{race_id}] Trying JS Click fallback...")
-                    driver.execute_script("arguments[0].click();", btn)
-                    time.sleep(3)
-                    if "ipat_sp" in driver.current_url: 
-                        click_success = True
-                        break
-                        
-            except Exception as click_err:
-                logger.warning(f"[{race_id}] Click loop error: {click_err}")
-                time.sleep(1)
+                input_btn = driver.find_element(sel_type, sel_value)
+                if input_btn.is_displayed():
+                    logger.info(f"[{race_id}] Found '買い目を入力する' button via {sel_type}={sel_value}")
+                    break
+                input_btn = None
+            except: continue
         
-        if not click_success:
-             raise Exception("Failed to transition to IPAT page after retries.")
-
-        # Finally Wait for Load
-        wait.until(EC.url_contains("ipat_sp.html"))
-        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "ul.Col4 li")))
-        logger.info(f"[{race_id}] IPAT Interface Loaded.")
+        if not input_btn:
+            logger.error(f"[{race_id}] Could not find '買い目を入力する' button!")
+            save_evidence(driver, race_id, "input_btn_not_found")
+            return False
         
-    except Exception as e:
-        logger.error(f"[{race_id}] Failed to open IPAT: {e}")
-        save_evidence(driver, race_id, "ipat_open_fail")
-        return False
-
-    # 2. Input Bets
-    type_map = {"単勝": "単勝", "複勝": "複勝", "枠連": "枠連", "馬連": "馬連", "ワイド": "ワイド", "馬単": "馬単", "3連複": "3連複", "3連単": "3連単"}
-    
-    for i, bet in enumerate(bets):
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_btn)
+        time.sleep(0.5)
+        
         try:
+            input_btn.click()
+            logger.info(f"[{race_id}] Clicked '買い目を入力する' button.")
+        except ElementClickInterceptedException:
             handle_popups(driver)
-            
-            # Select Type
-            b_type = type_map.get(bet['type'], bet['type'])
-            type_btns = driver.find_elements(By.CSS_SELECTOR, "ul.Col4 li")
-            clicked = False
-            for btn in type_btns:
-                if b_type in btn.text:
-                    btn.click()
-                    clicked = True
-                    break
-            if not clicked:
-                raise Exception(f"Type button {b_type} not found")
-            
-            time.sleep(0.5)
-            
-            # Select Horses
-            for h in bet['horses']:
-                h_clean = str(int(h)) 
-                row_xpath = f"//table[contains(@class, 'RaceOdds_HorseList_Table')]//tr[td[normalize-space(text())='{h_clean}']]"
-                row = driver.find_element(By.XPATH, row_xpath)
-                if "selected" not in row.get_attribute("class"):
-                    row.click()
-            
-            time.sleep(0.5)
-            
-            # Input Amount
-            money_input = driver.find_element(By.NAME, "money")
-            money_val = str(int(bet['amount']) // 100)
-            
-            # Retry Input
-            for inp_retry in range(3):
-                money_input.clear()
-                time.sleep(0.1)
-                money_input.send_keys(money_val)
-                time.sleep(0.2)
-                if money_input.get_attribute("value") == money_val:
-                    break
-                logger.warning(f"[{race_id}] Money input mismatch. Retrying... ({inp_retry})")
-            
-            if money_input.get_attribute("value") != money_val:
-                 driver.execute_script("arguments[0].value = arguments[1];", money_input, money_val)
-            
-            # Add
-            add_btn = driver.find_element(By.XPATH, "//button[contains(text(), '追加')]")
-            add_btn.click()
+            diagnose_interception(driver, input_btn)
             time.sleep(1)
-            handle_popups(driver)
-            
-        except Exception as e:
-            logger.error(f"[{race_id}] Bet {i+1} failed: {e}")
-            save_evidence(driver, race_id, f"bet_{i+1}_fail")
-            handle_popups(driver)
-
-    # 3. Set Bets
-    try:
-        handle_popups(driver)
-        driver.find_element(By.CLASS_NAME, "SetBtn").click()
+            input_btn.click()
+            logger.info(f"[{race_id}] Clicked '買い目を入力する' after popup handling.")
+        
         time.sleep(3)
         handle_popups(driver)
+        
+        # Wait for ipat_sp.html page to load
+        try:
+            WebDriverWait(driver, 10).until(EC.url_contains("ipat_sp.html"))
+            logger.info(f"[{race_id}] Transitioned to ipat_sp.html successfully.")
+        except TimeoutException:
+            # Check if already on ipat_sp.html or if popup appeared
+            if "ipat_sp" in driver.current_url:
+                logger.info(f"[{race_id}] Already on ipat_sp.html.")
+            else:
+                handle_popups(driver)
+                # Try new window
+                if len(driver.window_handles) > 1:
+                    driver.switch_to.window(driver.window_handles[-1])
+                    if "ipat_sp" in driver.current_url:
+                        logger.info(f"[{race_id}] Switched to new window with ipat_sp.html.")
+                else:
+                    save_evidence(driver, race_id, "ipat_transition_fail")
+                    return False
+        
     except Exception as e:
-        logger.error(f"[{race_id}] Failed to Set Bets: {e}")
+        logger.error(f"[{race_id}] Failed to click '買い目を入力する': {e}")
+        save_evidence(driver, race_id, "input_click_fail")
         return False
-
-    # 4. Final Vote
+    
+    # Step 1.5: Input bets on ipat_sp.html (Select type, horses, amount, add)
     try:
-        final_btn = wait.until(EC.element_to_be_clickable((By.ID, f"act-bet_{race_id}")))
-        final_btn.click()
-        time.sleep(1)
         handle_popups(driver)
+        save_evidence(driver, race_id, "before_bet_input")
         
-        time.sleep(5)
-        handle_popups(driver)
+        type_map = {"単勝": "単勝", "複勝": "複勝", "枠連": "枠連", "馬連": "馬連", 
+                    "ワイド": "ワイド", "馬単": "馬単", "3連複": "3連複", "3連単": "3連単"}
         
-        if "complete" in driver.current_url or "リクエストを受け付けました" in driver.page_source:
-            logger.info(f"[{race_id}] Vote Submitted.")
-            return True
-        else:
-            logger.warning(f"[{race_id}] Vote Submission ambiguous.")
-            return True 
-            
+        for i, bet in enumerate(bets):
+            try:
+                handle_popups(driver)
+                logger.info(f"[{race_id}] Processing bet {i+1}: {bet}")
+                
+                # Select Bet Type
+                b_type = type_map.get(bet['type'], bet['type'])
+                type_btns = driver.find_elements(By.CSS_SELECTOR, "ul.Col4 li")
+                type_clicked = False
+                for btn in type_btns:
+                    if b_type in btn.text:
+                        btn.click()
+                        type_clicked = True
+                        logger.info(f"[{race_id}] Selected bet type: {b_type}")
+                        break
+                if not type_clicked:
+                    logger.warning(f"[{race_id}] Type button {b_type} not found, skipping bet")
+                    continue
+                
+                time.sleep(0.5)
+                
+                # Select Horses
+                for h in bet['horses']:
+                    h_clean = str(int(h))
+                    try:
+                        # Try multiple selectors for horse selection
+                        horse_selectors = [
+                            f"//table[contains(@class, 'HorseList')]//tr[td[normalize-space(text())='{h_clean}']]",
+                            f"//tr[td[normalize-space(text())='{h_clean}']]",
+                            f"//td[normalize-space(text())='{h_clean}']/parent::tr",
+                        ]
+                        horse_row = None
+                        for sel in horse_selectors:
+                            try:
+                                horse_row = driver.find_element(By.XPATH, sel)
+                                if horse_row.is_displayed():
+                                    break
+                            except: continue
+                        
+                        if horse_row:
+                            if "selected" not in (horse_row.get_attribute("class") or "").lower():
+                                horse_row.click()
+                                logger.info(f"[{race_id}] Selected horse: {h_clean}")
+                        else:
+                            logger.warning(f"[{race_id}] Could not find horse row for: {h_clean}")
+                    except Exception as e:
+                        logger.warning(f"[{race_id}] Error selecting horse {h_clean}: {e}")
+                
+                time.sleep(0.5)
+                
+                # Input Amount
+                try:
+                    money_input = driver.find_element(By.NAME, "money")
+                    money_val = str(int(bet['amount']) // 100)  # Convert to 100-yen units
+                    
+                    money_input.clear()
+                    time.sleep(0.1)
+                    money_input.send_keys(money_val)
+                    logger.info(f"[{race_id}] Entered amount: {money_val} (x100 yen)")
+                except Exception as e:
+                    logger.warning(f"[{race_id}] Could not input amount: {e}")
+                
+                time.sleep(0.5)
+                
+                # Click Add button
+                try:
+                    add_btn = None
+                    add_selectors = [
+                        (By.XPATH, "//button[contains(text(), '追加')]"),
+                        (By.XPATH, "//button[text()='追加']"),
+                        (By.CSS_SELECTOR, "button.Common_Btn"),
+                        (By.CSS_SELECTOR, "button.Add_Btn"),
+                        (By.CSS_SELECTOR, ".ipat_Bet_Input button"),
+                    ]
+                    for sel_type, sel_value in add_selectors:
+                        try:
+                            add_btn = driver.find_element(sel_type, sel_value)
+                            if add_btn.is_displayed():
+                                logger.info(f"[{race_id}] Found Add button via {sel_type}={sel_value}")
+                                break
+                            add_btn = None
+                        except: continue
+                    
+                    if add_btn:
+                        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", add_btn)
+                        time.sleep(0.3)
+                        try:
+                            add_btn.click()
+                        except:
+                            driver.execute_script("arguments[0].click();", add_btn)
+                        logger.info(f"[{race_id}] Clicked 'Add' button for bet {i+1}")
+                        time.sleep(1)
+                        handle_popups(driver)
+                    else:
+                        logger.warning(f"[{race_id}] Could not find Add button!")
+                        save_evidence(driver, race_id, "add_btn_not_found")
+                except Exception as e:
+                    logger.warning(f"[{race_id}] Could not click add button: {e}")
+                    
+            except Exception as e:
+                logger.error(f"[{race_id}] Bet {i+1} failed: {e}")
+                save_evidence(driver, race_id, f"bet_{i+1}_fail")
+                handle_popups(driver)
+        
+        save_evidence(driver, race_id, "after_bet_input")
+        logger.info(f"[{race_id}] Finished inputting all bets.")
+        
     except Exception as e:
-        logger.error(f"[{race_id}] Final Vote Failed: {e}")
+        logger.error(f"[{race_id}] Failed to input bets: {e}")
+        save_evidence(driver, race_id, "bet_input_fail")
+        return False
+    
+    # Step 2: Click "買い目をセットする" button on ipat_sp.html
+    try:
+        handle_popups(driver)
+        save_evidence(driver, race_id, "before_set_btn")  # Debug screenshot
+        
+        # Wait for page to fully load
+        time.sleep(2)
+        
+        # Find and click "買い目をセットする" button
+        set_btn = None
+        selectors = [
+            (By.XPATH, "//button[contains(text(), '買い目をセットする')]"),
+            (By.XPATH, "//a[contains(text(), '買い目をセットする')]"),
+            (By.XPATH, "//*[contains(text(), '買い目をセットする')]"),
+            (By.CSS_SELECTOR, ".ipat_Set_Menu button.Set_Btn"),
+            (By.CSS_SELECTOR, ".ipat_Set_Menu button"),
+            (By.CLASS_NAME, "Set_Btn"),
+            (By.CLASS_NAME, "SetBtn"),
+        ]
+        
+        for sel_type, sel_value in selectors:
+            try:
+                set_btn = driver.find_element(sel_type, sel_value)
+                if set_btn.is_displayed():
+                    logger.info(f"[{race_id}] Found '買い目をセットする' button via {sel_type}={sel_value}")
+                    break
+                set_btn = None
+            except: continue
+        
+        if not set_btn:
+            logger.error(f"[{race_id}] Could not find '買い目をセットする' button!")
+            save_evidence(driver, race_id, "set_btn_not_found")
+            return False
+        
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", set_btn)
+        time.sleep(0.5)
+        set_btn.click()
+        logger.info(f"[{race_id}] Clicked '買い目をセットする' button.")
+        
+        time.sleep(3)
+        handle_popups(driver)  # Handle any confirmation dialog
+        
+    except Exception as e:
+        logger.error(f"[{race_id}] Failed to set bets: {e}")
+        save_evidence(driver, race_id, "set_bets_fail")
+        return False
+    
+    # Step 3: Click "この予想で勝負！" button on shutuba.html
+    try:
+        save_evidence(driver, race_id, "before_final_vote")
+        
+        # Navigate back to shutuba page if needed
+        if "shutuba.html" not in driver.current_url:
+            shutuba_url = f"https://orepro.netkeiba.com/bet/shutuba.html?mode=init&race_id={race_id}"
+            driver.get(shutuba_url)
+            time.sleep(3)
+            handle_popups(driver)
+        
+        # Find and click "この予想で勝負！" button
+        final_btn = None
+        time.sleep(2)  # Wait for page to fully render
+        
+        selectors = [
+            (By.ID, "bet_button_add"),
+            (By.XPATH, "//img[@id='bet_button_add']"),
+            (By.XPATH, "//img[contains(@alt, 'この予想で勝負')]/parent::*"),
+            (By.XPATH, "//img[contains(@alt, '予想で勝負')]"),
+            (By.XPATH, "//*[contains(text(), 'この予想で勝負')]"),
+            (By.XPATH, "//button[contains(text(), '予想で勝負')]"),
+            (By.XPATH, "//a[contains(text(), '予想で勝負')]"),
+            (By.XPATH, "//div[contains(text(), 'この予想で勝負')]"),
+            (By.CSS_SELECTOR, ".Betting_Btn"),
+            (By.CSS_SELECTOR, ".BetBtn"),
+            (By.CSS_SELECTOR, "button.Bet_Btn"),
+            (By.CSS_SELECTOR, "a.Bet_Btn"),
+        ]
+        
+        for sel_type, sel_value in selectors:
+            try:
+                elements = driver.find_elements(sel_type, sel_value)
+                for elem in elements:
+                    if elem.is_displayed():
+                        # Check text, alt attribute, class, or accept if found by ID
+                        elem_text = elem.text or ""
+                        elem_alt = elem.get_attribute("alt") or ""
+                        elem_class = elem.get_attribute("class") or ""
+                        if "勝負" in elem_text or "勝負" in elem_alt or "Bet" in elem_class or sel_type == By.ID:
+                            final_btn = elem
+                            logger.info(f"[{race_id}] Found 'この予想で勝負！' button via {sel_type}={sel_value}")
+                            break
+                if final_btn:
+                    break
+            except: continue
+        
+        if not final_btn:
+            logger.error(f"[{race_id}] Could not find 'この予想で勝負！' button!")
+            save_evidence(driver, race_id, "final_btn_not_found")
+            return False
+        
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", final_btn)
+        time.sleep(0.5)
+        final_btn.click()
+        logger.info(f"[{race_id}] Clicked 'この予想で勝負！' button.")
+        
+        time.sleep(3)
+        handle_popups(driver)
+        
+        # Verify success
+        save_evidence(driver, race_id, "after_final_vote")
+        logger.info(f"[{race_id}] Betting completed successfully.")
+        return True
+        
+    except Exception as e:
+        logger.error(f"[{race_id}] Failed to complete final vote: {e}")
+        save_evidence(driver, race_id, "final_vote_fail")
         return False
 
 def verify_and_retry(driver, race_id):
@@ -415,8 +594,8 @@ def main():
     secrets = load_secrets()
     bets_by_race = parse_report()
     
-    with open(REPORT_FILE, 'r', encoding='utf-8') as f:
-        marks_by_race = parse_marks(f.read())
+    # Generate marks from bets data (first horse = honmei, etc.)
+    marks_by_race = parse_marks(None, bets_by_race)
         
     driver = setup_driver()
     
@@ -424,6 +603,10 @@ def main():
         login_netkeiba(driver, secrets)
         
         for race_id in sorted(bets_by_race.keys()):
+            # Skip already-started races (test with 6R onwards, ~11:10 JST start)
+            if race_id < "202605010306":
+                logger.info(f"[{race_id}] Skipped (already started).")
+                continue
             if not bets_by_race[race_id]: continue
             
             logger.info(f"\n--- Processing {race_id} ---")
