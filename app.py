@@ -799,4 +799,4 @@ def launch_ipat_browser():
 
 if __name__ == '__main__':
     load_model()
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    app.run(host='0.0.0.0', port=8080, debug=False)
