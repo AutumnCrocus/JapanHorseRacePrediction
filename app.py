@@ -29,6 +29,10 @@ engineer = None
 bias_map = None
 jockey_stats = None
 
+# レース予測結果のキャッシュ (メモリ保持)
+# { race_id: { 'df': DataFrame, 'results': list, 'timestamp': datetime } }
+PREDICTION_CACHE = {}
+
 def get_model():
     """モデルを取得（未ロードならロードする）"""
     if model is None:
@@ -205,8 +209,14 @@ def predict_by_url():
         
         # Fetch data
         try:
-            # Load global artifacts
-            df = fetch_and_process_race_data(race_id, processor, engineer, bias_map, jockey_stats)
+            # キャッシュのチェック
+            if race_id in PREDICTION_CACHE:
+                print(f"Using cached DataFrame for Race ID: {race_id}")
+                df = PREDICTION_CACHE[race_id]['df']
+            else:
+                # Load global artifacts
+                df = fetch_and_process_race_data(race_id, processor, engineer, bias_map, jockey_stats)
+                # 注: ここではDFのみキャッシュ候補（run_prediction_logicで推論結果と共に保存される）
         except Exception as e:
             return jsonify({'error': f'データ取得に失敗しました: {str(e)}'}), 500
             
@@ -233,11 +243,24 @@ from modules.betting_allocator import BettingAllocator
 
 def run_prediction_logic(df, race_name_default, race_info_default, race_id=None, budget=0, strategy='balance'):
     """共通予測ロジック"""
-    model = get_model()
-    if model is None:
-        return jsonify({'error': 'モデルの読み込みに失敗しました'}), 500
     
-    # 特徴量を準備（モデルが期待する形式に）
+    # キャッシュのチェック (推論結果が入っているか)
+    if race_id and race_id in PREDICTION_CACHE and 'results' in PREDICTION_CACHE[race_id]:
+        print(f"Using cached inference results for Race ID: {race_id}")
+        cached_data = PREDICTION_CACHE[race_id]
+        results = cached_data['results']
+        # メタデータもキャッシュから取得（attrsが失われている可能性に備える）
+        race_name = cached_data.get('race_name', race_name_default)
+        race_data01 = cached_data.get('race_data01', '')
+        race_data02 = cached_data.get('race_data02', '')
+        # 共通項目の抽出
+    else:
+        # キャッシュがない場合は通常通り推論を実行
+        model = get_model()
+        if model is None:
+            return jsonify({'error': 'モデルの読み込みに失敗しました'}), 500
+        
+        # 特徴量を準備（モデルが期待する形式に）
     feature_names = model.feature_names
     
     # 欠損している特徴量はデフォルト値で埋める (Simplified for brevity)
@@ -386,6 +409,18 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
     race_name = df.attrs.get('race_name', race_name_default)
     race_data01 = df.attrs.get('race_data01', '')
     race_data02 = df.attrs.get('race_data02', '')
+
+    # 結果をキャッシュに保存 (race_idがある場合のみ)
+    if race_id and (race_id not in PREDICTION_CACHE or 'results' not in PREDICTION_CACHE[race_id]):
+        print(f"Caching results for Race ID: {race_id}")
+        PREDICTION_CACHE[race_id] = {
+            'df': df,
+            'results': results,
+            'race_name': race_name,
+            'race_data01': race_data01,
+            'race_data02': race_data02,
+            'timestamp': datetime.now()
+        }
 
     # Betting Allocation using BettingAllocator
     recommendations = []
