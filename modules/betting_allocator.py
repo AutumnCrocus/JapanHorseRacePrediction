@@ -268,6 +268,9 @@ class BettingAllocator:
                         
                         bet_code = type_map.get(r['type'], 'tan')
                         
+                        # Reasoning (SHAP) を取得
+                        reasoning = row.get('reasoning', {})
+                        
                         # BettingStrategyを使って理由を生成
                         if r['method'] == 'BOX':
                             reason = BettingStrategy.generate_box_reason(
@@ -283,7 +286,8 @@ class BettingAllocator:
                                 row.get('probability', 0.1),
                                 row.get('expected_value', 1.0),
                                 row.get('odds', 0.0),
-                                [feature_dict]
+                                [feature_dict],
+                                reasoning=reasoning
                             )
                         # Add stats for display
                         # IF SINGLE: use head horse stats

@@ -5,39 +5,81 @@ class BettingStrategy:
     """馬券戦略・予算配分クラス"""
     
     @staticmethod
-    def generate_reason(bet_type: str, horses: list, prob: float, ev: float, odds: float, features_list: list = None) -> str:
+    def generate_reason_from_shap(reasoning: dict) -> str:
+        """
+        SHAP値の情報から日本語の判断根拠を生成する
+        """
+        if not reasoning:
+            return ""
+            
+        positive = reasoning.get('positive', [])
+        if not positive:
+            return ""
+            
+        # 特徴量ラベルのマッピング (代表的なもの)
+        labels = {
+            'avg_last_3f': '末脚',
+            'jockey_win_rate': '名手',
+            'win_rate': '勝率',
+            'place_rate': '複勝率',
+            'avg_rank': '安定感',
+            'popularity': '実力',
+            '単勝': '期待値',
+            '期待値': '期待値',
+            '斤量': '斤量',
+            '年齢': '若さ',
+            '体重変化': '馬体',
+            'course_len': '適性',
+            'race_count': '経験'
+        }
+        
+        # 上位3つのプラス要因を抽出
+        factors = []
+        for p in positive[:3]:
+            feat = p.get('feature', '')
+            label = labels.get(feat, feat)
+            if label:
+                factors.append(label)
+        
+        if factors:
+            # 重複削除
+            factors = list(dict.fromkeys(factors))
+            return "、".join(factors) + "がプラス"
+            
+        return ""
+
+    @staticmethod
+    def generate_reason(bet_type: str, horses: list, prob: float, ev: float, odds: float, features_list: list = None, reasoning: dict = None) -> str:
         """
         購入理由を日本語で生成 (特徴量に基づく詳細版)
         """
-        base_msg = ""
         feature_msg = []
         
-        # 特徴量からのメッセージ生成 (主に単勝・複勝、または一番強い馬に対して)
-        if features_list and len(features_list) > 0:
-            # 注目すべき特徴量 (代表として最初の馬、またはスコア最高の馬を見る)
-            # ここではリストの最初の馬(=軸馬)の特徴を見る
+        # 1. SHAP値（reasoning）がある場合は最優先で使用
+        shap_msg = BettingStrategy.generate_reason_from_shap(reasoning)
+        if shap_msg:
+            feature_msg.append(shap_msg)
+        
+        # 2. 従来の特徴量ベースの簡易判定 (SHAPがない場合のバックアップ)
+        if not shap_msg and features_list and len(features_list) > 0:
             feat = features_list[0]
             
-            # 1. 末脚 (avg_last_3f)
+            # 末脚 (avg_last_3f)
             last_3f = feat.get('avg_last_3f', 37.0)
             if last_3f < 34.5:
                 feature_msg.append("鋭い末脚")
             elif last_3f < 35.0:
                 feature_msg.append("安定した末脚")
                 
-            # 2. 騎手 (jockey_win_rate)
+            # 騎手 (jockey_win_rate)
             j_rate = feat.get('jockey_win_rate', 0.0)
             if j_rate > 0.15:
                 feature_msg.append("名手とのコンビ")
             elif j_rate > 0.10:
                 feature_msg.append("実績ある騎手")
                 
-            # 3. コース適性 (過去の実績などがあれば)
-            # 現状は特徴量に含まれていない属性もあるため、あるものだけで判断
-            
-            # 4. 人気と実力のギャップ
+            # 人気と実力のギャップ
             pop = feat.get('popularity', 0)
-            # 確率が高いのに人気がない場合
             if prob > 0.3 and pop > 3:
                 feature_msg.append("実力過小評価")
             elif pop > 5:
@@ -46,13 +88,12 @@ class BettingStrategy:
         # 結合して「〜で、〜」の形にする
         extra_text = ""
         if feature_msg:
-            extra_text = "、".join(feature_msg) + "で"
+            extra_text = "、".join(feature_msg) + "。 "
 
         if bet_type == 'tan':
             if ev > 2.0:
-                return f"{extra_text}高い期待値{ev:.2f}倍の本命"
+                return f"{extra_text}期待値{ev:.2f}倍の本命"
             elif prob > 0.5:
-                # 確率が高いなら期待値が低くても勝率で推す
                 return f"{extra_text}勝率{prob*100:.0f}%と盤石"
             else:
                 return f"{extra_text}期待値{ev:.2f}倍で狙い目" if ev > 0.1 else f"{extra_text}穴狙い"
