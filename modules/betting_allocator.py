@@ -32,31 +32,32 @@ class BettingAllocator:
             list: 推奨買い目のリスト
         """
         if strategy == 'formation':
-            return BettingAllocator._allocate_formation(df_preds, budget)
+            recommendations = BettingAllocator._allocate_formation(df_preds, budget)
         elif strategy == 'hybrid_1000':
-            return BettingAllocator._allocate_hybrid_1000(df_preds, budget)
+            recommendations = BettingAllocator._allocate_hybrid_1000(df_preds, budget)
         elif strategy == 'kelly':
-            return BettingAllocator._allocate_kelly(df_preds, budget, odds_data)
+            recommendations = BettingAllocator._allocate_kelly(df_preds, budget, odds_data)
         elif strategy == 'odds_divergence':
-            return BettingAllocator._allocate_odds_divergence(df_preds, budget, odds_data)
+            recommendations = BettingAllocator._allocate_odds_divergence(df_preds, budget, odds_data)
         elif strategy == 'track_bias':
-            return BettingAllocator._allocate_track_bias(df_preds, budget, bias_info)
+            recommendations = BettingAllocator._allocate_track_bias(df_preds, budget, bias_info)
         elif strategy == 'formation_flex':
-            return BettingAllocator._allocate_formation_flex(df_preds, budget)
+            recommendations = BettingAllocator._allocate_formation_flex(df_preds, budget)
         elif strategy == 'wide_nagashi':
-            return BettingAllocator._allocate_wide_nagashi(df_preds, budget)
+            recommendations = BettingAllocator._allocate_wide_nagashi(df_preds, budget)
         elif strategy == 'box4_umaren':
-            return BettingAllocator._allocate_box4_umaren(df_preds, budget)
+            recommendations = BettingAllocator._allocate_box4_umaren(df_preds, budget)
         elif strategy == 'box4_sanrenpuku':
-            return BettingAllocator._allocate_box4_sanrenpuku(df_preds, budget)
+            recommendations = BettingAllocator._allocate_box4_sanrenpuku(df_preds, budget)
         elif strategy == 'umaren_nagashi':
-            return BettingAllocator._allocate_umaren_nagashi(df_preds, budget)
+            recommendations = BettingAllocator._allocate_umaren_nagashi(df_preds, budget)
         elif strategy == 'sanrenpuku_1axis':
-            return BettingAllocator._allocate_sanrenpuku_1axis(df_preds, budget)
+            recommendations = BettingAllocator._allocate_sanrenpuku_1axis(df_preds, budget)
         elif strategy == 'sanrenpuku_2axis':
-            return BettingAllocator._allocate_sanrenpuku_2axis(df_preds, budget)
+            recommendations = BettingAllocator._allocate_sanrenpuku_2axis(df_preds, budget)
             
-        recommendations = []
+        if recommendations:
+            return BettingAllocator._format_recommendations(recommendations, df_preds, odds_data)
         
         # 予測確率順にソート（この順序でBOX候補を選ぶ）
         df_sorted = df_preds.sort_values('probability', ascending=False).copy()
@@ -250,14 +251,37 @@ class BettingAllocator:
         }
         
         for r in recommendations:
-            combo_str = "-".join(map(str, r['horses']))
+            # 買い目文字列の生成 (methodに基づいて動的に生成)
+            method = r.get('method', 'SINGLE')
+            formation = r.get('formation', [])
+            horses = r.get('horses', r.get('horse_numbers', []))
+            
+            if r.get('combination'):
+                # すでに生成済みの場合はそれを使用（ただし馬番のみの場合は整形）
+                combo_str = r['combination']
+            elif method == 'BOX':
+                combo_str = f"{','.join(map(str, horses))} BOX"
+            elif method in ['流し', 'NAGASHI', '1軸流し']:
+                if len(formation) >= 2:
+                    combo_str = f"軸:{','.join(map(str, formation[0]))} - 相手:{','.join(map(str, formation[1]))}"
+                else:
+                    combo_str = f"軸:{horses[0]} - 相手:{','.join(map(str, horses[1:]))}"
+            elif method == 'FORMATION':
+                if len(formation) == 3:
+                    combo_str = f"1着:{formation[0]} 2着:{formation[1]} 3着:{formation[2]}"
+                elif len(formation) == 2:
+                    combo_str = f"軸:{formation[0]} 相手:{formation[1]}"
+                else:
+                    combo_str = "-".join(map(str, horses))
+            else:
+                combo_str = "-".join(map(str, horses))
             
             # 理由生成
             reason = '予算最適化'
             try:
                 # 軸馬（リストの先頭）の特徴を取得
-                if r['horses']:
-                    head_horse = int(r['horses'][0])
+                if horses:
+                    head_horse = int(horses[0])
                     # df_predsから馬情報を検索
                     # df_predsは辞書リストではなくDataFrame
                     target_row = df_preds[df_preds['horse_number'] == head_horse]
@@ -272,17 +296,17 @@ class BettingAllocator:
                         reasoning = row.get('reasoning', {})
                         
                         # BettingStrategyを使って理由を生成
-                        if r['method'] == 'BOX':
+                        if method == 'BOX':
                             reason = BettingStrategy.generate_box_reason(
-                                r['type'],
-                                r['horses'],
+                                r.get('type', 'BOX'),
+                                horses,
                                 df_preds,
                                 odds_data
                             )
                         else:
                             reason = BettingStrategy.generate_reason(
                                 bet_code,
-                                [str(h) for h in r['horses']],
+                                [str(h) for h in horses],
                                 row.get('probability', 0.1),
                                 row.get('expected_value', 1.0),
                                 row.get('odds', 0.0),
@@ -325,14 +349,14 @@ class BettingAllocator:
                 }
 
             rec_dict = {
-                'bet_type': r['type'],
-                'method': r['method'],
+                'bet_type': r.get('type', r.get('bet_type')),
+                'method': method,
                 'combination': combo_str,
-                'description': r['desc'],
-                'points': r['count'],
-                'unit_amount': 100,
-                'total_amount': r['amount'],
-                'horse_numbers': r['horses'],
+                'description': r.get('desc', r.get('description', '')),
+                'points': r.get('count', r.get('points', 1)),
+                'unit_amount': r.get('unit_amount', 100),
+                'total_amount': r.get('amount', r.get('total_amount', 0)),
+                'horse_numbers': horses,
                 'reason': reason
             }
             # Merge stats
@@ -371,43 +395,14 @@ class BettingAllocator:
             
             # 3連複 軸1頭流し (相手5頭) = 5C2 = 10点 = 1000円
             rec = {
-                'bet_type': '3連複',
+                'type': '3連複',
                 'method': '流し',
-                'description': '厳選3連複(軸1頭流し)',
-                'horse_numbers': [axis] + opponents,
+                'desc': '厳選3連複(軸1頭流し)',
+                'horses': [axis] + opponents,
                 'formation': [[axis], opponents],
-                'points': 10,
-                'unit_amount': 100,
-                'total_amount': 1000,
-                'reason': '軸信頼・高配当狙い'
+                'count': 10,
+                'amount': 1000
             }
-            # 文字列生成
-            rec['combination'] = f"軸:{axis} - 相手:{','.join(map(str, opponents))}"
-            
-            # 統計情報付与のためにリスト化してフォーマット関数を通すのもありだが、
-            # ここではシンプルに返すか、メインのフォーマッタに合わせる。
-            # _format_recommendationsを通さないとダメな構造なので、ここでは推奨辞書(簡易版)を返す。
-            # しかし _format_recommendations は method='BOX' or 'SINGLE' or othersを期待している。
-            # method='流し' の場合、combination等の生成ロジックが必要。
-            # 既存の _format_recommendations は '流し' に対応していない（BOXかSINGLEのみ特殊処理、他はdefault）。
-            # したがって、ここで辞書を作っても _format_recommendations だけでは不足する可能性があるが、
-            # 上記コードを見ると `else: ... reason = ...` のパスを通る。
-            # formationキーがあればOK。
-            
-            # 返す形は _allocate_formation と同様に生辞書を返すのが良さそうだが、
-            # _allocate_formation は整形済み辞書を返しているようには見えない？
-            # いや、_allocate_formationは最後に `rec` を作り、リストに入れて返している。
-            # その `rec` は `reason` や `combination` を持っている。
-            # なのでここでも完成形を返す。
-            
-            # Stats (Name, Odds, etc.) は呼び出し元で付与されないため、ここで付与する必要がある？
-            # いや、_format_recommendations は `allocate_budget` が呼ぶもので、
-            # `strategy='formation'` の場合は `_allocate_formation` が直接呼ばれてリターンされる。
-            # つまり `_allocate_formation` は完成形を返している。
-            # 同様に `_allocate_hybrid_1000` も完成形を返す必要がある。
-            
-            # 簡易的にStats付与（名前など）
-            # ここでは詳細は省略し、最低限の情報を入れる（アプリ側で表示されるキー）
             recommendations.append(rec)
             return recommendations
 
@@ -419,16 +414,12 @@ class BettingAllocator:
         if remaining_budget >= 600 and len(top) >= 4:
             box_horses = top[:4]
             rec = {
-                'bet_type': 'ワイド',
+                'type': 'ワイド',
                 'method': 'BOX',
-                'description': 'ワイド混戦BOX',
-                'horse_numbers': box_horses,
-                'formation': [box_horses],
-                'points': 6,
-                'unit_amount': 100,
-                'total_amount': 600,
-                'combination': f"{'-'.join(map(str, box_horses))} BOX",
-                'reason': '的中率重視・保険'
+                'desc': 'ワイド混戦BOX',
+                'horses': box_horses,
+                'count': 6,
+                'amount': 600
             }
             recommendations.append(rec)
             remaining_budget -= 600
@@ -444,23 +435,19 @@ class BettingAllocator:
                 # 既存リストから探すか新規作成
                 found = False
                 for r in recommendations:
-                    if r['bet_type'] == '単勝' and r['horse_numbers'][0] == h:
-                        r['total_amount'] += 100
+                    if r.get('type') == '単勝' and r.get('horses', [None])[0] == h:
+                        r['amount'] = r.get('amount', 0) + 100
                         found = True
                         break
                 
                 if not found:
                     recommendations.append({
-                        'bet_type': '単勝',
+                        'type': '単勝',
                         'method': 'SINGLE',
-                        'description': '単勝プッシュ',
-                        'horse_numbers': [h],
-                        'formation': [[h]],
-                        'points': 1,
-                        'unit_amount': 100,
-                        'total_amount': 100,
-                        'combination': str(h),
-                        'reason': '利益上乗せ'
+                        'desc': '単勝プッシュ',
+                        'horses': [h],
+                        'count': 1,
+                        'amount': 100
                     })
                 
                 remaining_budget -= 100
@@ -637,27 +624,14 @@ class BettingAllocator:
             if unit < 100: unit = 100 # Should not happen if cost <= budget check passed
             
             rec = {
-                'bet_type': main_bet['type'],
+                'type': main_bet['type'],
                 'method': main_bet['method'],
-                'points': main_bet['pts'],
-                'unit_amount': unit,
-                'total_amount': main_bet['pts'] * unit,
-                'reason': '混戦BOX' if is_flat and 'BOX' in main_bet['method'] else '軸強固・フォーメーション',
-                'horse_numbers': main_bet['g1'] + (main_bet.get('g2') or []) + (main_bet.get('g3') or [])
+                'count': main_bet['pts'],
+                'amount': main_bet['pts'] * unit,
+                'horses': main_bet['g1'] + (main_bet.get('g2') or []) + (main_bet.get('g3') or []),
+                'formation': [main_bet['g1']] + ([main_bet['g2']] if 'g2' in main_bet else []) + ([main_bet['g3']] if 'g3' in main_bet else []),
+                'desc': '混戦BOX' if is_flat and 'BOX' in main_bet['method'] else '軸強固・フォーメーション'
             }
-            
-            # Format combination string
-            if main_bet['method'] == 'BOX':
-                 rec['combination'] = f"{main_bet['g1']} BOX"
-                 rec['formation'] = [main_bet['g1']]
-            elif main_bet['type'] == '3連単':
-                 rec['combination'] = f"1着:{main_bet['g1']} - 2着:{main_bet['g2']} - 3着:{main_bet['g3']}"
-                 rec['formation'] = [main_bet['g1'], main_bet['g2'], main_bet['g3']]
-            else:
-                 rec['combination'] = f"軸:{','.join(map(str, main_bet['g1']))} - 相手:{','.join(map(str, main_bet['g2']))}"
-                 rec['formation'] = [main_bet['g1'], main_bet['g2']]
-
-            rec['horse_numbers'] = list(set(rec['horse_numbers'])) # Unique
             recommendations.append(rec)
             
         return recommendations
@@ -1136,16 +1110,13 @@ class BettingAllocator:
             formation_umaren.append([axis_horse['num'], opp['num']])
             
         recommendations.append({
-            'bet_type': '馬連', 'type': '馬連', 'method': 'NAGASHI',
-            'horse_numbers': [axis_horse['num']] + [h['num'] for h in opponent_horses],
-            'formation': formation_umaren,
-            'combination': f"{axis_horse['num']} - {','.join([str(h['num']) for h in opponent_horses])}",
-            'unit_amount': unit_amount,
-            'total_amount': unit_amount * len(opponent_horses),
-            'pts': len(opponent_horses),
-            'odds': axis_horse['odds'], 'prob': axis_horse['prob'], 'ev': 0,
-            'reason': f"バイアス合致: {frame_bias}/{position_bias}, 軸:{axis_horse['name']}",
-            'horse_name': f"軸:{axis_horse['name']} 相手:{len(opponent_horses)}頭"
+            'type': '馬連', 'method': '流し',
+            'horses': [axis_horse['num']] + [h['num'] for h in opponent_horses],
+            'formation': [[axis_horse['num']], [h['num'] for h in opponent_horses]],
+            'amount': unit_amount * len(opponent_horses),
+            'count': len(opponent_horses),
+            'desc': f"バイアス合致: {frame_bias}/{position_bias}",
+            'reason': f"バイアス:{frame_bias}/{position_bias}"
         })
         
         return recommendations
@@ -1307,12 +1278,11 @@ class BettingAllocator:
         if cost > budget: return []
         
         return [{
-            'bet_type': 'ワイド', 'method': '流し', 'type': 'ワイド',
-            'horse_numbers': [axis] + opponents,
+            'type': 'ワイド', 'method': '流し',
+            'horses': [axis] + opponents,
             'formation': [[axis], opponents],
-            'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis} 相手:{','.join(map(str, opponents))}",
-            'reason': 'LowCost: ワイド流し'
+            'amount': cost, 'count': points,
+            'desc': '低予算ワイド流し'
         }]
 
     @staticmethod
@@ -1330,11 +1300,10 @@ class BettingAllocator:
         if cost > budget: return []
         
         return [{
-            'bet_type': '馬連', 'method': 'BOX', 'type': '馬連',
-            'horse_numbers': horses, 'formation': [horses],
-            'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': "Top4 Box",
-            'reason': 'LowCost: 馬連Box4'
+            'type': '馬連', 'method': 'BOX',
+            'horses': horses, 'formation': [horses],
+            'amount': cost, 'count': points,
+            'desc': '馬連BOX4'
         }]
 
     @staticmethod
@@ -1352,11 +1321,10 @@ class BettingAllocator:
         if cost > budget: return []
         
         return [{
-            'bet_type': '3連複', 'method': 'BOX', 'type': '3連複',
-            'horse_numbers': horses, 'formation': [horses],
-            'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': "Top4 Box",
-            'reason': 'LowCost: 3連複Box4'
+            'type': '3連複', 'method': 'BOX',
+            'horses': horses, 'formation': [horses],
+            'amount': cost, 'count': points,
+            'desc': '3連複BOX4'
         }]
 
     @staticmethod
@@ -1384,12 +1352,11 @@ class BettingAllocator:
                  return []
         
         return [{
-            'bet_type': '馬連', 'method': '流し', 'type': '馬連',
-            'horse_numbers': [axis] + opponents,
+            'type': '馬連', 'method': '流し',
+            'horses': [axis] + opponents,
             'formation': [[axis], opponents],
-            'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis} 相手:{','.join(map(str, opponents))}",
-            'reason': 'LowCost: 馬連流し'
+            'amount': cost, 'count': points,
+            'desc': '馬連軸流し'
         }]
 
     @staticmethod
@@ -1418,12 +1385,11 @@ class BettingAllocator:
                  return []
         
         return [{
-            'bet_type': '3連複', 'method': '流し', 'type': '3連複',
-            'horse_numbers': [axis] + opponents,
+            'type': '3連複', 'method': '流し',
+            'horses': [axis] + opponents,
             'formation': [[axis], opponents],
-            'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis} 相手:{','.join(map(str, opponents))}",
-            'reason': '3連複1軸流し'
+            'amount': cost, 'count': points,
+            'desc': '3連複軸流し'
         }]
 
     @staticmethod
@@ -1447,10 +1413,9 @@ class BettingAllocator:
              return []
         
         return [{
-            'bet_type': '3連複', 'method': '2軸流し', 'type': '3連複',
-            'horse_numbers': [axis1, axis2] + opponents,
+            'type': '3連複', 'method': '流し', # 2軸流しだが流しとして処理
+            'horses': [axis1, axis2] + opponents,
             'formation': [[axis1, axis2], opponents],
-            'points': points, 'unit_amount': 100, 'total_amount': cost,
-            'combination': f"軸:{axis1}-{axis2} 相手:{','.join(map(str, opponents))}",
-            'reason': '3連複2軸流し'
+            'amount': cost, 'count': points,
+            'desc': '3連複2軸流し'
         }]

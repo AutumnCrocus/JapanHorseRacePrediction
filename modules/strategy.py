@@ -65,22 +65,25 @@ class BettingStrategy:
             feat = features_list[0]
             
             # 末脚 (avg_last_3f)
-            last_3f = feat.get('avg_last_3f', 37.0)
+            last_3f = feat.get('avg_last_3f')
+            if last_3f is None: last_3f = 37.0
+            
             if last_3f < 34.5:
                 feature_msg.append("鋭い末脚")
             elif last_3f < 35.0:
                 feature_msg.append("安定した末脚")
                 
             # 騎手 (jockey_win_rate)
-            j_rate = feat.get('jockey_win_rate', 0.0)
+            j_rate = feat.get('jockey_win_rate') or 0.0
             if j_rate > 0.15:
                 feature_msg.append("名手とのコンビ")
             elif j_rate > 0.10:
                 feature_msg.append("実績ある騎手")
                 
             # 人気と実力のギャップ
-            pop = feat.get('popularity', 0)
-            if prob > 0.3 and pop > 3:
+            pop = feat.get('popularity') or 10
+            safe_prob = prob or 0.0
+            if safe_prob > 0.3 and pop > 3:
                 feature_msg.append("実力過小評価")
             elif pop > 5:
                 feature_msg.append("穴妙味あり")
@@ -90,13 +93,15 @@ class BettingStrategy:
         if feature_msg:
             extra_text = "、".join(feature_msg) + "。 "
 
+        safe_ev = ev or 0.0
+        safe_prob = prob or 0.0
         if bet_type == 'tan':
-            if ev > 2.0:
-                return f"{extra_text}期待値{ev:.2f}倍の本命"
-            elif prob > 0.5:
-                return f"{extra_text}勝率{prob*100:.0f}%と盤石"
+            if safe_ev > 2.0:
+                return f"{extra_text}期待値{safe_ev:.2f}倍の本命"
+            elif safe_prob > 0.5:
+                return f"{extra_text}勝率{safe_prob*100:.0f}%と盤石"
             else:
-                return f"{extra_text}期待値{ev:.2f}倍で狙い目" if ev > 0.1 else f"{extra_text}穴狙い"
+                return f"{extra_text}期待値{safe_ev:.2f}倍で狙い目" if safe_ev > 0.1 else f"{extra_text}穴狙い"
                 
         elif bet_type == 'fuku':
             if prob > 0.8:
