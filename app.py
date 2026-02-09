@@ -46,6 +46,29 @@ def load_model():
     
     os.makedirs(MODEL_DIR, exist_ok=True)
     
+    # 2010-2026 最新ヒストリカルモデルを優先
+    latest_model_dir = os.path.join(MODEL_DIR, 'historical_2010_2026')
+    latest_model_path = os.path.join(latest_model_dir, 'model.pkl')
+    
+    if os.path.exists(latest_model_path):
+        print(f"最新ヒストリカルモデルを読み込み中: {latest_model_path}")
+        model = HorseRaceModel()
+        model.load(latest_model_path)
+        
+        # ProcessorとEngineerも同じディレクトリから読み込み
+        processor_path = os.path.join(latest_model_dir, 'processor.pkl')
+        engineer_path = os.path.join(latest_model_dir, 'engineer.pkl')
+        
+        if os.path.exists(processor_path):
+            with open(processor_path, 'rb') as f:
+                processor = pickle.load(f)
+        if os.path.exists(engineer_path):
+            with open(engineer_path, 'rb') as f:
+                engineer = pickle.load(f)
+        
+        print("最新モデルのロードが完了しました。")
+        return
+
     # アンサンブル用モデルファイルを検索（Productionモデル優先）
     production_model_path = os.path.join(MODEL_DIR, 'production_model.pkl')
     
@@ -72,7 +95,7 @@ def load_model():
                 model = create_sample_model()
                 model.save(model_path)
     
-    # ProcessorとEngineerを読み込み
+    # ProcessorとEngineerを読み込み (旧ディレクトリから)
     processor_path = os.path.join(MODEL_DIR, 'processor.pkl')
     engineer_path = os.path.join(MODEL_DIR, 'engineer.pkl')
     bias_map_path = os.path.join(MODEL_DIR, 'bias_map.pkl')

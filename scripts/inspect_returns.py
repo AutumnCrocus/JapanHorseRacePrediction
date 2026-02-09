@@ -2,7 +2,8 @@ import pandas as pd
 import pickle
 import os
 
-DATA_DIR = r'c:\Users\t4kic\Documents\JapanHorseRacePrediction\data\raw'
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'raw')
 RETURN_FILE = os.path.join(DATA_DIR, 'return_tables.pickle')
 
 def inspect():
@@ -11,17 +12,34 @@ def inspect():
         data = pickle.load(f)
     
     print(f"Type: {type(data)}")
+    print("Checking unique bet types...")
+    
     if isinstance(data, pd.DataFrame):
-        print(f"Columns: {data.columns.tolist()}")
-        print(data.head(1))
-    elif isinstance(data, dict):
-        print(f"Keys sample: {list(data.keys())[:5]}")
-        sample_key = list(data.keys())[0]
-        print(f"Sample value for {sample_key}:")
-        print(data[sample_key])
+        print(f"Index head: {data.index[:5]}")
+        print(f"Index type: {data.index.dtype}")
+        # Check first element with repr
+        first_idx = data.index[0]
+        rid = first_idx[0] if isinstance(first_idx, tuple) else first_idx
+        print(f"First race_id repr: {repr(rid)}")
         
-        # Check if race name is in value (usually DataFrame or list)
-        # If DataFrame, check columns.
+        # Check specific ID
+        target_id = '202506010101'
+        found = False
+        for idx in data.index:
+            rid = str(idx[0]) if isinstance(idx, tuple) else str(idx)
+            if rid == target_id:
+                found = True
+                break
+        print(f"Race {target_id} found in returns: {found}")
+    elif isinstance(data, dict):
+        count = 0
+        for race_id, df in data.items():
+            if isinstance(df, pd.DataFrame) and not df.empty:
+                bet_types.update(df[0].unique())
+            count += 1
+            if count > 1000: break # Check first 1000 races
+            
+        print(f"Unique Bet Types found: {bet_types}")
 
 if __name__ == '__main__':
     inspect()

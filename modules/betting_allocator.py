@@ -31,6 +31,8 @@ class BettingAllocator:
         Returns:
             list: 推奨買い目のリスト
         """
+        recommendations = []
+        
         if strategy == 'formation':
             recommendations = BettingAllocator._allocate_formation(df_preds, budget)
         elif strategy == 'hybrid_1000':
@@ -55,6 +57,10 @@ class BettingAllocator:
             recommendations = BettingAllocator._allocate_sanrenpuku_1axis(df_preds, budget)
         elif strategy == 'sanrenpuku_2axis':
             recommendations = BettingAllocator._allocate_sanrenpuku_2axis(df_preds, budget)
+        elif strategy == 'meta_optimized':
+            recommendations = BettingAllocator._allocate_meta_optimized(df_preds, budget)
+        elif strategy == 'meta_contrarian':
+            recommendations = BettingAllocator._allocate_meta_contrarian(df_preds, budget)
             
         if recommendations:
             return BettingAllocator._format_recommendations(recommendations, df_preds, odds_data)
@@ -339,7 +345,7 @@ class BettingAllocator:
                         }
 
             except Exception as e:
-                print(f"Reason generation error: {e}")
+                # Silently handle reason generation errors (too noisy)
                 reason = "予算最適化（詳細生成エラー）"
                 stats = {
                     'horse_name': "-",
@@ -357,7 +363,8 @@ class BettingAllocator:
                 'unit_amount': r.get('unit_amount', 100),
                 'total_amount': r.get('amount', r.get('total_amount', 0)),
                 'horse_numbers': horses,
-                'reason': reason
+                'reason': reason,
+                'formation': formation
             }
             # Merge stats
             rec_dict.update(stats)
@@ -368,7 +375,7 @@ class BettingAllocator:
     @staticmethod
     def _allocate_hybrid_1000(df_preds, budget):
         """
-        予算1000円専用：超厳選Formation + Balance複合戦略
+        予算1000円専用: 超厳選Formation + Balance複合戦略
         - 軸が強固（混戦でない）場合: 3連複軸1頭流し（相手5頭=10点=1000円）
         - 混戦の場合: ワイド4頭BOX（6点=600円）+ 単勝配分（400円）
         """
@@ -492,7 +499,8 @@ class BettingAllocator:
                     'odds': horse_odds,
                     'prob': horse_prob,
                     'ev': horse_ev,
-                    'rank': i + 1
+                    'rank': i + 1,
+                    'formation': None # Placeholder, as single bets don't have a formation in this context
                 })
         
         # 保険対象馬が存在する場合、予算の一部を単勝に配分
@@ -1419,3 +1427,253 @@ class BettingAllocator:
             'amount': cost, 'count': points,
             'desc': '3連複2軸流し'
         }]
+    @staticmethod
+    def _allocate_meta_optimized(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        メタ分析に基づく最適化戦略
+        レーススコア(0-80)を算出し、スコアに応じて配分を動的調整
+        """
+        # 1. レース指標算出
+        top_horse = df_preds.sort_values('probability', ascending=False).iloc[0]
+        top1_prob = top_horse['probability']
+        top1_odds = top_horse['odds']
+        
+        sorted_probs = df_preds['probability'].sort_values(ascending=False)
+        prob_gap = sorted_probs.iloc[0] - sorted_probs.iloc[1] if len(sorted_probs) > 1 else 0
+        
+        # 2. スコアリング (最大80点)
+        score = 0
+        
+        # 低オッズボーナス (0-30点)
+        if top1_odds < 5: score += 30
+        elif top1_odds < 10: score += 20
+        elif top1_odds < 15: score += 10
+        
+        # 高確率ボーナス (0-30点)
+        if top1_prob > 0.9: score += 30
+        elif top1_prob > 0.85: score += 20
+        elif top1_prob > 0.7: score += 10
+        
+        # 過信ペナルティ (0 ~ -20点)
+        if prob_gap > 0.7: score -= 20
+        elif prob_gap > 0.5: score -= 10
+        
+        # 接戦ボーナス (0-20点)
+        if 0.1 < prob_gap < 0.3: score += 20
+        elif prob_gap < 0.1: score += 10
+        
+        # 3. 配分決定
+        recs = []
+        
+        if score >= 60:
+            # S: 最高条件 -> 3連複軸1頭流し (相手5-6頭)
+            # 予算全額投入
+            cand_horses = df_preds.sort_values('probability', ascending=False)['horse_number'].tolist()
+            axis = [cand_horses[0]]
+            opponents = cand_horses[1:7] if len(cand_horses) >= 7 else cand_horses[1:]
+            
+            # nC2 * 100円 <= budget となるように相手を選ぶのが理想だが、
+            # ここではシンプルに axis-opponent
+            # 相手5頭=10点=1000円, 6頭=15点=1500円
+            
+            # 予算に合わせて相手数を調整
+            n_opponents = 0
+            for n in range(5, 12):
+                cost = (n * (n-1) // 2) * 100
+                if cost <= budget:
+                    n_opponents = n
+                else:
+                    break
+            
+            if n_opponents >= 3:
+                opponents = cand_horses[1:n_opponents+1]
+                cost = (n_opponents * (n_opponents-1) // 2) * 100
+                unit = budget // (cost // 100)
+                
+                recs.append({
+                    'type': '3連複',
+                    'method': 'NAGASHI',
+                    'formation': [axis, opponents],
+                    'amount': (cost // 100) * unit,
+                    'unit_amount': unit,
+                    'count': n_opponents * (n_opponents-1) // 2,
+                    'desc': f'Sランク(Score:{score}): 3連複軸1頭流し',
+                    'horses': axis + opponents
+                })
+                
+        elif score >= 40:
+            # A: 良好 -> 3連複BOX (予算80%) + ワイドBOX (予算20%)
+            # 主力: 3連複5頭BOX (10点)
+            total_budget = int(budget * 0.8 / 100) * 100
+            if total_budget >= 1000:
+                recs.append(BettingAllocator._create_box_rec('3連複', df_preds.sort_values('probability', ascending=False)['horse_number'].tolist()[:5], total_budget))
+                
+            sub_budget = budget - (recs[0]['amount'] if recs else 0)
+            if sub_budget >= 600:
+                 recs.append(BettingAllocator._create_box_rec('ワイド', df_preds.sort_values('probability', ascending=False)['horse_number'].tolist()[:4], sub_budget))
+                 
+        elif score >= 20: 
+            # B: 標準 -> ワイドBOX (予算60%目安)
+            target_budget = int(budget * 0.6 / 100) * 100
+            if target_budget >= 600:
+                recs.append(BettingAllocator._create_box_rec('ワイド', df_preds.sort_values('probability', ascending=False)['horse_number'].tolist()[:5], target_budget))
+                
+        elif score >= 0:
+            # C: 慎重 -> 馬連BOX (予算40%目安)
+            target_budget = int(budget * 0.4 / 100) * 100
+            if target_budget >= 600:
+                recs.append(BettingAllocator._create_box_rec('馬連', df_preds.sort_values('probability', ascending=False)['horse_number'].tolist()[:4], target_budget))
+        
+        else:
+            # D: スキップ
+            return []
+            
+        return recs
+
+    @staticmethod
+    def _allocate_meta_contrarian(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        メタ分析に基づく逆張り戦略 (Contrarian)
+        - スコアが低い（荒れる）時こそ、3連複BOX等で手広く高配当を狙う
+        - スコアが高い（堅い）時は、3連単等で点数を絞って利益率を高める
+        """
+        # 1. レース指標算出
+        top_horse = df_preds.sort_values('probability', ascending=False).iloc[0]
+        top1_prob = top_horse['probability']
+        top1_odds = top_horse['odds']
+        
+        sorted_probs = df_preds['probability'].sort_values(ascending=False)
+        prob_gap = sorted_probs.iloc[0] - sorted_probs.iloc[1] if len(sorted_probs) > 1 else 0
+        
+        # 2. スコアリング (0-80点, 変動なし)
+        score = 0
+        if top1_odds < 5: score += 30
+        elif top1_odds < 10: score += 20
+        elif top1_odds < 15: score += 10
+        
+        if top1_prob > 0.9: score += 30
+        elif top1_prob > 0.85: score += 20
+        elif top1_prob > 0.7: score += 10
+        
+        if prob_gap > 0.7: score -= 20
+        elif prob_gap > 0.5: score -= 10
+        
+        if 0.1 < prob_gap < 0.3: score += 20
+        elif prob_gap < 0.1: score += 10
+        
+        # 3. 配分決定 (逆張りロジック)
+        recs = []
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        horses = df_sorted['horse_number'].tolist()
+        
+        if score >= 60:
+            # S: 鉄板 -> 3連単フォーメーション (1着固定 + ヒモ荒れ狙い)
+            # 1着: Top1 (固定)
+            # 2着: Top2-6 (5頭)
+            # 3着: Top2-12 (11頭) - 3着に人気薄が飛び込むのを拾う
+            # 点数: 1 * 5 * 10 - 重複 = 約40-50点?
+            # Formation: [1], [2-6], [2-12]
+            # 点数計算: 5 * 10 = 50点 (2着候補が3着にもいる場合) -> 実際は (5 * 11) - 5 (2着=3着のケース) = 50点
+            
+            if len(horses) >= 12:
+                points = 50 
+                # 予算5000円には収まる (5000円)
+                
+                # 予算調整
+                cost = points * 100
+                if cost > budget:
+                    # 予算オーバーなら3着候補を削る
+                    # 5000円未満の予算の場合など
+                    n_3rd = 12
+                    while (1 * 5 * (n_3rd - 2)) * 100 > budget and n_3rd > 6:
+                        n_3rd -= 1
+                    opponents_3rd = horses[1:n_3rd]
+                else:
+                    opponents_3rd = horses[1:12]
+                
+                points = 5 * (len(opponents_3rd) - 1)
+                cost = points * 100
+                unit = budget // (cost // 100)
+                
+                if unit >= 100:
+                    recs.append({
+                        'type': '3連単',
+                        'method': 'FORMATION',
+                        'formation': [[horses[0]], horses[1:6], opponents_3rd],
+                        'amount': (cost // 100) * unit,
+                        'unit_amount': unit,
+                        'count': points,
+                        'desc': f'Sランク(Score:{score}): 3連単1着不動・ヒモ荒れ狙い',
+                        'horses': list(set([horses[0]] + horses[1:6] + opponents_3rd))
+                    })
+                    
+        elif score >= 40:
+            # A: 有力 -> 3連複 軸1頭流し (相手6頭 = 15点)
+            # 軸: Top1, 相手: Top2-7
+            if len(horses) >= 7:
+                points = 15
+                cost = points * 100
+                unit = budget // (cost // 100)
+                
+                if unit >= 100:
+                    recs.append({
+                        'type': '3連複',
+                        'method': 'NAGASHI',
+                        'formation': [[horses[0]], horses[1:7]],
+                        'amount': (cost // 100) * unit,
+                        'unit_amount': unit,
+                        'count': points,
+                        'desc': f'Aランク(Score:{score}): 3連複軸1頭流し',
+                        'horses': list(set([horses[0]] + horses[1:7]))
+                    })
+                    
+        elif score >= 20: 
+            # B: 混戦 -> 3連複 5頭BOX (10点)
+            # 軸が信用できないためBOX
+            if len(horses) >= 5:
+                points = 10
+                cost = points * 100
+                unit = budget // (cost // 100)
+                
+                if unit >= 100:
+                    recs.append({
+                        'type': '3連複',
+                        'method': 'BOX',
+                        'formation': [horses[:5]],
+                        'amount': (cost // 100) * unit,
+                        'unit_amount': unit,
+                        'count': points,
+                        'desc': f'Bランク(Score:{score}): 3連複5頭BOX',
+                        'horses': horses[:5]
+                    })
+                
+        else:
+            # C: 大荒れ (Score < 20) -> 3連複 6-7頭BOX (20点 or 35点)
+            # 紛れ当たりを狙って広く構える
+            # 予算5000円なら7頭BOX(3500円)が可能
+            
+            box_size = 7
+            points = 35 # 7C3
+            
+            # 予算不足なら6頭(20点)に縮小
+            if points * 100 > budget:
+                box_size = 6
+                points = 20
+                
+            if len(horses) >= box_size:
+                cost = points * 100
+                unit = budget // (cost // 100)
+                
+                if unit >= 100:
+                    recs.append({
+                        'type': '3連複',
+                        'method': 'BOX',
+                        'formation': [horses[:box_size]],
+                        'amount': (cost // 100) * unit,
+                        'unit_amount': unit,
+                        'count': points,
+                        'desc': f'Cランク(Score:{score}): 3連複{box_size}頭BOX (波乱狙い)',
+                        'horses': horses[:box_size]
+                    })
+        
+        return recs

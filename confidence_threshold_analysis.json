@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-02-08T21:46:02.157768",
+  "strategy": "formation_flex",
+  "budget": 5000,
+  "sample_rate": 0.1,
+  "sample_size": 345,
+  "total_races": 3455,
+  "results": [
+    {
+      "min_confidence": "S",
+      "race_count": 271,
+      "bet_count": 540,
+      "hit_count": 228,
+      "hit_rate": 42.22222222222222,
+      "total_bet": 1350000,
+      "total_return": 5445420.0,
+      "recovery_rate": 403.3644444444445,
+      "profit": 4095420.0,
+      "avg_payout": 23883.42105263158
+    },
+    {
+      "min_confidence": "A",
+      "race_count": 276,
+      "bet_count": 550,
+      "hit_count": 232,
+      "hit_rate": 42.18181818181818,
+      "total_bet": 1375000,
+      "total_return": 5541900.0,
+      "recovery_rate": 403.0472727272727,
+      "profit": 4166900.0,
+      "avg_payout": 23887.5
+    },
+    {
+      "min_confidence": "B",
+      "race_count": 279,
+      "bet_count": 556,
+      "hit_count": 236,
+      "hit_rate": 42.44604316546763,
+      "total_bet": 1390000,
+      "total_return": 5596540.0,
+      "recovery_rate": 402.62877697841725,
+      "profit": 4206540.0,
+      "avg_payout": 23714.15254237288
+    }
+  ],
+  "best_threshold": "S"
+}

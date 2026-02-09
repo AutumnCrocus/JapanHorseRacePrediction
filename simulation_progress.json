@@ -1,0 +1,35 @@
+{
+  "status": "completed",
+  "updated_at": "2026-02-08T20:13:48.343785",
+  "current_model": "both",
+  "progress_pct": 100.0,
+  "races_processed": 3455,
+  "races_total": 3455,
+  "sample_mode": true,
+  "summary": {
+    "historical": {
+      "model": "historical",
+      "race_count": 277,
+      "bet_count": 554,
+      "hit_count": 232,
+      "hit_rate": 41.87725631768953,
+      "total_bet": 1385000,
+      "total_return": 9052810.0,
+      "recovery_rate": 653.6324909747292,
+      "profit": 7667810.0,
+      "sample_mode": true
+    },
+    "weighted": {
+      "model": "weighted",
+      "race_count": 343,
+      "bet_count": 686,
+      "hit_count": 443,
+      "hit_rate": 64.57725947521867,
+      "total_bet": 1715000,
+      "total_return": 3879350.0,
+      "recovery_rate": 226.201166180758,
+      "profit": 2164350.0,
+      "sample_mode": true
+    }
+  }
+}

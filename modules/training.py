@@ -147,8 +147,19 @@ class HorseRaceModel:
     
     def train(self, X: pd.DataFrame, y: pd.Series, 
               test_size: float = 0.2, early_stopping_rounds: int = 50,
-              X_val: pd.DataFrame = None, y_val: pd.Series = None) -> dict:
-        """モデルを学習"""
+              X_val: pd.DataFrame = None, y_val: pd.Series = None,
+              sample_weight: np.ndarray = None) -> dict:
+        """モデルを学習
+        
+        Args:
+            X: 特徴量DataFrame
+            y: ターゲット
+            test_size: 検証データの割合
+            early_stopping_rounds: 早期終了ラウンド数
+            X_val: 検証用特徴量 (外部指定)
+            y_val: 検証用ターゲット (外部指定)
+            sample_weight: サンプル重み (時系列重み付け学習用)
+        """
         self.feature_names = X.columns.tolist()
         
         # データ分割
@@ -165,8 +176,24 @@ class HorseRaceModel:
             # 全データ学習 (検証データも学習データと同じにする)
             X_train, X_val, y_train, y_val = X, X, y, y
         
+        # 重みの分割 (sample_weightが指定されている場合)
+        w_train = None
+        if sample_weight is not None:
+            # sample_weight は pd.Series または np.ndarray
+            if isinstance(sample_weight, np.ndarray):
+                sample_weight = pd.Series(sample_weight, index=X.index)
+            
+            if X_val is not None and y_val is not None:
+                # 外部検証データの場合、重みは訓練データ全体分
+                w_train = sample_weight.values
+            elif test_size > 0:
+                # 内部分割の場合、X_trainのインデックスで抽出
+                w_train = sample_weight.loc[X_train.index].values
+            else:
+                w_train = sample_weight.values
+        
         if self.model_type == 'lgbm':
-            self._train_lgbm(X_train, y_train, X_val, y_val, early_stopping_rounds)
+            self._train_lgbm(X_train, y_train, X_val, y_val, early_stopping_rounds, w_train)
         elif self.model_type == 'rf':
             from sklearn.ensemble import RandomForestClassifier
             self.model = RandomForestClassifier(**self.model_params)
@@ -207,8 +234,8 @@ class HorseRaceModel:
         }
         return metrics
 
-    def _train_lgbm(self, X_train, y_train, X_val, y_val, early_stopping_rounds):
-        train_data = lgb.Dataset(X_train, label=y_train)
+    def _train_lgbm(self, X_train, y_train, X_val, y_val, early_stopping_rounds, sample_weight=None):
+        train_data = lgb.Dataset(X_train, label=y_train, weight=sample_weight)
         val_data = lgb.Dataset(X_val, label=y_val, reference=train_data)
         
         params = self.model_params.copy()
