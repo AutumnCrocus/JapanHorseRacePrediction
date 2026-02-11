@@ -24,11 +24,10 @@ shap = None
 #     xgb = None
 xgb = None
 
-# try:
-#     import catboost as cb
-# except ImportError:
-#     cb = None
-cb = None
+try:
+    import catboost as cb
+except ImportError:
+    cb = None
 
 try:
     import torch
