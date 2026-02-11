@@ -129,8 +129,8 @@ def main():
         results = results[results['race_id'].isin(sampled_races)].copy()
         print(f"サンプリング後のレース数: {len(sampled_races):,}")
 
-    # 既存モジュールをそのまま活用
-    df_proc = processor.process_results(results[(results['date'] >= TRAIN_START) & (results['date'] <= TRAIN_END)].copy())
+    # 特徴量生成の実行
+    df_proc = processor.process_results(results.copy())
     df_proc = engineer.add_horse_history_features(df_proc, hr)
     df_proc = engineer.add_course_suitability_features(df_proc, hr)
     df_proc, _ = engineer.add_jockey_features(df_proc)
@@ -143,39 +143,63 @@ def main():
     # ターゲット: 関連度スコア
     df_proc['relevance'] = prepare_ranking_labels(df_proc)
     
-    # 期間ソート (時系列分割のため)
-    df_proc = df_proc.sort_values(['date', 'race_id'])
+    # 期間指定（引数があれば優先、なければデフォルト）
+    # 例: --train-end 2024-12-31 --val-end 2025-12-31
+    train_start = TRAIN_START
+    train_end = '2024-12-31' if "--full-validation" in sys.argv else TRAIN_END
+    val_start = '2025-01-01' if "--full-validation" in sys.argv else '2025-01-01' # デフォルト分割用
+    val_end = '2025-12-31' if "--full-validation" in sys.argv else TRAIN_END
+
+    if "--full-validation" in sys.argv:
+        print(f"模式: 2010-2024 学習 / 2025 検証 (フルデータ)")
+        df_train = df_proc[(df_proc['date'] >= train_start) & (df_proc['date'] <= train_end)].copy()
+        df_val = df_proc[(df_proc['date'] >= val_start) & (df_proc['date'] <= val_end)].copy()
+    else:
+        # 以前の8:2分割ロジック
+        df_proc = df_proc.sort_values(['date', 'race_id'])
+        split_idx = int(len(df_proc) * 0.8)
+        df_train = df_proc.iloc[:split_idx].copy()
+        df_val = df_proc.iloc[split_idx:].copy()
     
     # 学習対象カラムの抽出 (数値のみ)
     exclude_cols = [
         'rank', 'date', 'race_id', 'horse_id', 'target', '着順', 'relevance',
         'time', '着差', '通過', '上り', '単勝', '人気', 'horse_name', 'jockey', 
-        'trainer', 'owner', 'gender', 'original_race_id'
+        'trainer', 'owner', 'gender', 'original_race_id', 'タイム', 'タイム秒',
+        '着 順', '不正', '失格', '中止', '取消', '除外', 'running_style',
+        '体重', '体重変化', '馬体重', '単 勝', '人 気', '賞金', '賞金（万円）',
+        '付加賞（万円）', 'rank_num', 'is_win', 'is_place', 'last_3f_num',
+        'odds', 'popularity', 'return'
     ]
-    features = [c for c in df_proc.columns if c not in exclude_cols and pd.api.types.is_numeric_dtype(df_proc[c])]
+    # df_train基準で特徴量を決定
+    features = [c for c in df_train.columns if c not in exclude_cols and pd.api.types.is_numeric_dtype(df_train[c])]
     
-    # 時系列で8:2分割
-    split_date = df_proc.iloc[int(len(df_proc) * 0.8)]['date']
-    df_train = df_proc[df_proc['date'] < split_date].copy()
-    df_val = df_proc[df_proc['date'] >= split_date].copy()
-    
+    # 特徴量の確認
+    print(f"使用特徴量 ({len(features)}): {', '.join(features)}")
+
     # ランキング学習にはグループ化（レースごとのデータ）が必要
-    # 重要なルール: グループ内の順序を保持したまま、各グループのサイズを計算する
-    train_groups = df_train.groupby('race_id').size().tolist()
-    val_groups = df_val.groupby('race_id').size().tolist()
+    def get_groups(df):
+        return df.groupby('race_id', sort=False).size().tolist()
+
+    train_groups = get_groups(df_train)
+    val_groups = get_groups(df_val)
     
     X_train = df_train[features]
     y_train = df_train['relevance']
     X_val = df_val[features]
     y_val = df_val['relevance']
     
-    print(f"特徴量数: {len(features)}")
     print(f"学習: {len(X_train)}件 ({len(train_groups)}レース)")
     print(f"検証: {len(X_val)}件 ({len(val_groups)}レース)")
     
     # 4. 学習
     model = StandaloneRankingModel()
     model.train(X_train, y_train, train_groups, X_val, y_val, val_groups)
+    
+    # 重要度の表示
+    importances = pd.Series(model.model.feature_importance(), index=features).sort_values(ascending=False)
+    print("\n=== 特徴量重要度 (TOP 10) ===")
+    print(importances.head(10))
     
     # 5. 保存
     model_path = os.path.join(MODEL_OUTPUT_DIR, "ranking_model.pkl")

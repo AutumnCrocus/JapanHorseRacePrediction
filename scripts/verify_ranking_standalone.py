@@ -50,8 +50,23 @@ def main():
         results['date'] = pd.to_datetime(results['race_id'].astype(str).str[:8], format='%Y%m%d', errors='coerce')
     results['date'] = pd.to_datetime(results['date']).dt.normalize()
     
-    # 直近の1レースを抽出 (2025/02/08など)
-    test_race_id = results['race_id'].unique()[-1]
+    if '--date' in sys.argv:
+        date_str = sys.argv[sys.argv.index('--date') + 1]
+        test_date = pd.to_datetime(date_str).normalize()
+        race_ids = results[results['date'] == test_date]['race_id'].unique()
+        if len(race_ids) == 0:
+            print(f"No races found on {date_str}. Using latest instead.")
+            test_race_id = results['race_id'].unique()[-1]
+        else:
+            test_race_id = race_ids[0]
+    else:
+        # 直近の2025年の1レースを抽出
+        races_2025 = results[results['date'].dt.year == 2025]['race_id'].unique()
+        if len(races_2025) > 0:
+            test_race_id = races_2025[-1]
+        else:
+            test_race_id = results['race_id'].unique()[-1]
+    
     race_df = results[results['race_id'] == test_race_id].copy()
     
     processor = DataProcessor()
