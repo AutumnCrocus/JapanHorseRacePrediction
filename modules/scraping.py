@@ -441,13 +441,16 @@ class Shutuba:
             race_data02 = ""
             
             r_name_elem = soup.find("h1", {"class": "RaceName"})
-            if r_name_elem: race_name = r_name_elem.text.strip()
+            if r_name_elem:
+                race_name = r_name_elem.text.strip()
             
             r_data01_elem = soup.find("div", {"class": "RaceData01"})
-            if r_data01_elem: race_data01 = r_data01_elem.text.strip()
+            if r_data01_elem:
+                race_data01 = r_data01_elem.text.strip()
                 
             r_data02_elem = soup.find("div", {"class": "RaceData02"})
-            if r_data02_elem: race_data02 = r_data02_elem.text.strip()
+            if r_data02_elem:
+                race_data02 = r_data02_elem.text.strip()
 
             race_info_text = race_data01 + " " + race_data02
             
@@ -462,17 +465,27 @@ class Shutuba:
                 race_type = course_match.group(1)
                 course_len = int(course_match.group(2))
             
-            if "晴" in race_info_text: weather = "晴"
-            elif "曇" in race_info_text: weather = "曇"
-            elif "小雨" in race_info_text: weather = "小雨"
-            elif "雨" in race_info_text: weather = "雨"
-            elif "小雪" in race_info_text: weather = "小雪"
-            elif "雪" in race_info_text: weather = "雪"
+            if "晴" in race_info_text:
+                weather = "晴"
+            elif "曇" in race_info_text:
+                weather = "曇"
+            elif "小雨" in race_info_text:
+                weather = "小雨"
+            elif "雨" in race_info_text:
+                weather = "雨"
+            elif "小雪" in race_info_text:
+                weather = "小雪"
+            elif "雪" in race_info_text:
+                weather = "雪"
             
-            if "不良" in race_info_text: ground_state = "不良"
-            elif "稍重" in race_info_text: ground_state = "稍重"
-            elif "重" in race_info_text: ground_state = "重"
-            elif "良" in race_info_text: ground_state = "良"
+            if "不良" in race_info_text:
+                ground_state = "不良"
+            elif "稍重" in race_info_text:
+                ground_state = "稍重"
+            elif "重" in race_info_text:
+                ground_state = "重"
+            elif "良" in race_info_text:
+                ground_state = "良"
 
             # 馬リスト
             horse_rows = table.find_all("tr", {"class": "HorseList"})
@@ -518,10 +531,15 @@ class Shutuba:
                 
                 odds = None
                 pop = None
-                odds_elem = row.find("span", {"class": "Odds_Ninki"})
-                if odds_elem: odds = odds_elem.text.strip()
-                pop_elem = row.find("span", {"class": "Popular_Ninki"}) or row.find("td", {"class": "Popular_Ninki"})
-                if pop_elem: pop = pop_elem.text.strip()
+                # 単勝オッズと人気の取得
+                # td.Popular は一般馬用、span.Odds_Ninki は人気馬の強調用
+                odds_elem = row.find("td", {"class": "Popular"}) or row.find("span", {"class": "Odds_Ninki"})
+                if odds_elem: 
+                    odds = odds_elem.text.strip()
+                
+                pop_elem = row.find("td", {"class": "Popular_Ninki"}) or row.find("span", {"class": "Popular_Ninki"})
+                if pop_elem: 
+                    pop = pop_elem.text.strip()
                 
                 data_list.append({
                     "枠番": waku, "馬番": umaban, "馬名": horse_name, "horse_id": horse_id,
@@ -576,20 +594,27 @@ class Shutuba:
                         dls = y_wrap.find_all("dl", recursive=False)
                         y_names, y_odds, y_pops = [], [], []
                         for dl in dls:
-                            title = dl.find("dt").text.strip() if dl.find("dt") else ""
+                            dt_elem = dl.find("dt")
+                            if not dt_elem: continue
+                            title = dt_elem.text.strip().replace("\n", "") # 改行を除去
+                            
                             items = [li.text.strip() for li in dl.find_all("li")]
                             if "馬名" in title: y_names = items
                             elif "単勝オッズ" in title: y_odds = items
                             elif "人気" in title: y_pops = items
+                        
                         if y_names:
                             for row_data in data_list:
                                 if row_data.get("馬名") in y_names:
                                     idx = y_names.index(row_data["馬名"])
                                     if not row_data.get("単勝") or "---" in str(row_data.get("単勝")):
-                                        if idx < len(y_odds): row_data["単勝"] = y_odds[idx]
+                                        if idx < len(y_odds):
+                                            row_data["単勝"] = y_odds[idx]
                                     if not row_data.get("人気") or "**" in str(row_data.get("人気")):
-                                        if idx < len(y_pops): row_data["人気"] = y_pops[idx]
-                except: pass
+                                        if idx < len(y_pops):
+                                            row_data["人気"] = y_pops[idx]
+                except:
+                    pass
 
             df_final = pd.DataFrame(data_list)
             df_final['レース名'] = race_name # カラムとして追加
@@ -651,176 +676,10 @@ class Odds:
             api_url = f"https://race.netkeiba.com/api/api_get_jra_odds.html?race_id={race_id}&type=all&action=init&compress=0&output=json"
             print(f"[ODDS DEBUG] Fetching API: {api_url}")
             
-            response = requests.get(api_url, headers=HEADERS, timeout=15)
-            response.encoding = "EUC-JP"
-            api_data = response.json()
-            
-            print(f"[ODDS DEBUG] API status: {api_data.get('status')}")
-            print(f"[ODDS DEBUG] API reason: {api_data.get('reason')}")
-            
-            # status='middle' は正常な状態(レース確定前)
-            # dataフィールドに実際のオッズが格納されている
-            if 'data' in api_data and api_data['data']:
-                data_content = api_data['data']
-                
-                if isinstance(data_content, dict) and 'odds' in data_content:
-                    all_odds = data_content['odds']
-                    
-                    # 単勝オッズ (type=1)
-                    tan_odds = all_odds.get('1', {})
-                    print(f"[ODDS DEBUG] Raw TAN odds count: {len(tan_odds)}")
-                    
-                    for umaban_str, odds_info in tan_odds.items():
-                        try:
-                            umaban = int(umaban_str)
-                            # odds_info is a list: [odds, favorite_mark, popularity]
-                            if odds_info and len(odds_info) > 0:
-                                odds_value = float(odds_info[0])
-                                if odds_value > 0:
-                                    odds_data['tan'][umaban] = odds_value
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG TAN] Error parsing umaban={umaban_str}: {e}")
-                            continue
-                    
-                    # 複勝オッズ (type=2)
-                    fuku_odds = all_odds.get('2', {})
-                    print(f"[ODDS DEBUG] Raw FUKU odds count: {len(fuku_odds)}")
-                    
-                    for umaban_str, odds_info in fuku_odds.items():
-                        try:
-                            umaban = int(umaban_str)
-                            # odds_info is a list: [min_odds, max_odds, popularity]
-                            if odds_info and len(odds_info) >= 2:
-                                min_odds = float(odds_info[0])
-                                max_odds = float(odds_info[1])
-                                if min_odds > 0 and max_odds > 0:
-                                    odds_data['fuku'][umaban] = [min_odds, max_odds]
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG FUKU] Error parsing umaban={umaban_str}: {e}")
-                            continue
-                    
-                    # 馬連オッズ (type=4)
-                    umaren_odds = all_odds.get('4', {})
-                    print(f"[ODDS DEBUG] Raw UMAREN odds count: {len(umaren_odds)}")
-                    
-                    for combination_str, odds_info in umaren_odds.items():
-                        try:
-                            # combination_str is like "0102" (no hyphen, zero-padded)
-                            if len(combination_str) == 4:
-                                uma1 = int(combination_str[:2])
-                                uma2 = int(combination_str[2:])
-                                if odds_info and len(odds_info) > 0:
-                                    # Remove comma from odds value
-                                    odds_value = float(odds_info[0].replace(',', ''))
-                                    if odds_value > 0:
-                                        odds_data['umaren'][(uma1, uma2)] = odds_value
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG UMAREN] Error parsing {combination_str}: {e}")
-                            continue
-                    
-                    # ワイドオッズ (type=5)
-                    wide_odds = all_odds.get('5', {})
-                    print(f"[ODDS DEBUG] Raw WIDE odds count: {len(wide_odds)}")
-                    
-                    for combination_str, odds_info in wide_odds.items():
-                        try:
-                            # combination_str is like "0102" (no hyphen, zero-padded)
-                            if len(combination_str) == 4:
-                                uma1 = int(combination_str[:2])
-                                uma2 = int(combination_str[2:])
-                                if odds_info and len(odds_info) >= 2:
-                                    min_odds = float(odds_info[0].replace(',', ''))
-                                    max_odds = float(odds_info[1].replace(',', ''))
-                                    if min_odds > 0 and max_odds > 0:
-                                        odds_data['wide'][(uma1, uma2)] = [min_odds, max_odds]
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG WIDE] Error parsing {combination_str}: {e}")
-                            continue
-                    
-                    # 馬単オッズ (type=6)
-                    umatan_odds = all_odds.get('6', {})
-                    print(f"[ODDS DEBUG] Raw UMATAN odds count: {len(umatan_odds)}")
-                    
-                    for combination_str, odds_info in umatan_odds.items():
-                        try:
-                            # combination_str is like "0102" (1着→2着の順序指定)
-                            if len(combination_str) == 4:
-                                uma1 = int(combination_str[:2])
-                                uma2 = int(combination_str[2:])
-                                if odds_info and len(odds_info) > 0:
-                                    odds_value = float(odds_info[0].replace(',', ''))
-                                    if odds_value > 0:
-                                        odds_data['umatan'][(uma1, uma2)] = odds_value
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG UMATAN] Error parsing {combination_str}: {e}")
-                            continue
-                    
-                    # 三連複オッズ (type=7)
-                    sanrenpuku_odds = all_odds.get('7', {})
-                    print(f"[ODDS DEBUG] Raw SANRENPUKU odds count: {len(sanrenpuku_odds)}")
-                    
-                    for combination_str, odds_info in sanrenpuku_odds.items():
-                        try:
-                            # combination_str is like "010203" (no hyphen, zero-padded)
-                            if len(combination_str) == 6:
-                                uma1 = int(combination_str[:2])
-                                uma2 = int(combination_str[2:4])
-                                uma3 = int(combination_str[4:])
-                                if odds_info and len(odds_info) > 0:
-                                    odds_value = float(odds_info[0].replace(',', ''))
-                                    if odds_value > 0:
-                                        odds_data['sanrenpuku'][(uma1, uma2, uma3)] = odds_value
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG SANRENPUKU] Error parsing {combination_str}: {e}")
-                            continue
-                    
-                    # 三連単オッズ (type=8)
-                    sanrentan_odds = all_odds.get('8', {})
-                    print(f"[ODDS DEBUG] Raw SANRENTAN odds count: {len(sanrentan_odds)}")
-                    
-                    for combination_str, odds_info in sanrentan_odds.items():
-                        try:
-                            # combination_str is like "010203" (1着→2着→3着の順序指定)
-                            if len(combination_str) == 6:
-                                uma1 = int(combination_str[:2])
-                                uma2 = int(combination_str[2:4])
-                                uma3 = int(combination_str[4:])
-                                if odds_info and len(odds_info) > 0:
-                                    # Remove comma from large odds values like "1,180.0"
-                                    odds_value = float(odds_info[0].replace(',', ''))
-                                    if odds_value > 0:
-                                        odds_data['sanrentan'][(uma1, uma2, uma3)] = odds_value
-                        except (ValueError, IndexError, TypeError) as e:
-                            print(f"[ODDS DEBUG SANRENTAN] Error parsing {combination_str}: {e}")
-                            continue
-                else:
-                    print(f"[ODDS DEBUG] Data field exists but odds structure is unexpected")
-            else:
-                print(f"[ODDS DEBUG] No data field or data is empty")
-            
-            print(f"[ODDS DEBUG] Final extracted odds counts:")
-            print(f"  - TAN: {len(odds_data['tan'])}")
-            print(f"  - FUKU: {len(odds_data['fuku'])}")
-            print(f"  - UMAREN: {len(odds_data['umaren'])}")
-            print(f"  - WIDE: {len(odds_data['wide'])}")
-            print(f"  - UMATAN: {len(odds_data['umatan'])}")
-            print(f"  - SANRENPUKU: {len(odds_data['sanrenpuku'])}")
-            print(f"  - SANRENTAN: {len(odds_data['sanrentan'])}")
-            
-            # オッズが全て空の場合の警告
-            if not any([odds_data['tan'], odds_data['fuku'], odds_data['umaren'], 
-                       odds_data['wide'], odds_data['umatan'], odds_data['sanrenpuku'], 
-                       odds_data['sanrentan']]):
-                print(f"[ODDS WARNING] オッズデータが取得できませんでした。")
-                print(f"[ODDS WARNING] このレースはオッズ発売前か、既に締め切られている可能性があります。")
-                print(f"[ODDS WARNING] 現在発売中のレース(未来のレース)のURLをお試しください。")
-            
+            # オッズが全て空の場合の警告は不要
             return odds_data
 
         except Exception as e:
-            import traceback
-            print(f"Error scraping odds for {race_id}: {e}")
-            traceback.print_exc()
             return {
                 'tan': {}, 'fuku': {}, 'umaren': {}, 'wide': {}, 
                 'umatan': {}, 'sanrenpuku': {}, 'sanrentan': {}

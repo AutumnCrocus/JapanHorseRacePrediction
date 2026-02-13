@@ -6,11 +6,16 @@
 import pandas as pd
 import numpy as np
 import re
+import warnings
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from .constants import (
     RACE_TYPE_DICT, WEATHER_DICT, GROUND_STATE_DICT,
     SEX_DICT, RACE_TYPE_MAP, WEATHER_MAP, GROUND_MAP
 )
+
+# pandasの警告を抑制
+warnings.filterwarnings('ignore', category=FutureWarning)
+pd.set_option('future.no_silent_downcasting', True)
 
 
 class DataProcessor:
@@ -78,7 +83,6 @@ class DataProcessor:
             # すでに性カラムがある場合 (API経由など)
             df['性'] = df['性'].map(lambda x: SEX_DICT.get(x, x) if isinstance(x, str) else x).fillna(0).astype(int)
         
-        # カテゴリ項目のマッピング (文字列の場合に数値へ変換)
         if 'race_type' in df.columns:
             df['race_type'] = df['race_type'].map(lambda x: RACE_TYPE_MAP.get(x, x) if isinstance(x, str) else x).fillna(0).astype(int)
         if 'weather' in df.columns:
@@ -540,10 +544,9 @@ class FeatureEngineer:
                     if col in df.columns:
                         df[col] = df[col].fillna(val)
             else:
-                 df['jockey_avg_rank'] = 8.0
-                 df['jockey_avg_rank'] = 8.0
-                 df['jockey_win_rate'] = 0.08
-                 df['jockey_return_avg'] = 75.0
+                df['jockey_avg_rank'] = 8.0
+                df['jockey_win_rate'] = 0.08
+                df['jockey_return_avg'] = 75.0
             
             return df, jockey_stats
 
