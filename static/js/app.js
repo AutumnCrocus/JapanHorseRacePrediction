@@ -21,6 +21,8 @@ const elements = {
     raceUrl: document.getElementById('raceUrl'),
     predictUrlBtn: document.getElementById('predictUrlBtn'),
     budget: document.getElementById('budget'),
+    modelType: document.getElementById('modelType'),
+    strategy: document.getElementById('strategy'),
     // モデル情報要素
     modelAlgo: document.getElementById('modelAlgo'),
     modelTarget: document.getElementById('modelTarget'),
@@ -59,6 +61,11 @@ function initEventListeners() {
     elements.demoBtn.addEventListener('click', runDemo);
     if (elements.predictUrlBtn) {
         elements.predictUrlBtn.addEventListener('click', runUrlPrediction);
+    }
+
+    // モデル切り替えイベント
+    if (elements.modelType) {
+        elements.modelType.addEventListener('change', handleModelChange);
     }
 
     // IPAT連携ボタン
@@ -199,7 +206,8 @@ async function runUrlPrediction() {
     showLoading(true);
 
     const budget = document.getElementById('budget') ? document.getElementById('budget').value : 0;
-    const strategy = document.getElementById('strategy') ? document.getElementById('strategy').value : 'balance';
+    const strategy = elements.strategy ? elements.strategy.value : 'balance';
+    const model_type = elements.modelType ? elements.modelType.value : 'lgbm';
 
     try {
         const response = await fetch(`${API_BASE}/api/predict_by_url`, {
@@ -207,7 +215,7 @@ async function runUrlPrediction() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url, budget, strategy })
+            body: JSON.stringify({ url, budget, strategy, model_type })
         });
 
         const data = await response.json();
@@ -754,6 +762,58 @@ function displayRecommendations(recommendations) {
         </tr>
         `;
     }).join('');
+}
+
+/**
+ * モデル切り替え時の処理
+ */
+async function handleModelChange() {
+    const modelType = elements.modelType.value;
+    console.log(`[ModelChange] Switching to: ${modelType}`);
+
+    // 戦略の自動切り替え
+    if (modelType === 'ltr') {
+        if (elements.strategy) elements.strategy.value = 'ranking_anchor';
+    } else {
+        if (elements.strategy) elements.strategy.value = 'box4_sanrenpuku';
+    }
+
+    // モデル情報の更新
+    try {
+        const infoRes = await fetch(`${API_BASE}/api/model_info?model_type=${modelType}`);
+        const infoData = await infoRes.json();
+        if (infoData.success) {
+            updateModelInfoUI(infoData);
+        }
+
+        const featureRes = await fetch(`${API_BASE}/api/feature_importance?model_type=${modelType}`);
+        const featureData = await featureRes.json();
+        if (featureData.success && featureData.available) {
+            displayFeatureImportance(featureData.features);
+        } else {
+            const importanceEl = document.getElementById('featureImportance');
+            if (importanceEl) importanceEl.innerHTML = `<div class="placeholder-message"><p>ℹ️ このモデルの重要度データはありません</p></div>`;
+        }
+    } catch (e) {
+        console.error('Error updating model info:', e);
+    }
+}
+
+function updateModelInfoUI(data) {
+    if (elements.modelAlgo) elements.modelAlgo.textContent = data.algorithm;
+    if (elements.modelTarget) elements.modelTarget.textContent = data.target;
+    if (elements.modelSource) elements.modelSource.textContent = data.source;
+    if (elements.modelFeatures) elements.modelFeatures.textContent = `${data.feature_count}種類`;
+
+    const dateEl = document.getElementById('modelDate');
+    if (dateEl) dateEl.textContent = data.last_updated || '-';
+
+    if (data.metrics) {
+        const aucEl = document.getElementById('modelAuc');
+        const returnEl = document.getElementById('modelReturn');
+        if (aucEl) aucEl.textContent = data.metrics.auc || '-';
+        if (returnEl) returnEl.textContent = data.metrics.recovery_rate ? `${data.metrics.recovery_rate}%` : '-';
+    }
 }
 
 // ========================================

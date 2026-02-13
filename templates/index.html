@@ -81,9 +81,16 @@
                                 step="100"
                                 style="flex: 1; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
 
+                            <select id="modelType" class="input-text" title="予測モデルを選択"
+                                style="flex: 1; min-width: 140px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f9fa; color: #333; font-weight: bold;">
+                                <option value="lgbm">🤖 LGBM (Historical)</option>
+                                <option value="ltr">🏆 LTR (Ranking) ★推奨</option>
+                            </select>
+
                             <select id="strategy" class="input-text"
                                 style="flex: 1; min-width: 140px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: white; color: #333;">
                                 <option value="box4_sanrenpuku">★ 3連複 4頭BOX (推奨/高回収)</option>
+                                <option value="ranking_anchor">【LTR推奨】3連複 軸流し (厚め狙い)</option>
                                 <option value="box4_umaren">馬連 4頭BOX (安定)</option>
                                 <option value="umaren_nagashi">馬連 軸流し (500円〜)</option>
                                 <option value="wide_nagashi">ワイド 軸流し (高的中)</option>

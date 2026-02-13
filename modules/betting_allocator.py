@@ -61,6 +61,8 @@ class BettingAllocator:
             recommendations = BettingAllocator._allocate_meta_optimized(df_preds, budget)
         elif strategy == 'meta_contrarian':
             recommendations = BettingAllocator._allocate_meta_contrarian(df_preds, budget)
+        elif strategy == 'ranking_anchor':
+            recommendations = BettingAllocator._allocate_ranking_anchor(df_preds, budget)
             
         if recommendations:
             return BettingAllocator._format_recommendations(recommendations, df_preds, odds_data)
@@ -1676,4 +1678,65 @@ class BettingAllocator:
                         'horses': horses[:box_size]
                     })
         
+        return recs
+    
+    @staticmethod
+    def _allocate_ranking_anchor(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        ランキング学習モデル(LTR)専用戦略: Ranking Anchor
+        - 指標: probability (LTRスコア)
+        - 軸馬(1位)の複勝率の高さを活用
+        - スコア差(Gap)に応じて配分を調整
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        horses = df_sorted['horse_number'].tolist()
+        probs = df_sorted['probability'].tolist()
+        
+        if len(horses) < 6:
+            return BettingAllocator._allocate_formation(df_preds, budget) # Fallback to formation
+            
+        axis = horses[0]
+        gap = probs[0] - probs[1] if len(probs) > 1 else 0
+        
+        recs = []
+        remaining_budget = budget
+        
+        # 1. 単勝保険 (Gapが大きい場合のみ)
+        if gap > 0.05 and remaining_budget >= 500:
+            win_amt = min(1000, int(remaining_budget * 0.2 / 100) * 100)
+            if win_amt >= 100:
+                recs.append({
+                    'type': '単勝', 'method': 'SINGLE', 'horses': [axis],
+                    'formation': [[axis]], 'amount': win_amt, 'count': 1,
+                    'desc': f'LTR単勝(Gap:{gap:.2f})'
+                })
+                remaining_budget -= win_amt
+                
+        # 2. ワイド軸1頭流し (的中率維持)
+        # 相手は2-5位の4頭
+        wide_opps = horses[1:5]
+        wide_pts = len(wide_opps)
+        wide_budget = int(remaining_budget * 0.4 / 100) * 100
+        if wide_budget >= wide_pts * 100:
+            unit = wide_budget // wide_pts
+            recs.append({
+                'type': 'ワイド', 'method': '流し', 'horses': [axis] + wide_opps,
+                'formation': [[axis], wide_opps], 'amount': (wide_budget // 100) * 100,
+                'unit_amount': unit, 'count': wide_pts, 'desc': 'LTRワイド軸流し'
+            })
+            remaining_budget -= (wide_budget // 100) * 100
+            
+        # 3. 三連複軸1頭流し (高配当狙い)
+        # 相手は2-7位の6頭 (15点)
+        trip_opps = horses[1:7]
+        trip_pts = 15 # 6C2
+        if remaining_budget >= trip_pts * 100:
+            unit = remaining_budget // trip_pts
+            recs.append({
+                'type': '3連複', 'method': '流し', 'horses': [axis] + trip_opps,
+                'formation': [[axis], trip_opps], 'amount': (remaining_budget // 100) * 100,
+                'unit_amount': unit, 'count': trip_pts, 'desc': 'LTR三連複軸流し'
+            })
+            remaining_budget = 0
+            
         return recs
