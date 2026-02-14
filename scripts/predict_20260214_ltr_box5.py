@@ -165,7 +165,7 @@ def process_race(race_id, predictor, budget=1000, horse_results_db=None, peds_db
             'venue': get_venue_name(race_id)
         },
         'recommendations': recs,
-        'predictions': results_df.sort_values('probability', ascending=False).head(5)
+        'all_predictions': results_df.sort_values('probability', ascending=False)
     }
 
 
@@ -235,11 +235,32 @@ def main():  # noqa: C901
                 f.write("\n#### LTRスコア上位 (Top 5)\n")
                 f.write("| 馬番 | 馬名 | スコア | 単勝オッズ |\n")
                 f.write("| :---: | :--- | :---: | :---: |\n")
-                for _, p in race['predictions'].iterrows():
+                # 上位5頭のみ表示
+                for _, p in race['all_predictions'].head(5).iterrows():
                     f.write(f"| {p['horse_number']} | {p['horse_name']} | {p['probability']:.4f} | {p['odds']}倍 |\n")
                 f.write("\n---\n")
 
-    print(f"Report generated: {report_file}")
+    # CSV出力 (シミュレーション用)
+    csv_rows = []
+    for r in all_results:
+        rid = r['info']['race_id']
+        df = r['all_predictions']
+        for _, row in df.iterrows():
+            csv_rows.append({
+                'race_id': rid,
+                'horse_number': row['horse_number'],
+                'horse_name': row['horse_name'],
+                'ltr_score': row['probability'],
+                'win_odds': row['odds'],
+                'rank_prediction': row.get('rank_prediction', 0)  # 未実装なら0
+            })
+            
+    if csv_rows:
+        df_csv = pd.DataFrame(csv_rows)
+        csv_path = "data/processed/prediction_20260214_ltr_full.csv"
+        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+        df_csv.to_csv(csv_path, index=False)
+        print(f"Full prediction data saved: {csv_path}")
 
 
 if __name__ == "__main__":
