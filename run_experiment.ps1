@@ -7,6 +7,7 @@ Write-Host "=== Starting Experiment ==="
 # 1. Train
 Write-Host "Step 1: Training Model..."
 python scripts/train_experiment_model.py
+python scripts/training/train_experiment_model.py
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Training failed!"
     exit 1
@@ -14,7 +15,8 @@ if ($LASTEXITCODE -ne 0) {
 
 # 2. Simulate
 Write-Host "Step 2: Running Simulation..."
-python scripts/simulate_strategy_comparison.py
+echo "Simulating..."
+python scripts/simulation/simulate_strategy_comparison.py
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Simulation failed!"
     exit 1

@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from modules.constants import MODEL_DIR, RAW_DATA_DIR, RESULTS_FILE, HORSE_RESULTS_FILE, PEDS_FILE
 from modules.preprocessing import prepare_training_data
 from modules.training import HorseRaceModel
-from scripts.train_period import train_period_model # 参考程度
+from scripts.training.train_period import train_period_model # 参考程度
 
 def process_year(test_year, sim_master_df, feature_cols, odds_col):
     """

@@ -528,6 +528,18 @@ class Shutuba:
                 
                 h_weight_td = row.find("td", {"class": "Weight"})
                 h_weight = h_weight_td.text.strip() if h_weight_td else None
+
+                # Trainer (厩舎)
+                trainer_td = row.find("td", {"class": "Trainer"})
+                trainer_name = None
+                trainer_id = None
+                if trainer_td:
+                    t_link = trainer_td.find("a")
+                    if t_link:
+                        trainer_name = t_link.text.strip()
+                        if "href" in t_link.attrs:
+                            found = re.search(r"/trainer/(\d+)", t_link["href"])
+                            if found: trainer_id = found.group(1)
                 
                 odds = None
                 pop = None
@@ -544,6 +556,7 @@ class Shutuba:
                 data_list.append({
                     "枠番": waku, "馬番": umaban, "馬名": horse_name, "horse_id": horse_id,
                     "性齢": sex_age, "斤量": weight, "騎手": jockey_name, "jockey_id": jockey_id,
+                    "厩舎": trainer_name, "trainer_id": trainer_id,
                     "馬体重": h_weight, "単勝": odds, "人気": pop,
                     "race_type": race_type, "course_len": course_len, "weather": weather, "ground_state": ground_state
                 })

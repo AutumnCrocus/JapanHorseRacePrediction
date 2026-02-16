@@ -532,22 +532,51 @@ class FeatureEngineer:
         """
         df = df.copy()
         
+        # jockey_idがない場合、騎手名で代用（互換性維持）
+        if 'jockey_id' not in df.columns and '騎手' in df.columns:
+            df['jockey_id'] = df['騎手']
+
         # 予測モード: 既存の統計データをマージ
         if jockey_stats is not None:
+            # jockey_stats側も jockey_id がキーになっていることを期待
+            # もし df['jockey_id'] が騎手名なら、stats側も騎手名である必要がある
+            
+            merged = False
             # jockey_idが一致するものだけマージ
             if 'jockey_id' in df.columns:
-                df = pd.merge(df, jockey_stats, on='jockey_id', how='left')
-                
-                # 欠損埋め（新規騎手など）
-                defaults = {'jockey_avg_rank': 8.0, 'jockey_win_rate': 0.08, 'jockey_return_avg': 75.0}
-                for col, val in defaults.items():
-                    if col in df.columns:
-                        df[col] = df[col].fillna(val)
-            else:
-                df['jockey_avg_rank'] = 8.0
-                df['jockey_win_rate'] = 0.08
-                df['jockey_return_avg'] = 75.0
+                # jockey_statsにjockey_idがあるか確認（DataFrameの場合）
+                if isinstance(jockey_stats, pd.DataFrame) and 'jockey_id' in jockey_stats.columns:
+                    # 型変換して合わせる試み（strにする）
+                    df['jockey_id_str'] = df['jockey_id'].astype(str)
+                    jockey_stats['jockey_id_str'] = jockey_stats['jockey_id'].astype(str)
+                    
+                    df_merged = pd.merge(df, jockey_stats, left_on='jockey_id_str', right_on='jockey_id_str', how='left', suffixes=('', '_stats'))
+                    
+                    # マージ成功判定（win_rateが入ったか）
+                    if 'jockey_win_rate' in df_merged.columns and df_merged['jockey_win_rate'].notna().sum() > 0:
+                        df = df_merged.drop(columns=['jockey_id_str', 'jockey_id_stats'], errors='ignore')
+                        merged = True
+                    else:
+                        # 失敗したら戻す（dfはそのまま）
+                        pass
             
+            # IDマージ失敗、かつ騎手名がある場合
+            if not merged and '騎手' in df.columns:
+                # jockey_statsのjockey_idが実は名前かもしれない
+                stats_renamed = jockey_stats.rename(columns={'jockey_id': '騎手'})
+                if '騎手' in stats_renamed.columns:
+                    df = pd.merge(df, stats_renamed, on='騎手', how='left', suffixes=('', '_stats'))
+                    merged = True
+
+            # 欠損埋め（新規騎手など）
+            defaults = {'jockey_avg_rank': 8.0, 'jockey_win_rate': 0.08, 'jockey_return_avg': 75.0}
+            for col, val in defaults.items():
+                if col in df.columns:
+                    df[col] = df[col].fillna(val)
+                elif col not in df.columns:
+                    # カラム自体がない場合は作成
+                    df[col] = val
+                    
             return df, jockey_stats
 
         # 学習モード: 時系列で特徴量生成

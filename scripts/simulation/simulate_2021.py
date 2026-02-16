@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from modules.constants import MODEL_DIR, RAW_DATA_DIR, RESULTS_FILE, HORSE_RESULTS_FILE, PEDS_FILE
 from modules.preprocessing import prepare_training_data
 from modules.training import HorseRaceModel
-from scripts.train_period import train_period_model # インポート確認用
+from scripts.training.train_period import train_period_model # インポート確認用
 
 def simulate_2021():
     print("=== 2021年 投資シミュレーション (EV戦略) ===")

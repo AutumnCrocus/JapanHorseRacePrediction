@@ -5,8 +5,6 @@
 
 import pandas as pd
 import numpy as np
-import pandas as pd
-import numpy as np
 from .strategy_composite import CompositeBettingStrategy
 from .strategy import BettingStrategy
 
@@ -469,184 +467,116 @@ class BettingAllocator:
 
     @staticmethod
     def _allocate_formation(df_preds, budget):
+        """
+        LTRモデル向けフォーメーション戦略 (2026/02/14版)
+        シミュレーション結果により「3連単3頭Box (上位1-3位)」が最もROIが高かったため、これを主軸にする。
+        
+        予算別戦略:
+        - Budget >= 3000円: 
+            Main: 3連単 3頭BOX (1,2,3番手) = 6点
+            Sub:  3連単 フォーメーション (1->2,3,4->2,3,4,5) などの拡張、または3連複抑え
+        - Budget >= 600円:
+            Main: 3連単 3頭BOX (1,2,3番手) = 6点
+        - Budget < 600円:
+            3連複 3頭BOX (1,2,3番手) = 1点 (またはワイドBOX)
+        """
         df_sorted = df_preds.sort_values('probability', ascending=False)
         top = df_sorted['horse_number'].tolist()
-        probs = df_sorted['probability'].tolist()
         
-        if len(top) < 6:
-            # Fallback
+        if len(top) < 3:
             return BettingAllocator.allocate_budget(df_preds, budget, strategy='balance')
             
-        # 1. Analyze Distribution
-        # Check if top horses are dominant or flat
-        is_flat = (probs[0] - probs[4]) < 0.15 # Top 5 within 15% -> Confused
-        is_strong_axis = probs[0] > 0.30 # Top 1 is strong (>30%)
-        
-        # 2. Strategy Selection & Fallback Loop
-        # Priority: 3-Ren-Tan Formation -> 3-Ren-Puku Box/Form -> Uma-Ren
-        
         recommendations = []
         remaining_budget = budget
         
-        # --- ① 単勝保険ロジック ---
-        # 確率上位5位以内かつ期待値10以上の馬を抽出し、オッズで傾斜配分
-        insurance_candidates = []
-        for i in range(min(5, len(df_sorted))):
-            horse_odds = df_sorted.iloc[i]['odds']
-            horse_prob = probs[i]
-            horse_ev = horse_prob * horse_odds
-            horse_num = top[i]
-            
-            if horse_ev >= 10.0:
-                insurance_candidates.append({
-                    'horse_num': horse_num,
-                    'odds': horse_odds,
-                    'prob': horse_prob,
-                    'ev': horse_ev,
-                    'rank': i + 1,
-                    'formation': None # Placeholder, as single bets don't have a formation in this context
-                })
+        # 1. Main Strategy: 3連単 3頭BOX (上位3頭)
+        # Cost: 6点 * 100円 = 600円
+        # ROI期待値: 73.8% (Simulatied) - ただし爆発力がある
         
-        # 保険対象馬が存在する場合、予算の一部を単勝に配分
-        if insurance_candidates and remaining_budget >= 300:
-            # 単勝保険に使う予算は全体の最大30%、または1頭あたり最大500円
-            max_insurance_budget = min(int(budget * 0.3), 500 * len(insurance_candidates))
-            insurance_budget = min(max_insurance_budget, remaining_budget - 300)  # 最低300円はメインベットに残す
-            
-            if insurance_budget >= 100:
-                # オッズ合計で傾斜配分 (高オッズほど多く配分)
-                total_odds = sum(c['odds'] for c in insurance_candidates)
-                
-                for cand in insurance_candidates:
-                    weight = cand['odds'] / total_odds
-                    amt = int(insurance_budget * weight / 100) * 100
-                    if amt < 100: amt = 100
-                    if amt > remaining_budget: amt = remaining_budget
-                    
-                    if amt >= 100:
-                        recommendations.append({
-                            'bet_type': '単勝',
-                            'method': 'SINGLE',
-                            'combination': str(cand['horse_num']),
-                            'horse_numbers': [cand['horse_num']],
-                            'total_amount': amt,
-                            'points': 1,
-                            'description': f'高期待値単勝({cand["rank"]}位)',
-                            'reason': f'期待値{cand["ev"]:.1f} (確率{int(cand["prob"]*100)}%×オッズ{cand["odds"]:.1f})'
-                        })
-                        remaining_budget -= amt
-
-        # --- Main Bet Logic ---
+        main_horses = top[:3]
+        cost_main = 600
         
-        def calculate_cost(bet_type, method, g1, g2, g3=None):
-            pts = 0
-            if bet_type == '3連単':
-                # Formation: g1 -> g2 -> g3
-                for i in g1:
-                    for j in g2:
-                        if i==j: continue
-                        for k in g3:
-                            if k==i or k==j: continue
-                            pts+=1
-            elif bet_type == '3連複':
-                 if method == 'BOX':
-                    n = len(g1)
-                    pts = n * (n-1) * (n-2) // 6
-                 else: # Formation 1-Axis: g1 -> g2 (actually g2 is list of opponents)
-                    # 3-Ren-Puku 1-Head Axis: g1[0] - g2 - g2
-                    head = g1[0]
-                    opps = [x for x in g2 if x != head]
-                    n = len(opps)
-                    pts = n * (n-1) // 2
-            elif bet_type == '馬連':
-                if method == 'BOX':
-                    n = len(g1)
-                    pts = n * (n-1) // 2
-                else: # Formation/Nagashi
-                     head = g1[0]
-                     opps = [x for x in g2 if x != head]
-                     pts = len(opps)
-            elif bet_type == 'ワイド':
-                 # Box
-                 n = len(g1)
-                 pts = n * (n-1) // 2
-                 
-            return pts * 100
+        if remaining_budget >= cost_main:
+            # 資金配分: 予算の50%〜80%をメインに投入
+            # ただし最低600円
+            alloc_ratio = 0.6
+            target_alloc = int(budget * alloc_ratio)
+            if target_alloc < 600:
+                target_alloc = 600
             
-        main_bet = None
-        
-        # Try 3-Ren-Tan Formation (High Budget, Hierarchy)
-        # Conditions: Not Flat OR Budget sufficient
-        if not is_flat and remaining_budget >= 1000:
-            # 1st: Top 2, 2nd: Top 5, 3rd: Top 6 (Wide Formation)
-            g1, g2, g3 = top[:2], top[:5], top[:6]
-            cost = calculate_cost('3連単', 'FORMATION', g1, g2, g3)
+            # 1点あたりの金額算出 (100円単位)
+            unit_price = (target_alloc // 600) * 100
+            actual_cost = unit_price * 6
             
-            if cost > remaining_budget:
-                # Shrink: 1st: Top 1, 2nd: Top 4, 3rd: Top 5
-                g1, g2, g3 = top[:1], top[:4], top[:5]
-                cost = calculate_cost('3連単', 'FORMATION', g1, g2, g3)
-            
-            if cost <= remaining_budget:
-                main_bet = {
-                    'type': '3連単', 'method': 'FORMATION', 'g1': g1, 'g2': g2, 'g3': g3, 'cost': cost, 'pts': cost//100
+            if actual_cost <= remaining_budget:
+                rec = {
+                    'type': '3連単',
+                    'method': 'BOX',
+                    'desc': 'LTR推奨・精鋭3頭BOX',
+                    'horses': main_horses,
+                    'count': 6,
+                    'amount': actual_cost,
+                    'formation': [main_horses]
                 }
-
-        # Try 3-Ren-Puku (If 3-Ren-Tan failed or Flat)
-        if not main_bet:
-            if is_flat:
-                 # Box 5
-                 g1 = top[:5]
-                 cost = calculate_cost('3連複', 'BOX', g1, None)
-                 if cost <= remaining_budget:
-                     main_bet = {'type': '3連複', 'method': 'BOX', 'g1': g1, 'cost': cost, 'pts': cost//100}
-            else:
-                 # 1-Head Axis 6 Flow
-                 g1, g2 = top[:1], top[:6]
-                 cost = calculate_cost('3連複', 'FORMATION', g1, g2)
-                 if cost <= remaining_budget:
-                     main_bet = {'type': '3連複', 'method': '流し', 'g1': g1, 'g2': g2, 'cost': cost, 'pts': cost//100}
-
-        # Try Uma-Ren (Low Budget Fallback)
-        if not main_bet:
-             if is_flat:
-                 # Box 5
-                 g1 = top[:5]
-                 cost = calculate_cost('馬連', 'BOX', g1, None)
-                 if cost <= remaining_budget:
-                     main_bet = {'type': '馬連', 'method': 'BOX', 'g1': g1, 'cost': cost, 'pts': cost//100}
-             else:
-                 # Nagashi 5
-                 g1, g2 = top[:1], top[:6]
-                 cost = calculate_cost('馬連', '流し', g1, g2)
-                 if cost <= remaining_budget:
-                    main_bet = {'type': '馬連', 'method': '流し', 'g1': g1, 'g2': g2, 'cost': cost, 'pts': cost//100}
-                    
-        # Try Wide (Ultimate Fallback)
-        if not main_bet:
-             g1 = top[:4]
-             cost = calculate_cost('ワイド', 'BOX', g1, None)
-             if cost <= remaining_budget:
-                  main_bet = {'type': 'ワイド', 'method': 'BOX', 'g1': g1, 'cost': cost, 'pts': cost//100}
-                  
-        # Apply Main Bet
-        if main_bet:
-            # Scale amount
-            unit = (remaining_budget // main_bet['cost']) * 100
-            if unit < 100: unit = 100 # Should not happen if cost <= budget check passed
+                recommendations.append(rec)
+                remaining_budget -= actual_cost
+        
+        # 2. Sub Strategy: 3連複/ワイド 抑え (上位4-5頭)
+        # メインが外れた場合 (1,2,3着が 1,2,4 とか 1,3,5 の場合) のケア
+        
+        if remaining_budget >= 100:
+            sub_rec = None
+            if remaining_budget >= 1000 and len(top) >= 5:
+                # 5頭BOX
+                horses_sub = top[:5]
+                cost_sub = 1000
+                unit_sub = (remaining_budget // cost_sub) * 100
+                actual_sub = unit_sub * 10
+                sub_rec = {
+                    'type': '3連複', 'method': 'BOX', 'desc': '抑え5頭BOX',
+                    'horses': horses_sub, 'count': 10, 'amount': actual_sub, 'formation': [horses_sub]
+                }
+            elif remaining_budget >= 400 and len(top) >= 4:
+                # 4頭BOX
+                horses_sub = top[:4]
+                cost_sub = 400
+                unit_sub = (remaining_budget // cost_sub) * 100
+                actual_sub = unit_sub * 4
+                sub_rec = {
+                    'type': '3連複', 'method': 'BOX', 'desc': '抑え4頭BOX',
+                    'horses': horses_sub, 'count': 4, 'amount': actual_sub, 'formation': [horses_sub]
+                }
+            elif remaining_budget >= 100 and len(top) >= 3:
+                # 3頭BOX (メインと同じだが、3連複で安く抑える)
+                horses_sub = top[:3]
+                cost_sub = 100
+                unit_sub = (remaining_budget // cost_sub) * 100
+                actual_sub = unit_sub * 1
+                sub_rec = {
+                    'type': '3連複', 'method': 'BOX', 'desc': '保険3頭BOX',
+                    'horses': horses_sub, 'count': 1, 'amount': actual_sub, 'formation': [horses_sub]
+                }
             
+            if sub_rec:
+                recommendations.append(sub_rec)
+                remaining_budget -= sub_rec['amount']
+        
+        # もしメインすら買えなかった場合 (Budget < 600)
+        if not recommendations and budget < 600:
+            # 3連複 3頭BOX (1点)
             rec = {
-                'type': main_bet['type'],
-                'method': main_bet['method'],
-                'count': main_bet['pts'],
-                'amount': main_bet['pts'] * unit,
-                'horses': main_bet['g1'] + (main_bet.get('g2') or []) + (main_bet.get('g3') or []),
-                'formation': [main_bet['g1']] + ([main_bet['g2']] if 'g2' in main_bet else []) + ([main_bet['g3']] if 'g3' in main_bet else []),
-                'desc': '混戦BOX' if is_flat and 'BOX' in main_bet['method'] else '軸強固・フォーメーション'
+                'type': '3連複',
+                'method': 'BOX',
+                'desc': 'LTRミニマムBOX',
+                'horses': top[:3],
+                'count': 1,
+                'amount': 100,
+                'formation': [top[:3]]
             }
             recommendations.append(rec)
-            
+        
         return recommendations
+
 
     @staticmethod
     def _allocate_kelly(df_preds: pd.DataFrame, budget: int, odds_data: dict = None,
