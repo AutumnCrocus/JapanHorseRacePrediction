@@ -34,7 +34,7 @@ def test_formation():
     # 1. Low Budget Test (500 yen)
     print("\n--- Case 1: Low Budget (500 yen) ---")
     df = create_mock_preds('normal')
-    recs = BettingAllocator._allocate_formation(df, 500)
+    recs = BettingAllocator.allocate_budget(df, 500, strategy='formation')
     print(f"Result Count: {len(recs)}")
     for r in recs:
         print(f"Type: {r['bet_type']}, Method: {r['method']}, Cost: {r['total_amount']}")
@@ -47,7 +47,7 @@ def test_formation():
     # 2. Strong Axis & High Budget (10000 yen) -> Expect 3-Ren-Tan + Insurance
     print("\n--- Case 2: Strong Axis + High Budget (10000 yen) ---")
     df = create_mock_preds('strong', top_odds=25.0)  # EV = 0.45 * 25 = 11.25 >= 10
-    recs = BettingAllocator._allocate_formation(df, 10000)
+    recs = BettingAllocator.allocate_budget(df, 10000, strategy='formation')
     
     types = [r['bet_type'] for r in recs]
     print(f"Types: {types}")
@@ -59,7 +59,7 @@ def test_formation():
     # 3. Flat Distribution (Confused) -> Expect BOX
     print("\n--- Case 3: Flat Distribution ---")
     df = create_mock_preds('flat')
-    recs = BettingAllocator._allocate_formation(df, 5000)
+    recs = BettingAllocator.allocate_budget(df, 5000, strategy='formation')
     
     methods = [r['method'] for r in recs]
     print(f"Methods: {methods}")
