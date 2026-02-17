@@ -1,9 +1,12 @@
 
 import os
 import pandas as pd
+import numpy as np
 import pickle
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from .constants import RAW_DATA_DIR, RESULTS_FILE
+from .scraping import Shutuba, Odds
 
 def load_yearly_data(base_dir, file_prefix, start_year, end_year):
     """
@@ -99,3 +102,84 @@ def load_results(start_year, end_year):
             return full_data # フィルタ失敗したら全量
             
     return pd.DataFrame()
+
+def fetch_and_process_race_data(race_id, processor, engineer, bias_map=None, jockey_stats=None):
+    """
+    指定されたレースIDのデータを取得し、前処理・特徴量生成を行ってDataFrameを返す。
+    リアルタイム予測(API)用。
+    """
+    print(f"Fetching data for Race ID: {race_id}")
+    
+    # 1. 出馬表取得
+    df_shutuba = Shutuba.scrape(race_id)
+    if df_shutuba.empty:
+        print("Failed to fetch shutuba data.")
+        return pd.DataFrame()
+
+    # Cleaning: Validate and fix list values in DataFrame
+    for col in df_shutuba.columns:
+        if df_shutuba[col].apply(lambda x: isinstance(x, list)).any():
+            def flatten_cell(x):
+                if isinstance(x, list):
+                    if len(x) > 0: return str(x[0])
+                    else: return ""
+                return x
+            df_shutuba[col] = df_shutuba[col].apply(flatten_cell)
+
+    # 日付カラムを追加（現在日時）
+    if 'date' not in df_shutuba.columns:
+        df_shutuba['date'] = datetime.now()
+
+    # 2. オッズ取得
+    try:
+        odds_data = Odds.scrape(race_id)
+        if odds_data and 'tan' in odds_data:
+            for idx, row in df_shutuba.iterrows():
+                try:
+                    umaban = int(row['馬番'])
+                    if umaban in odds_data['tan']:
+                         df_shutuba.at[idx, '単勝'] = odds_data['tan'][umaban]
+                except: pass
+    except Exception as e:
+        print(f"Warning: Failed to fetch odds: {e}")
+
+    # 3. 前処理 & 特徴量生成
+    try:
+        # 3.1 Processor
+        df_processed = processor.process_results(df_shutuba)
+        
+        # 3.2 馬体重補完
+        if '体重' in df_processed.columns:
+            mean_weight = df_processed['体重'].mean()
+            if pd.isna(mean_weight): mean_weight = 470.0
+            df_processed['体重'] = df_processed['体重'].fillna(mean_weight)
+                
+        if '体重変化' in df_processed.columns:
+            df_processed['体重変化'] = df_processed['体重変化'].fillna(0)
+
+        # 3.3 Engineer
+        # Note: horse_results_db / peds_db are not passed here, so history/peds features might be skipped
+        # specific logic depends on Engineer implementation handling None
+        
+        # Add basic engineer features
+        # Assuming engineer methods handle missing external DBs gracefully or we skip them
+        if hasattr(engineer, 'add_jockey_features') and jockey_stats is not None:
+             df_processed, _ = engineer.add_jockey_features(df_processed, jockey_stats)
+        elif hasattr(engineer, 'add_jockey_features'):
+             df_processed, _ = engineer.add_jockey_features(df_processed) # Try without stats if supported
+             
+        if hasattr(engineer, 'add_odds_features'):
+            df_processed = engineer.add_odds_features(df_processed)
+        
+        # 3.4 カテゴリエンコード
+        cat_cols = ['性', 'race_type', 'weather', 'ground_state', 'sire', 'dam']
+        cat_cols = [c for c in cat_cols if c in df_processed.columns]
+        df_processed = processor.encode_categorical(df_processed, cat_cols)
+        
+        return df_processed
+        
+    except Exception as e:
+        print(f"Error in processing race data: {e}")
+        import traceback
+        traceback.print_exc()
+        return pd.DataFrame()
