@@ -19,14 +19,16 @@ from modules.constants import MODEL_DIR
 from modules.training import HorseRaceModel, create_sample_model, EnsembleModel
 from modules.scraping import Odds
 from modules.strategy import BettingStrategy
+from modules.deepfm_inference import DeepFMInference
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 # グローバル変数でモデルを保持 (複数モデル対応)
-# { 'lgbm': HorseRaceModel, 'ltr': RankingWrapper }
+# { 'lgbm': HorseRaceModel, 'ltr': RankingWrapper, 'stacking': HorseRaceModel }
 MODELS = {}
 PROCESSORS = {}
 ENGINEERS = {}
+DEEPFM_INFERENCE = None
 bias_map = None
 jockey_stats = None
 
@@ -83,6 +85,40 @@ def load_model(model_type='lgbm'):
                     ENGINEERS['lgbm'] = pickle.load(f)
             print("LGBMモデルのロード完了。")
 
+    elif model_type == 'stacking':
+        # DeepFMスタッキングモデル (experiment_model_2026.pkl)
+        stacking_model_path = os.path.join(MODEL_DIR, 'experiment_model_2026.pkl')
+        
+        if os.path.exists(stacking_model_path):
+            print(f"Stackingモデルを読み込み中: {stacking_model_path}")
+            m = HorseRaceModel()
+            m.load(stacking_model_path)
+            MODELS['stacking'] = m
+            
+            # ProcessorとEngineerはLGBM版を使用
+            latest_model_dir = os.path.join(MODEL_DIR, 'historical_2010_2026')
+            proc_path = os.path.join(latest_model_dir, 'processor.pkl')
+            eng_path = os.path.join(latest_model_dir, 'engineer.pkl')
+            if os.path.exists(proc_path):
+                with open(proc_path, 'rb') as f:
+                    PROCESSORS['stacking'] = pickle.load(f)
+            if os.path.exists(eng_path):
+                with open(eng_path, 'rb') as f:
+                    ENGINEERS['stacking'] = pickle.load(f)
+
+            # DeepFM推論エンジンのロード
+            global DEEPFM_INFERENCE
+            if DEEPFM_INFERENCE is None:
+                deepfm_model_path = os.path.join(MODEL_DIR, 'deepfm', 'deepfm_model.pth')
+                deepfm_meta_path = os.path.join(MODEL_DIR, 'deepfm', 'deepfm_metadata.pkl')
+                if os.path.exists(deepfm_model_path) and os.path.exists(deepfm_meta_path):
+                    print("DeepFM推論エンジンを初期化中...")
+                    DEEPFM_INFERENCE = DeepFMInference(deepfm_model_path, deepfm_meta_path)
+                else:
+                    print("Warning: DeepFMモデルまたはメタデータが見つかりません。")
+            
+            print("Stackingモデルのロード完了。")
+
     elif model_type == 'ltr':
         # 新しい LTR モデル
         ltr_model_dir = os.path.join(MODEL_DIR, 'standalone_ranking')
@@ -126,22 +162,25 @@ def load_model(model_type='lgbm'):
 @app.route('/')
 def index():
     """メインページ"""
-    # デフォルトモデル(LGBM)の情報を取得
-    model = get_model('lgbm')
+    # スタッキングモデル（DeepFM+LGBM）を優先
+    target_type = 'stacking' if 'stacking' in MODELS else 'lgbm'
+    model = get_model(target_type)
+    
     model_data = {
         'success': False,
-        'algorithm': 'LightGBM (Historical)',
+        'algorithm': 'Stacking (DeepFM+LGBM)' if target_type == 'stacking' else 'LightGBM (Historical)',
         'last_updated': '-',
         'feature_count': 0,
         'features': [],
         'available': False,
-        'metrics': {'auc': 0.802, 'recovery_rate': 114.1}
+        'metrics': {'auc': 0.860, 'recovery_rate': 94.1} if target_type == 'stacking' else {'auc': 0.802, 'recovery_rate': 114.1}
     }
     
     if model:
         try:
-            latest_model_dir = os.path.join(MODEL_DIR, 'historical_2010_2026')
-            model_path = os.path.join(latest_model_dir, 'model.pkl')
+            # 最終更新日の取得
+            model_file = 'experiment_model_2026.pkl' if target_type == 'stacking' else 'model.pkl'
+            model_path = os.path.join(MODEL_DIR, model_file) if target_type == 'stacking' else os.path.join(MODEL_DIR, 'historical_2010_2026', 'model.pkl')
             
             if os.path.exists(model_path):
                 mtime = os.path.getmtime(model_path)
@@ -261,6 +300,17 @@ def run_prediction_logic(df, race_name_default, race_info_default, race_id=None,
             return jsonify({'error': f'モデル({model_type})の読み込みに失敗しました'}), 500
         
         feature_names = model.feature_names
+        
+        # DeepFMスコアが必要な場合は算出を試みる
+        if 'deepfm_score' in feature_names and DEEPFM_INFERENCE is not None:
+            if 'deepfm_score' not in df.columns:
+                print("DeepFMスコアをリアルタイム算出中...")
+                try:
+                    df['deepfm_score'] = DEEPFM_INFERENCE.predict(df)
+                    print(f"DeepFMスコア算出完了 (サンプル数: {len(df)})")
+                except Exception as e:
+                    print(f"DeepFMスコアの算出に失敗しました: {e}")
+                    df['deepfm_score'] = 0.5 # フォールバック
         
         # 欠損している特徴量はデフォルト値で埋める (Simplified for brevity)
         for col in feature_names:
@@ -824,5 +874,7 @@ def launch_ipat_browser():
 
 
 if __name__ == '__main__':
-    load_model()
+    load_model('lgbm')
+    load_model('ltr')
+    load_model('stacking')
     app.run(host='0.0.0.0', port=8080, debug=False)
