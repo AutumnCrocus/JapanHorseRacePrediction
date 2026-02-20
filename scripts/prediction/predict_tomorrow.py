@@ -2,7 +2,7 @@
 import os
 import sys
 import re
-import time
+
 import requests
 import pandas as pd
 import numpy as np
@@ -13,10 +13,11 @@ from datetime import datetime
 # モジュールパスを通す
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
-from modules.constants import HEADERS, MODEL_DIR, RAW_DATA_DIR, RESULTS_FILE, HORSE_RESULTS_FILE, PEDS_FILE
+from modules.constants import HEADERS, MODEL_DIR, RAW_DATA_DIR, HORSE_RESULTS_FILE, PEDS_FILE
 from modules.scraping import Shutuba, Odds
 from modules.training import HorseRaceModel, EnsembleModel, RacePredictor
 from modules.betting_allocator import BettingAllocator
+from modules.strategies.experimental import ExperimentalStrategies
 
 def get_race_ids(date_str):
     """
@@ -132,21 +133,42 @@ def load_prediction_pipeline():
     """モデルと前処理パイプラインをロード"""
     print("Loading models...")
     
-    # Check for ensemble model first
-    if os.path.exists(os.path.join(MODEL_DIR, 'model_lgbm_0.pkl')):
+    # Try loading 2026 model first (Priority)
+    model_name = 'experiment_model_2026.pkl'
+    model_path = os.path.join(MODEL_DIR, model_name)
+    
+    if os.path.exists(model_path):
+        model = HorseRaceModel()
+        model.load(model_path)
+        print(f"Loaded {model_name} (New 2026 Model)")
+        processor_path = os.path.join(MODEL_DIR, 'processor_2026.pkl')
+        engineer_path = os.path.join(MODEL_DIR, 'engineer_2026.pkl')
+    
+    # Check for ensemble model (Fallback or specific use)
+    elif os.path.exists(os.path.join(MODEL_DIR, 'model_lgbm_0.pkl')):
         model = EnsembleModel()
         model.load(MODEL_DIR)
         print("Ensemble model loaded.")
+        processor_path = os.path.join(MODEL_DIR, 'processor.pkl')
+        engineer_path = os.path.join(MODEL_DIR, 'engineer.pkl')
+    
     else:
         model = HorseRaceModel()
         model.load()
-        print("Single model loaded.")
+        print("Single model loaded (default).")
+        processor_path = os.path.join(MODEL_DIR, 'processor.pkl')
+        engineer_path = os.path.join(MODEL_DIR, 'engineer.pkl')
 
     # Processor / Engineer
     import pickle
-    processor_path = os.path.join(MODEL_DIR, 'processor.pkl')
-    engineer_path = os.path.join(MODEL_DIR, 'engineer.pkl')
     
+    if not os.path.exists(processor_path):
+        print(f"Warning: {processor_path} not found. Falling back to default.")
+        processor_path = os.path.join(MODEL_DIR, 'processor.pkl')
+    if not os.path.exists(engineer_path):
+        print(f"Warning: {engineer_path} not found. Falling back to default.")
+        engineer_path = os.path.join(MODEL_DIR, 'engineer.pkl')
+
     with open(processor_path, 'rb') as f:
         processor = pickle.load(f)
     with open(engineer_path, 'rb') as f:
@@ -154,7 +176,7 @@ def load_prediction_pipeline():
         
     return RacePredictor(model, processor, engineer)
 
-def process_race(race_id, predictor, budget=1000, horse_results_db=None, peds_db=None):
+def process_race(race_id, predictor, budget=500, strategy='formation', horse_results_db=None, peds_db=None):
     """1レース分の処理を実行"""
     print(f"\nProcessing Race ID: {race_id}")
     
@@ -270,10 +292,32 @@ def process_race(race_id, predictor, budget=1000, horse_results_db=None, peds_db
     results_df['odds'] = pd.to_numeric(results_df['単勝'], errors='coerce').fillna(0)
     results_df['expected_value'] = results_df['probability'] * results_df['odds']
     
-    # 5. 予算配分
+    # 5. 予算配分 (Standard)
     recommendations = BettingAllocator.allocate_budget(
         results_df, 
         budget=budget, 
+        strategy=strategy,
+        odds_data=odds_data
+    )
+    
+    # 6. Value Hunter Strategy (Secondary)
+    vh_recs = ExperimentalStrategies.value_hunter(
+        results_df,
+        budget=5000, # Value Hunter Default
+        odds_data=odds_data
+    )
+    
+    # 7. Dynamic Box Strategy (Tertiary)
+    # Budget 3000 (Recommended for Profit)
+    db_recs_3000 = ExperimentalStrategies.dynamic_box(
+        results_df,
+        budget=3000, 
+        odds_data=odds_data
+    )
+    # Budget 1000 (Recommended for ROI/Efficiency)
+    db_recs_1000 = ExperimentalStrategies.dynamic_box(
+        results_df,
+        budget=1000, 
         odds_data=odds_data
     )
     
@@ -287,6 +331,11 @@ def process_race(race_id, predictor, budget=1000, horse_results_db=None, peds_db
     return {
         'info': race_info,
         'recommendations': recommendations,
+        'value_hunter': vh_recs,
+        'recommendations': recommendations,
+        'value_hunter': vh_recs,
+        'dynamic_box_3000': db_recs_3000,
+        'dynamic_box_1000': db_recs_1000,
         'predictions': results_df.sort_values('probability', ascending=False).head(5)[['馬番', '馬名', 'probability', '単勝']].to_dict('records')
     }
 
@@ -343,7 +392,15 @@ def load_historical_data():
     return horse_results, peds
 
 def main():
-    date_str = '20260131'
+    # Default to tomorrow
+    tomorrow = datetime.now() + pd.Timedelta(days=1)
+    date_str = tomorrow.strftime('%Y%m%d')
+    
+    # Allow command line argument for date
+    if len(sys.argv) > 1:
+        date_str = sys.argv[1]
+        
+    print(f"Predicting for date: {date_str}")
     race_ids = get_race_ids(date_str)
     
     if not race_ids:
@@ -356,10 +413,15 @@ def main():
     
     all_results = []
     
+    # Settings
+    budget = 500
+    strategy = 'formation'
+    
     # Sequential Processing (Stable & Fast with pre-calc)
     for rid in tqdm(race_ids, desc="Processing Races"):
         try:
-            res = process_race(rid, predictor, budget=1000, horse_results_db=horse_results, peds_db=peds)
+            # Strategy: Formation (500円) is the best performing strategy in 2025 simulation
+            res = process_race(rid, predictor, budget=budget, strategy=strategy, horse_results_db=horse_results, peds_db=peds)
             if res:
                 all_results.append(res)
         except Exception as e:
@@ -395,7 +457,7 @@ def main():
                 f.write(f"### {venue}{r_num}R: {info['race_name']}\n")
                 f.write(f"- 発走情報: {info['race_time']}\n\n")
                 
-                f.write("#### 推奨買い目 (予算1000円)\n")
+                f.write(f"#### 推奨買い目 (戦略:{'Formation' if budget==500 else 'Balance'} / 予算{budget}円)\n")
                 recs = race['recommendations']
                 if not recs:
                     f.write("- 推奨なし (オッズ不足または混戦)\n")
@@ -403,6 +465,34 @@ def main():
                     for rec in recs:
                         f.write(f"- **{rec['bet_type']} {rec['method']}**: {rec['combination']} ({rec['total_amount']}円)\n")
                         f.write(f"  - 理由: {rec['reason']}\n")
+                
+                # Value Hunter Recommendations
+                vh_recs = race.get('value_hunter', [])
+                if vh_recs:
+                    f.write(f"\n#### 推奨買い目 (戦略:Value Hunter / 予算5000円)\n")
+                    for rec in vh_recs:
+                        f.write(f"- **{rec['bet_type']} {rec['method']}**: {rec['combination']} ({rec['total_amount']}円)\n")
+                        f.write(f"  - 理由: {rec['reason']}\n")
+                        
+                # Dynamic Box Recommendations (3000 JPY)
+                db_recs_3000 = race.get('dynamic_box_3000', [])
+                if db_recs_3000:
+                    f.write(f"\n#### 推奨買い目 (戦略:Dynamic Box / 予算3000円 - 利益重視)\n")
+                    for rec in db_recs_3000:
+                        f.write(f"- **{rec['bet_type']} {rec['method']}**: {rec['combination']} ({rec['total_amount']}円)\n")
+                        f.write(f"  - 理由: {rec['reason']}\n")
+                        if 'desc' in rec and rec['desc']:
+                             f.write(f"  - 詳細: {rec['desc']}\n")
+
+                # Dynamic Box Recommendations (1000 JPY)
+                db_recs_1000 = race.get('dynamic_box_1000', [])
+                if db_recs_1000:
+                    f.write(f"\n#### 推奨買い目 (戦略:Dynamic Box / 予算1000円 - 効率重視)\n")
+                    for rec in db_recs_1000:
+                        f.write(f"- **{rec['bet_type']} {rec['method']}**: {rec['combination']} ({rec['total_amount']}円)\n")
+                        f.write(f"  - 理由: {rec['reason']}\n")
+                        if 'desc' in rec and rec['desc']:
+                             f.write(f"  - 詳細: {rec['desc']}\n")
                 
                 f.write("\n#### AI注目馬 (Top 5)\n")
                 f.write("| 馬番 | 馬名 | 勝率予測 | 単勝オッズ |\n")

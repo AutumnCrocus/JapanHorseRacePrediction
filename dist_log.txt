@@ -1,0 +1,28 @@
+=== Data Distribution Check ===
+Total rows: 773068
+Columns: ['着順', '枠番', '馬番', '馬名', '性齢', '斤量', '騎手', 'タイム', '着差', 'タイム指数', '通過', '上り', '単勝', '人気', '馬体重', '調教タイム', '厩舎コメント', '備考', '調教師', '馬主', '賞金（万円）', 'horse_id', 'jockey_id', 'trainer_id', 'course_len', 'race_type', 'original_race_id', 'venue_id', 'kai', 'day', 'race_num', '性', '年齢', 'タイム秒', '体重', '体重変化', 'running_style', 'avg_rank', 'win_rate', 'place_rate', 'race_count', 'avg_last_3f', 'avg_running_style', 'interval', 'prev_rank', 'date', 'same_distance_win_rate', 'same_type_win_rate', 'rank_num', 'is_win', 'jockey_avg_rank', 'jockey_win_rate', 'return', 'jockey_return_avg', 'peds_score_speed', 'peds_score_stamina', 'peds_score_dirt', 'sire', 'dam', 'odds', 'popularity', 'target', 'year']
+
+Year Distribution:
+year
+2010    49568
+2011    48726
+2012    49472
+2013    49638
+2014    49877
+2015    49609
+2016    49697
+2017    48922
+2018    48199
+2019    47118
+2020    47876
+2021    47476
+2022    46840
+2023    47273
+2024    45280
+2025    47497
+Name: count, dtype: int64
+
+Train Horses (<=2024): 76792
+Test Horses (2025): 11885
+New Horses in 2025: 5181
+Examples of new horses: ['2023100655', '2020106368', '2022101129', '2023107394', '2021100008']

@@ -5,7 +5,7 @@ import numpy as np
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from .constants import RAW_DATA_DIR, RESULTS_FILE
+from .constants import RAW_DATA_DIR, RESULTS_FILE, PROCESSED_DATA_DIR
 from .scraping import Shutuba, Odds
 
 def load_yearly_data(base_dir, file_prefix, start_year, end_year):
@@ -78,6 +78,37 @@ def load_results(start_year, end_year):
     data = load_yearly_data(results_dir, "results", start_year, end_year)
     
     if (isinstance(data, pd.DataFrame) and not data.empty) or (isinstance(data, dict) and data):
+        # Merge DeepFM scores if available
+        deepfm_path = os.path.join(PROCESSED_DATA_DIR, 'deepfm_scores.csv')
+        if isinstance(data, pd.DataFrame) and os.path.exists(deepfm_path):
+             try:
+                 print(f"Loading DeepFM scores from {deepfm_path}...")
+                 deepfm_df = pd.read_csv(deepfm_path)
+                 
+                 # Ensure types for merge
+                 # Check if race_id exists
+                 if 'race_id' in data.columns:
+                     data['race_id'] = data['race_id'].astype(str)
+                 else:
+                     # If race_id is index
+                     data = data.reset_index()
+                     data['race_id'] = data['race_id'].astype(str)
+
+                 if 'horse_number' in data.columns:
+                     data['horse_number'] = data['horse_number'].astype(int)
+                 
+                 deepfm_df['race_id'] = deepfm_df['race_id'].astype(str)
+                 deepfm_df['horse_number'] = deepfm_df['horse_number'].astype(int)
+                 
+                 # Merge (Left Join)
+                 initial_len = len(data)
+                 # Keep only necessary columns from deepfm
+                 data = pd.merge(data, deepfm_df[['race_id', 'horse_number', 'deepfm_score']], 
+                               on=['race_id', 'horse_number'], how='left')
+                 print(f"Merged DeepFM scores. Rows: {initial_len} -> {len(data)}")
+             except Exception as e:
+                 print(f"Failed to merge DeepFM scores: {e}")
+
         return data
         
     # 年別ファイルがまだない場合、既存の巨大ファイルからロード (フォールバック)
