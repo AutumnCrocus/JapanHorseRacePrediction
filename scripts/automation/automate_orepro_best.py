@@ -1,8 +1,8 @@
 """
-最優秀モデル/戦略の買い目を俺プロ（orePro）に自動登録するスクリプト
+最優秀モデル/戦略の買い目を俺プロに自動登録 (v17ベースの安定版)
+- 最優秀: lgbm / box4_sanrenpuku (回収率211.5%)
 - 対象レポート: reports/prediction_20260221_all_models.md
-- 対象モデル/戦略: best_model_strategy.json から読み込み
-- SeleniumでChrome操作 (automate_orepro_v17.py ベース)
+- 対象日: 2026/02/21 (土)
 """
 
 import json
@@ -29,25 +29,8 @@ SECRETS_FILE = os.path.join(PROJECT_ROOT, 'scripts', 'debug', 'netkeiba_secrets.
 LOG_DIR = os.path.join(PROJECT_ROOT, 'scripts', 'debug', 'screenshots_orepro_best')
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# レース日付: 2026/02/21
-RACE_DATE = '20260221'
-
-# 会場コード: JRA場コード
-VENUE_MAP = {
-    '東京': '05',
-    '阪神': '09',
-    '小倉': '10',
-}
-
-# 各会場の開催回と日目  (前回調査結果)
-KAI_DAY_MAP = {
-    '東京': ('01', '07'),    # 第1回 7日目
-    '阪神': ('01', '01'),    # 第1回 1日目
-    '小倉': ('01', '07'),    # 第1回 7日目
-}
-
 logging.basicConfig(
-    filename=os.path.join(LOG_DIR, f'orepro_best_{RACE_DATE}.log'),
+    filename=os.path.join(LOG_DIR, 'orepro_best_20260221.log'),
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s'
 )
@@ -55,113 +38,6 @@ logger = logging.getLogger()
 console = logging.StreamHandler(sys.stdout)
 console.setLevel(logging.INFO)
 logger.addHandler(console)
-
-
-def build_race_id(venue_name: str, race_num: int) -> str:
-    """会場名と出走番号からrace_idを生成"""
-    jyo = VENUE_MAP.get(venue_name, '05')
-    kai, day = KAI_DAY_MAP.get(venue_name, ('01', '01'))
-    year = RACE_DATE[:4]
-    return f"{year}{jyo}{kai}{day}{race_num:02d}"
-
-
-def load_best_model_strategy():
-    """最優秀モデル/戦略をJSONから読み込む"""
-    if not os.path.exists(BEST_MODEL_JSON):
-        logger.warning("best_model_strategy.json が見つかりません。デフォルト (lgbm/box4_sanrenpuku) を使用します。")
-        return 'lgbm', 'box4_sanrenpuku'
-    with open(BEST_MODEL_JSON, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    return data['model'], data['strategy']
-
-
-def parse_report(target_model: str, target_strategy: str) -> dict:
-    """
-    レポートから対象モデル/戦略の買い目をパースする
-    Returns: {race_id: [bets...]}
-    """
-    bets_by_race = {}
-    current_race_id = None
-    in_target_section = False
-
-    if not os.path.exists(REPORT_FILE):
-        logger.error(f"レポートファイルが見つかりません: {REPORT_FILE}")
-        return {}
-
-    with open(REPORT_FILE, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-
-    # 表示用文字列を組み立て
-    target_header = f"モデル: {target_model} / 戦略: {target_strategy}"
-
-    for line in lines:
-        line = line.rstrip()
-
-        # ## 東京1R (202605010701) 形式
-        m_race = re.search(r'## (東京|阪神|小倉)(\d+)R\s*\((\d+)\)', line)
-        if m_race:
-            current_race_id = m_race.group(3)  # race_idをそのまま使う
-            bets_by_race[current_race_id] = []
-            in_target_section = False
-            continue
-
-        # ### モデル: lgbm / 戦略: box4_sanrenpuku
-        if line.startswith('###') and target_header in line:
-            in_target_section = True
-            continue
-        elif line.startswith('###'):
-            in_target_section = False
-            continue
-
-        # 買い目行のパース: - 3連複 BOX (2,5,1,13 BOX): 400円 (4点)
-        if in_target_section and current_race_id and line.startswith('- '):
-            try:
-                m = re.match(
-                    r'- (単勝|複勝|馬連|ワイド|馬単|3連複|3連単)\s+(BOX|流し|SINGLE|Formation)\s+\((.+?)\):\s+(\d+)円',
-                    line
-                )
-                if not m:
-                    continue
-
-                bet_type = m.group(1)
-                method_raw = m.group(2)
-                combo_str = m.group(3)
-                amount = int(m.group(4))
-
-                # 馬番のパース
-                if '軸:' in combo_str and '相手:' in combo_str:
-                    m_axis = re.search(r'軸:([\d,]+)', combo_str)
-                    m_opp = re.search(r'相手:([\d,]+)', combo_str)
-                    axis = [int(h) for h in m_axis.group(1).split(',') if h.strip().isdigit()]
-                    opponents = [int(h) for h in m_opp.group(1).split(',') if h.strip().isdigit()]
-                    horses = {'axis': axis, 'opponents': opponents}
-                    method = '流し'
-                else:
-                    # BOX形式: "2,5,1,13 BOX" -> [2,5,1,13]
-                    horse_str = re.sub(r'\s*BOX\s*', '', combo_str)
-                    horses_raw = re.split(r'[,\s]+', horse_str.strip())
-                    horses = [int(h) for h in horses_raw if h.strip().isdigit()]
-                    if method_raw.upper() == 'BOX':
-                        method = 'BOX'
-                    elif method_raw == 'SINGLE':
-                        method = 'SINGLE'
-                        horses = horses[:1]  # 単勝は1頭
-                    else:
-                        method = method_raw
-
-                bets_by_race[current_race_id].append({
-                    'type': bet_type,
-                    'method': method,
-                    'horses': horses,
-                    'total_amount': amount,
-                    'raw_line': line.strip()
-                })
-            except Exception as e:
-                logger.warning(f"行のパースエラー '{line.strip()}': {e}")
-
-    # 買い目がないレースは除外
-    bets_by_race = {k: v for k, v in bets_by_race.items() if v}
-    return bets_by_race
 
 
 def load_secrets():
@@ -179,68 +55,133 @@ def setup_driver():
     return webdriver.Chrome(options=options)
 
 
+def save_evidence(driver, race_id, step_name):
+    try:
+        ts = datetime.now().strftime('%H%M%S')
+        path = os.path.join(LOG_DIR, f'{race_id}_{ts}_{step_name}.png')
+        driver.save_screenshot(path)
+        logger.info(f'📸 Screenshot: {path}')
+    except Exception as e:
+        logger.error(f'Screenshot failed: {e}')
+
+
 def handle_popups(driver):
     try:
         WebDriverWait(driver, 0.5).until(EC.alert_is_present())
         driver.switch_to.alert.accept()
     except TimeoutException:
         pass
-    try:
-        for btn in driver.find_elements(By.XPATH, "//button[contains(text(), 'はい')]"):
-            if btn.is_displayed():
-                btn.click()
-                time.sleep(0.5)
-                return
-    except Exception:
-        pass
-    try:
-        for btn in driver.find_elements(By.CSS_SELECTOR, '.swal-button--confirm'):
-            if btn.is_displayed():
-                btn.click()
-                time.sleep(0.5)
-    except Exception:
-        pass
-
-
-def login_netkeiba(driver, secrets):
-    logger.info('[LOGIN] ログインページへアクセス...')
-    driver.get('https://regist.netkeiba.com/account/?pid=login')
-    wait = WebDriverWait(driver, 10)
-    try:
-        user_input = wait.until(EC.presence_of_element_located((By.NAME, 'login_id')))
-        pass_input = driver.find_element(By.NAME, 'pswd')
-        user_input.send_keys(secrets['email'])
-        pass_input.send_keys(secrets['password'])
+    for btn_sel in [
+        (By.XPATH, "//button[contains(text(), 'はい')]"),
+        (By.CSS_SELECTOR, '.swal-button--confirm'),
+        (By.CSS_SELECTOR, '.jconfirm-buttons button'),
+    ]:
         try:
-            login_btn = driver.find_element(By.XPATH, "//input[@type='image' and contains(@alt, 'ログイン')]")
+            for btn in driver.find_elements(*btn_sel):
+                if btn.is_displayed():
+                    btn.click()
+                    time.sleep(0.5)
+                    return
         except Exception:
-            login_btn = driver.find_element(By.XPATH, "//button[contains(text(), 'ログイン')]")
-        login_btn.click()
-        wait.until(EC.url_contains('netkeiba.com'))
-        logger.info('[LOGIN] 成功')
-    except Exception as e:
-        logger.error(f'[LOGIN] 失敗: {e}')
-        sys.exit(1)
+            pass
 
 
-def ensure_shutuba_page(driver, race_id: str) -> bool:
-    url = f'https://orepro.netkeiba.com/bet/shutuba.html?mode=init&race_id={race_id}'
-    logger.info(f'[{race_id}] Navigate to: {url}')
-    driver.get(url)
-    time.sleep(4)
-    handle_popups(driver)
+def check_error_popup(driver):
     try:
-        driver.find_element(By.CLASS_NAME, 'Vote')
-        logger.info(f'[{race_id}] 出馬表ページ読み込み成功')
-        return True
+        for el in driver.find_elements(By.CSS_SELECTOR, '.swal-text'):
+            if el.is_displayed() and el.text.strip():
+                logger.error(f'Error Popup: {el.text}')
+                return el.text
     except Exception:
-        logger.error(f'[{race_id}] 出馬表ページの読み込みに失敗')
-        return False
+        pass
+    return None
 
 
-def calculate_combinations(bet_type: str, method: str, horses) -> int:
+def load_best_model_strategy():
+    if not os.path.exists(BEST_MODEL_JSON):
+        return 'lgbm', 'box4_sanrenpuku'
+    with open(BEST_MODEL_JSON, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return data['model'], data['strategy']
+
+
+def parse_report(target_model: str, target_strategy: str) -> dict:
+    """
+    新形式レポートから対象モデル/戦略の買い目をパース
+    ## 東京1R (202605010701)
+    ### モデル: lgbm / 戦略: box4_sanrenpuku
+    - 3連複 BOX (2,5,1,13 BOX): 400円 (4点)
+    """
+    bets_by_race = {}
+    current_race_id = None
+    in_target_section = False
+    target_header = f"モデル: {target_model} / 戦略: {target_strategy}"
+
+    if not os.path.exists(REPORT_FILE):
+        logger.error(f'レポートが見つかりません: {REPORT_FILE}')
+        return {}
+
+    with open(REPORT_FILE, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    for line in lines:
+        line = line.rstrip()
+
+        # ## 東京1R (202605010701) 形式
+        m_race = re.search(r'## (東京|阪神|小倉)(\d+)R\s*\((\d+)\)', line)
+        if m_race:
+            current_race_id = m_race.group(3)
+            bets_by_race[current_race_id] = []
+            in_target_section = False
+            continue
+
+        # ### モデル: lgbm / 戦略: box4_sanrenpuku
+        if line.startswith('###'):
+            in_target_section = target_header in line
+            continue
+
+        if in_target_section and current_race_id and line.startswith('- '):
+            m = re.match(
+                r'- (単勝|複勝|馬連|ワイド|馬単|3連複|3連単)\s+(BOX|流し|SINGLE|Formation)\s+\((.+?)\):\s+(\d+)円',
+                line
+            )
+            if not m:
+                continue
+            bet_type = m.group(1)
+            method_raw = m.group(2)
+            combo_str = m.group(3)
+            amount = int(m.group(4))
+
+            if '軸:' in combo_str and '相手:' in combo_str:
+                m_ax = re.search(r'軸:([\d,]+)', combo_str)
+                m_op = re.search(r'相手:([\d,]+)', combo_str)
+                axis = [h.strip() for h in m_ax.group(1).split(',') if h.strip().isdigit()]
+                opponents = [h.strip() for h in m_op.group(1).split(',') if h.strip().isdigit()]
+                horses = {'axis': axis, 'opponents': opponents}
+                method = '流し'
+            else:
+                horse_str = re.sub(r'\s*BOX\s*', '', combo_str)
+                horses_raw = re.split(r'[,\s]+', horse_str.strip())
+                horses = [h.strip() for h in horses_raw if h.strip().isdigit()]
+                if method_raw.upper() == 'BOX':
+                    method = 'BOX'
+                elif method_raw == 'SINGLE':
+                    method = 'SINGLE'
+                    horses = horses[:1]
+                else:
+                    method = method_raw
+
+            bets_by_race[current_race_id].append({
+                'type': bet_type, 'method': method, 'horses': horses,
+                'total_amount': amount, 'raw_line': line.strip()
+            })
+
+    return {k: v for k, v in bets_by_race.items() if v}
+
+
+def calculate_combinations(bet_type, method, horses):
     if method == 'BOX':
-        n = len(horses) if isinstance(horses, list) else 0
+        n = len(horses)
         if bet_type == '3連複':
             return math.comb(n, 3)
         if bet_type in ['馬連', 'ワイド']:
@@ -257,15 +198,83 @@ def calculate_combinations(bet_type: str, method: str, horses) -> int:
                 return opp_count
         if bet_type in ['馬連', 'ワイド']:
             return opp_count
-    elif method == 'SINGLE':
-        return 1
     return 1
 
 
-def perform_betting(driver, race_id: str, bets: list) -> bool:
-    handle_popups(driver)
+def login_netkeiba(driver, secrets):
+    logger.info('[LOGIN] ログイン中...')
+    driver.get('https://regist.netkeiba.com/account/?pid=login')
+    wait = WebDriverWait(driver, 10)
+    try:
+        user_input = wait.until(EC.presence_of_element_located((By.NAME, 'login_id')))
+        pass_input = driver.find_element(By.NAME, 'pswd')
+        user_input.send_keys(secrets['email'])
+        pass_input.send_keys(secrets['password'])
+        try:
+            btn = driver.find_element(By.XPATH, "//input[@type='image' and contains(@alt, 'ログイン')]")
+        except Exception:
+            btn = driver.find_element(By.XPATH, "//button[contains(text(), 'ログイン')]")
+        btn.click()
+        wait.until(EC.url_contains('netkeiba.com'))
+        logger.info('[LOGIN] 成功')
+    except Exception as e:
+        logger.error(f'[LOGIN] 失敗: {e}')
+        save_evidence(driver, 'login', 'error')
+        sys.exit(1)
 
-    # 買い目を入力するボタンを探す
+
+def input_marks(driver, race_id, bets):
+    """出馬表に◎印を入力"""
+    try:
+        if not bets:
+            return
+        first_bet = bets[0]
+        if first_bet['method'] == '流し':
+            target_horse = first_bet['horses']['axis'][0]
+        else:
+            target_horse = first_bet['horses'][0]
+
+        horse_str = str(int(target_horse))
+        logger.info(f'[{race_id}] ◎ → 馬番 {horse_str}')
+
+        xpath = f"//tr[contains(@class, 'HorseList') and td[text()='{horse_str}']]"
+        row = driver.find_element(By.XPATH, xpath)
+        row_id = row.get_attribute('id')
+        internal_id = row_id.replace('tr_', '')
+        mark_id = f'm1-{internal_id}'
+        label_id = f'ml1-{internal_id}'
+
+        input_el = driver.find_element(By.ID, mark_id)
+        if not input_el.is_selected():
+            label_btn = driver.find_element(By.ID, label_id)
+            driver.execute_script('arguments[0].click();', label_btn)
+            time.sleep(0.5)
+    except Exception as e:
+        logger.warning(f'[{race_id}] 印入力エラー (スキップ): {e}')
+
+
+def ensure_shutuba_page(driver, race_id):
+    url = f'https://orepro.netkeiba.com/bet/shutuba.html?mode=init&race_id={race_id}'
+    logger.info(f'[{race_id}] Navigate: {url}')
+    driver.get(url)
+    time.sleep(4)
+    handle_popups(driver)
+    try:
+        driver.find_element(By.CLASS_NAME, 'Vote')
+        logger.info(f'[{race_id}] 出馬表ページ読み込み成功')
+        return True
+    except Exception:
+        logger.error(f'[{race_id}] 出馬表ページ読み込み失敗')
+        save_evidence(driver, race_id, 'shutuba_fail')
+        return False
+
+
+def perform_betting(driver, race_id, bets):
+    # Step 0: 印入力
+    input_marks(driver, race_id, bets)
+
+    # Step 1: 「買い目を入力する」ボタン
+    handle_popups(driver)
     input_btn = None
     for sel_type, sel_val in [
         (By.ID, 'act-ipat'),
@@ -281,6 +290,7 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
 
     if not input_btn:
         logger.error(f'[{race_id}] 「買い目を入力する」ボタンが見つかりません')
+        save_evidence(driver, race_id, 'input_btn_missing')
         return False
 
     driver.execute_script('arguments[0].scrollIntoView({block: "center"});', input_btn)
@@ -303,17 +313,23 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
     if len(driver.window_handles) > 1:
         driver.switch_to.window(driver.window_handles[-1])
 
+    # Step 2: 買い目を入力
     for i, bet in enumerate(bets):
         try:
             handle_popups(driver)
             b_type = bet['type']
             WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'ul.Col4 li')))
 
+            click_success = False
             for btn in driver.find_elements(By.CSS_SELECTOR, 'ul.Col4 li'):
                 if b_type in btn.text:
                     btn.click()
+                    click_success = True
                     break
+            if not click_success:
+                logger.warning(f'[{race_id}] 券種ボタン {b_type} が見つかりません')
 
+            # 方式選択
             target_method = '通常'
             if bet['method'] == 'BOX':
                 target_method = 'ボックス'
@@ -326,22 +342,45 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
                     time.sleep(0.5)
                     break
 
+            # 馬番選択
             if bet['method'] == '流し':
                 for h in bet['horses']['axis']:
-                    driver.execute_script(f"document.getElementById('uc-0-{h}').click();")
+                    h_val = str(int(h))
+                    try:
+                        driver.execute_script(f"document.getElementById('uc-0-{h_val}').click();")
+                    except Exception as he:
+                        logger.warning(f'軸馬 {h_val} 選択エラー: {he}')
                     time.sleep(0.1)
                 for h in bet['horses']['opponents']:
-                    driver.execute_script(f"document.getElementById('uc-1-{h}').click();")
+                    h_val = str(int(h))
+                    try:
+                        driver.execute_script(f"document.getElementById('uc-1-{h_val}').click();")
+                    except Exception as he:
+                        logger.warning(f'相手馬 {h_val} 選択エラー: {he}')
                     time.sleep(0.1)
             else:
-                for h in (bet['horses'] if isinstance(bet['horses'], list) else []):
-                    driver.execute_script(f"document.getElementById('tr_{h}').click();")
+                # BOX方式: tr → input → label を経由してclick (v14/v17と同じ方法)
+                for h in bet['horses']:
+                    try:
+                        h_val = str(int(h))
+                        tr_id = f'tr_{h_val}'
+                        logger.info(f'馬番 {h_val} 選択中 ({tr_id})')
+                        tr = driver.find_element(By.ID, tr_id)
+                        inp = tr.find_element(By.TAG_NAME, 'input')
+                        lbl = tr.find_element(By.TAG_NAME, 'label')
+                        if not inp.is_selected():
+                            driver.execute_script('arguments[0].click();', lbl)
+                    except Exception as he:
+                        logger.warning(f'[{race_id}] 馬番 {h} 選択エラー: {he}')
+                        save_evidence(driver, race_id, f'horse_{h}_fail')
                     time.sleep(0.1)
 
+            # 金額
             combos = calculate_combinations(bet['type'], bet['method'], bet['horses'])
             unit_price = (bet['total_amount'] // combos // 100) * 100
             if unit_price < 100:
                 unit_price = 100
+            logger.info(f'[{race_id}] Bet {i+1}: {b_type} {bet["method"]} {bet["horses"]} combos={combos} unit={unit_price}')
 
             money_input = driver.find_element(By.NAME, 'money')
             money_input.clear()
@@ -358,11 +397,12 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
                     pass
 
             time.sleep(1)
-            logger.info(f'[{race_id}] Bet {i+1}: {b_type} {bet["method"]} {bet["horses"]} {bet["total_amount"]}円')
+            if check_error_popup(driver):
+                continue
         except Exception as e:
-            logger.error(f'[{race_id}] Bet {i} エラー: {e}')
+            logger.error(f'[{race_id}] Bet {i} error: {e}')
 
-    # セットボタン
+    # Step 3: SetBtn
     try:
         set_btn = None
         for sel in [(By.CLASS_NAME, 'SetBtn'), (By.XPATH, "//button[contains(text(), '買い目をセットする')]")]:
@@ -383,26 +423,25 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
                 logger.error(f'[{race_id}] 出馬表への遷移失敗')
                 return False
         else:
-            logger.error(f'[{race_id}] SetBtnが見つかりません')
+            logger.error(f'[{race_id}] SetBtn が見つかりません')
+            save_evidence(driver, race_id, 'setbtn_missing')
             return False
     except Exception as e:
-        logger.error(f'[{race_id}] セットフェーズエラー: {e}')
+        logger.error(f'[{race_id}] Setフェーズエラー: {e}')
         return False
 
-    # 最終登録ボタン
+    # Step 4: 最終登録
     try:
         final_btn = None
-        for sel in [
-            (By.ID, f'act-bet_{race_id}'),
-            (By.ID, 'bet_button_add'),
-            (By.CSS_SELECTOR, "button[id^='act-bet_']"),
-            (By.CSS_SELECTOR, '.BetBtn')
-        ]:
-            try:
-                final_btn = driver.find_element(*sel)
-                break
-            except Exception:
-                continue
+        try:
+            final_btn = driver.find_element(By.ID, f'act-bet_{race_id}')
+        except Exception:
+            for sel in [(By.ID, 'bet_button_add'), (By.CSS_SELECTOR, "button[id^='act-bet_']"), (By.CSS_SELECTOR, '.BetBtn')]:
+                try:
+                    final_btn = driver.find_element(*sel)
+                    break
+                except Exception:
+                    continue
 
         if final_btn:
             driver.execute_script('arguments[0].scrollIntoView({block: "center"});', final_btn)
@@ -410,9 +449,14 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
             driver.execute_script('arguments[0].click();', final_btn)
             logger.info(f'[{race_id}] 最終登録ボタンクリック')
             time.sleep(4)
+            err = check_error_popup(driver)
+            if err:
+                logger.error(f'[{race_id}] 登録エラー: {err}')
+                return False
             return True
         else:
             logger.error(f'[{race_id}] 最終登録ボタンが見つかりません')
+            save_evidence(driver, race_id, 'finalvote_missing')
             return False
     except Exception as e:
         logger.error(f'[{race_id}] 登録フェーズエラー: {e}')
@@ -421,46 +465,44 @@ def perform_betting(driver, race_id: str, bets: list) -> bool:
 
 def main():
     best_model, best_strategy = load_best_model_strategy()
-    logger.info(f"=== 最優秀モデル/戦略: {best_model} / {best_strategy} ===")
+    logger.info(f'=== 最優秀モデル/戦略: {best_model} / {best_strategy} ===')
 
     bets_by_race = parse_report(best_model, best_strategy)
     if not bets_by_race:
-        logger.error(f"レポートから '{best_model}/{best_strategy}' の買い目が見つかりませんでした。")
+        logger.error("買い目が見つかりませんでした。")
         return
 
-    logger.info(f"パース済みレース数: {len(bets_by_race)}")
-    for rid, bets in list(bets_by_race.items())[:3]:
-        logger.info(f"  {rid}: {len(bets)}件 -> {[b['raw_line'] for b in bets]}")
+    logger.info(f'パース済みレース数: {len(bets_by_race)}')
 
-    # ドライバー起動
     secrets = load_secrets()
     driver = setup_driver()
+
+    success_count = 0
+    fail_count = 0
 
     try:
         login_netkeiba(driver, secrets)
 
-        success_count = 0
-        fail_count = 0
-
-        for race_id, bets in sorted(bets_by_race.items()):
+        for race_id in sorted(bets_by_race.keys()):
+            bets = bets_by_race[race_id]
             if not bets:
                 continue
-            logger.info(f'\n--- {race_id} ---')
+            logger.info(f'\n--- {race_id} ({len(bets)}件) ---')
             if ensure_shutuba_page(driver, race_id):
                 if perform_betting(driver, race_id, bets):
-                    logger.info(f'[{race_id}] SUCCESS')
+                    logger.info(f'[{race_id}] ✅ SUCCESS')
                     success_count += 1
                 else:
-                    logger.error(f'[{race_id}] FAILED')
+                    logger.error(f'[{race_id}] ❌ FAILED')
                     fail_count += 1
             else:
-                logger.error(f'[{race_id}] ページ読み込みに失敗')
+                logger.error(f'[{race_id}] ❌ ページ読み込み失敗')
                 fail_count += 1
             time.sleep(1)
 
         logger.info(f'\n=== 完了: 成功 {success_count}R / 失敗 {fail_count}R ===')
     finally:
-        logger.info('ブラウザを開いたまま終了します（確認用）')
+        logger.info('ブラウザを開いたまま終了します（確認用）。手動でご確認ください。')
         # driver.quit()
 
 

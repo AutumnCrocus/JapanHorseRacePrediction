@@ -134,7 +134,7 @@ def load_results(start_year, end_year):
             
     return pd.DataFrame()
 
-def fetch_and_process_race_data(race_id, processor, engineer, bias_map=None, jockey_stats=None):
+def fetch_and_process_race_data(race_id, processor, engineer, bias_map=None, jockey_stats=None, horse_results_df=None, peds_df=None):
     """
     指定されたレースIDのデータを取得し、前処理・特徴量生成を行ってDataFrameを返す。
     リアルタイム予測(API)用。
@@ -157,9 +157,14 @@ def fetch_and_process_race_data(race_id, processor, engineer, bias_map=None, joc
                 return x
             df_shutuba[col] = df_shutuba[col].apply(flatten_cell)
 
-    # 日付カラムを追加（現在日時）
+    # 日付カラムを追加
     if 'date' not in df_shutuba.columns:
-        df_shutuba['date'] = datetime.now()
+        # race_idから日付を推定 (YYYYMMDD...)
+        try:
+            date_str = str(race_id)[:8]
+            df_shutuba['date'] = pd.to_datetime(date_str, format='%Y%m%d')
+        except:
+            df_shutuba['date'] = datetime.now()
 
     # 2. オッズ取得
     try:
@@ -189,18 +194,31 @@ def fetch_and_process_race_data(race_id, processor, engineer, bias_map=None, joc
             df_processed['体重変化'] = df_processed['体重変化'].fillna(0)
 
         # 3.3 Engineer
-        # Note: horse_results_db / peds_db are not passed here, so history/peds features might be skipped
-        # specific logic depends on Engineer implementation handling None
+        # 過去成績の統合
+        if hasattr(engineer, 'add_horse_history_features') and horse_results_df is not None:
+            df_processed = engineer.add_horse_history_features(df_processed, horse_results_df)
+            
+        if hasattr(engineer, 'add_course_suitability_features') and horse_results_df is not None:
+            df_processed = engineer.add_course_suitability_features(df_processed, horse_results_df)
+            
+        # 騎手成績の統合
+        if hasattr(engineer, 'add_jockey_features'):
+            if jockey_stats is not None:
+                df_processed, _ = engineer.add_jockey_features(df_processed, jockey_stats)
+            else:
+                df_processed, _ = engineer.add_jockey_features(df_processed)
         
-        # Add basic engineer features
-        # Assuming engineer methods handle missing external DBs gracefully or we skip them
-        if hasattr(engineer, 'add_jockey_features') and jockey_stats is not None:
-             df_processed, _ = engineer.add_jockey_features(df_processed, jockey_stats)
-        elif hasattr(engineer, 'add_jockey_features'):
-             df_processed, _ = engineer.add_jockey_features(df_processed) # Try without stats if supported
-             
+        # 血統データの統合
+        if hasattr(engineer, 'add_pedigree_features') and peds_df is not None:
+            df_processed = engineer.add_pedigree_features(df_processed, peds_df)
+            
+        # オッズ・人気特徴量
         if hasattr(engineer, 'add_odds_features'):
             df_processed = engineer.add_odds_features(df_processed)
+        
+        # トラックバイアス
+        if hasattr(engineer, 'add_bias_features') and bias_map is not None:
+            df_processed = engineer.add_bias_features(df_processed, bias_map)
         
         # 3.4 カテゴリエンコード
         cat_cols = ['性', 'race_type', 'weather', 'ground_state', 'sire', 'dam']

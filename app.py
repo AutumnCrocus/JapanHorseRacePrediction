@@ -31,6 +31,8 @@ ENGINEERS = {}
 DEEPFM_INFERENCE = None
 bias_map = None
 jockey_stats = None
+horse_results = None
+peds = None
 
 # レース予測結果のキャッシュ (メモリ保持)
 # { race_id: { 'df': DataFrame, 'results': list, 'timestamp': datetime } }
@@ -45,10 +47,42 @@ def get_model(model_type='lgbm'):
 
 def load_model(model_type='lgbm'):
     """モデルを読み込み（LGBM または LTR）"""
-    global bias_map, jockey_stats
+    global bias_map, jockey_stats, horse_results, peds
     
     os.makedirs(MODEL_DIR, exist_ok=True)
     
+    # マスターデータのロード (過去成績、血統)
+    from modules.constants import RAW_DATA_DIR, HORSE_RESULTS_FILE, PEDS_FILE
+    if horse_results is None:
+        hr_path = os.path.join(RAW_DATA_DIR, HORSE_RESULTS_FILE)
+        if os.path.exists(hr_path):
+            print(f"過去成績データを読み込み中: {hr_path}")
+            with open(hr_path, 'rb') as f:
+                horse_results = pickle.load(f)
+                
+    if peds is None:
+        peds_path = os.path.join(RAW_DATA_DIR, PEDS_FILE)
+        if os.path.exists(peds_path):
+            print(f"血統データを読み込み中: {peds_path}")
+            with open(peds_path, 'rb') as f:
+                peds = pickle.load(f)
+            # 血統スコアの事前計算 (最適化)
+            if peds is not None and not peds.empty:
+                print("血統スコアを事前計算中...")
+                ped_scores = {
+                    'speed': ['ディープインパクト', 'ロードカナロア', 'サクラバクシンオー', 'ダイワメジャー', 'キングカメハメハ'],
+                    'stamina': ['ハーツクライ', 'オルフェーヴル', 'ゴールドシップ', 'ステイゴールド', 'エピファネイア'],
+                    'dirt': ['ヘニーヒューズ', 'シニスターミニスター', 'ゴールドアリュール', 'パイロ', 'クロフネ']
+                }
+                peds_str = peds.fillna('').astype(str).agg(' '.join, axis=1)
+                for cat, sires in ped_scores.items():
+                    def count_s(text):
+                        c = 0
+                        for s in sires:
+                            if s in text: c += 1
+                        return c
+                    peds[f'peds_score_{cat}'] = peds_str.apply(count_s)
+
     # 共通のメタデータ読み込み
     bias_map_path = os.path.join(MODEL_DIR, 'bias_map.pkl')
     jockey_stats_path = os.path.join(MODEL_DIR, 'jockey_stats.pkl')
@@ -258,7 +292,7 @@ def predict_by_url():
             # データ取得 (Processor/Engineer は選択されたモデルのものを使用)
             proc = PROCESSORS.get(model_type)
             eng = ENGINEERS.get(model_type)
-            df = fetch_and_process_race_data(race_id, proc, eng, bias_map, jockey_stats)
+            df = fetch_and_process_race_data(race_id, proc, eng, bias_map, jockey_stats, horse_results, peds)
         except Exception as e:
             return jsonify({'error': f'データ取得に失敗しました: {str(e)}'}), 500
             
