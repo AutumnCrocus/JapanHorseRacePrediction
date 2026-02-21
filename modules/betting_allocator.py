@@ -1251,21 +1251,29 @@ class BettingAllocator:
     @staticmethod
     def _allocate_box4_sanrenpuku(df_preds: pd.DataFrame, budget: int) -> list:
         """
-        低予算戦略3: 3連複4頭BOX (400円)
+        3連複4頭BOX戦略: 4C3=4点
+        予算(budget)を最大限活用するように1点あたりの金額を調整する。
         """
         df_sorted = df_preds.sort_values('probability', ascending=False)
         if len(df_sorted) < 4: return []
         
         horses = df_sorted.iloc[:4]['horse_number'].astype(int).tolist()
         points = 4
-        cost = 400
         
-        if cost > budget: return []
+        # 1点あたりの金額を計算 (100円単位)
+        unit_amount = (budget // points // 100) * 100
+        if unit_amount < 100: unit_amount = 100
+        
+        total_cost = unit_amount * points
+        
+        if total_cost > budget: return []
         
         return [{
             'type': '3連複', 'method': 'BOX',
             'horses': horses, 'formation': [horses],
-            'amount': cost, 'count': points,
+            'amount': total_cost, 
+            'unit_amount': unit_amount,
+            'count': points,
             'desc': '3連複BOX4'
         }]
 
