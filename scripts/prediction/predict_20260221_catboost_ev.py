@@ -115,10 +115,20 @@ def main():
             continue
             
         try:
+            # 会場名判別
+            venue_map = {"05": "東京", "09": "阪神", "10": "小倉"}
+            venue_code = rid[4:6]
+            venue_name = venue_map.get(venue_code, "不明")
+            race_num = int(rid[-2:])
+            
+            # レース情報の取得
             race_name = df.attrs.get('race_name', '不明')
+            if race_name == '不明':
+                race_name = f"{venue_name}{race_num}R"
+            
             race_data01 = df.attrs.get('race_data01', '')
             race_data02 = df.attrs.get('race_data02', '')
-            print(f"レース名: {race_name} ({race_data01})")
+            print(f"レース名: {race_name} ({venue_name} {race_num}R)")
 
             # 特徴量抽出
             X = pd.DataFrame(index=df.index)
@@ -154,6 +164,8 @@ def main():
                 results.append({
                     'race_id': rid,
                     'race_name': race_name,
+                    'venue_name': venue_name,
+                    'race_num': race_num,
                     'race_data01': race_data01,
                     'race_data02': race_data02,
                     'race_ev': race_ev,
@@ -183,7 +195,8 @@ def main():
         else:
             f.write(f"## 投票候補レース一覧 ({len(results)}件)\n\n")
             for res in results:
-                f.write(f"### {res['race_name']} ({res['race_id']})\n")
+                f.write(f"### {res['venue_name']}{res['race_num']}R ({res['race_id']})\n")
+                f.write(f"- レース名: {res['race_name']}\n")
                 f.write(f"- 開催: {res['race_data01']} / {res['race_data02']}\n")
                 f.write(f"- **平均EV: {res['race_ev']:.2f}**\n\n")
                 
