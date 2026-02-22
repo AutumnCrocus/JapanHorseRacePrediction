@@ -33,26 +33,33 @@ description: 毎週末の運用サイクル（予測実行と成績集計）
 4. **結果の報告（notify_user）**:
    予測生成が完了した旨と、レポートファイル（`reports/prediction_YYYYMMDD_all_models.md` 等）をユーザーに報告します。
 
-## 2. 月曜日の夜（先週末の成績集計と評価）
+## 2. 週末の夜（日別成績集計と累積ファイルの更新）
 
-先週末のレース結果（払戻金など）を取得し、各モデル・戦略の成績をシミュレーションスクリプトを用いて集計・評価します。
+レース当日の結果（払戻金など）を取得し、成績の集計と累積ファイル（CSV等）への保存を行います。対象日（`YYYYMMDD`）ごとに以下の手順を実行します。
 
-1. **レース結果・払戻金データの取得**:
-   先週末の開催日のレース結果および払戻金データを取得します。
-
-   ```bash
-   python scripts/scraper/scrape_payouts_weekend.py
-   # もしくは各日の日付を指定して取得
-   ```
-
-2. **ウィークエンド成績のシミュレーション（集計）**:
-   取得した払戻金データと、金・土に出力した予測データ（`predictions/` または `reports/` に保存されたデータ）を突き合わせ、先週末の全モデル・戦略の回収率・的中率・収益を集計します。
+1. **払戻金データの取得**:
+   レース開催日の配当データを取得します。
 
    ```bash
-   # 先週末の対象日を指定してシミュレーション・比較を実行
-   python scripts/simulation/simulate_weekend_results.py
+   python scripts/scraping/scrape_payouts.py [YYYYMMDD]
    ```
 
-3. **結果サマリーの報告と教訓の記録**:
-   - `reports/weekend_summary_YYYYMMDD.md` のような形で先週末の運用成績を出力し、ユーザーに報告します（`notify_user`でレビューを要求）。
+2. **当日の成績集計**:
+   取得した払戻金データと出力済みの予測データ（例： `prediction_YYYYMMDD_integrated_v2.md`）を突き合わせ、各戦略の回収率などを日次で計算します。
+
+   ```bash
+   python scripts/simulation/verify_integrated_report.py [YYYYMMDD]
+   ```
+
+3. **成績の累積ファイルへの保存とサマリー更新**:
+   当日の成績を過去のデータと統合し、すべてのモデル・戦略の累積成績を更新します。
+
+   ```bash
+   python scripts/simulation/update_cumulative_results.py [YYYYMMDD]
+   ```
+
+4. **結果の記録と共有**:
+   - 出力された各種成績ファイル（`reports/verify_integrated_result_[YYYYMMDD].csv`、`reports/cumulative_model_performance.csv`、`reports/cumulative_model_summary.csv` 等）の内容を確認します。
    - 特に好成績だった、あるいは想定より悪かったモデル・戦略の傾向を分析し、必要に応じて `docs/lessons/` に分析結果や新たな知見を記録します。
+   - `walkthrough.md` 等に結果をまとめ、Gitにコミット・プッシュします。
+   - `notify_user` にてユーザーに累積成績のサマリーや特記事項を報告します。
