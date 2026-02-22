@@ -12,7 +12,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from modules.constants import HEADERS
 
 # ============= 設定 =============
-TARGET_DATE = '20260221'
+if len(sys.argv) > 1:
+    TARGET_DATE = sys.argv[1]
+else:
+    print("Error: 実行時に日付を指定してください。 例: python script.py 20260221")
+    sys.exit(1)
+
 OUTPUT_FILE = f"data/raw/payouts_{TARGET_DATE}.pkl"
 # ===============================
 
