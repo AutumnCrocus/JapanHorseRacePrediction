@@ -11,7 +11,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 # ============= 設定 =============
 TARGET_DATE = '20260221'
-REPORT_FILE = f"reports/prediction_{TARGET_DATE}_integrated_v2.md"
+REPORT_FILE_V2 = f"reports/prediction_{TARGET_DATE}_integrated_v2.md"
+REPORT_FILE_V1 = f"reports/prediction_{TARGET_DATE}_integrated.md"
+REPORT_FILE = REPORT_FILE_V2 if os.path.exists(REPORT_FILE_V2) else REPORT_FILE_V1
 PAYOUT_FILE = f"data/raw/payouts_{TARGET_DATE}.pkl"
 # ===============================
 
@@ -148,6 +150,8 @@ def extract_bets_from_integrated_report(report_path):
                         
                         type_key = 'sanrenpuku'
                         strat_name = f"CatBoost_{method_raw}_sanrenpuku"
+                        if method_raw == 'BOX':
+                            strat_name += f"_{len(horses_list)}"
                         
                         bet_combinations = []
                         if method_raw == 'BOX':
@@ -238,7 +242,9 @@ def main():
     else:
         target_date = TARGET_DATE
 
-    report_path = f"reports/prediction_{target_date}_integrated_v2.md"
+    report_path_v2 = f"reports/prediction_{target_date}_integrated_v2.md"
+    report_path_v1 = f"reports/prediction_{target_date}_integrated.md"
+    report_path = report_path_v2 if os.path.exists(report_path_v2) else report_path_v1
     payout_path = f"data/raw/payouts_{target_date}.pkl"
 
     print(f"Reading Report: {report_path}")

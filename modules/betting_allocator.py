@@ -51,6 +51,8 @@ class BettingAllocator:
             recommendations = BettingAllocator._allocate_box4_sanrenpuku(df_preds, budget)
         elif strategy == 'box5_sanrenpuku':
             recommendations = BettingAllocator._allocate_box5_sanrenpuku(df_preds, budget)
+        elif strategy == 'box6_sanrenpuku':
+            recommendations = BettingAllocator._allocate_box6_sanrenpuku(df_preds, budget)
         elif strategy == 'umaren_nagashi':
             recommendations = BettingAllocator._allocate_umaren_nagashi(df_preds, budget)
         elif strategy == 'sanrenpuku_1axis':
@@ -1280,26 +1282,57 @@ class BettingAllocator:
     @staticmethod
     def _allocate_box5_sanrenpuku(df_preds: pd.DataFrame, budget: int) -> list:
         """
-        三連複5頭BOX戦略 (5C3=10点, 1000円)
-        AI予測上位5頭の組み合わせで高配当を狙う。
-        4頭BOXより広い網を張り、的中率向上を目指す。
+        三連複5頭BOX戦略 (5C3=10点)
+        予算(budget)を最大限活用するように1点あたりの金額を調整する。
         """
         df_sorted = df_preds.sort_values('probability', ascending=False)
-        if len(df_sorted) < 5:
-            return []
+        if len(df_sorted) < 5: return []
         
         horses = df_sorted.iloc[:5]['horse_number'].astype(int).tolist()
-        points = 10  # 5C3 = 10
-        cost = points * 100  # 1000円
+        points = 10
         
-        if cost > budget:
-            return []
+        unit_amount = (budget // points // 100) * 100
+        if unit_amount < 100: unit_amount = 100
+        
+        total_cost = unit_amount * points
+        
+        if total_cost > budget: return []
         
         return [{
             'type': '3連複', 'method': 'BOX',
             'horses': horses, 'formation': [horses],
-            'amount': cost, 'count': points,
+            'amount': total_cost, 
+            'unit_amount': unit_amount,
+            'count': points,
             'desc': '3連複BOX5'
+        }]
+
+    @staticmethod
+    def _allocate_box6_sanrenpuku(df_preds: pd.DataFrame, budget: int) -> list:
+        """
+        三連複6頭BOX戦略 (6C3=20点)
+        予算(budget)を最大限活用するように1点あたりの金額を調整する。
+        """
+        df_sorted = df_preds.sort_values('probability', ascending=False)
+        if len(df_sorted) < 6: return []
+        
+        horses = df_sorted.iloc[:6]['horse_number'].astype(int).tolist()
+        points = 20
+        
+        unit_amount = (budget // points // 100) * 100
+        if unit_amount < 100: unit_amount = 100
+        
+        total_cost = unit_amount * points
+        
+        if total_cost > budget: return []
+        
+        return [{
+            'type': '3連複', 'method': 'BOX',
+            'horses': horses, 'formation': [horses],
+            'amount': total_cost, 
+            'unit_amount': unit_amount,
+            'count': points,
+            'desc': '3連複BOX6'
         }]
 
     @staticmethod
