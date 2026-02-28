@@ -12,7 +12,7 @@ from app import load_model, run_prediction_logic, MODELS
 from modules.scraping import Shutuba, get_race_date_info
 from modules.data_loader import fetch_and_process_race_data
 
-def discover_race_ids(target_date):
+def discover_race_ids(target_date, min_race=1):
     print(f"{target_date} のレースIDを探索中...")
     venues = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"] 
     valid_ids = []
@@ -30,7 +30,7 @@ def discover_race_ids(target_date):
                         target_str = f"{target_date[:4]}年{int(target_date[4:6])}月{int(target_date[6:8])}日"
                         if info.attrs.get('race_name') and target_str in date_info.get('date', ''):
                             print(f"会場 {v} (第{kai}回{day}日目) を発見しました。")
-                            for r_num in range(1, 13):
+                            for r_num in range(min_race, 13):
                                 valid_ids.append(f"{race_id_prefix}{r_num:02d}")
                 except:
                     continue
@@ -40,17 +40,19 @@ def main():
     parser = argparse.ArgumentParser(description="指定日付の全レースをマルチモデルで予想するスクリプト")
     parser.add_argument("--date", type=str, required=True, help="対象日付 (YYYYMMDD)")
     parser.add_argument("--budget", type=int, default=5000, help="1組み合わせあたりの予算上限 (デフォルト: 5000円)")
+    parser.add_argument("--min-race", type=int, default=1, help="対象とする最小レース番号 (デフォルト: 1)")
     args = parser.parse_args()
     
     target_date = args.date
     budget_per_combination = args.budget
+    min_race = args.min_race
     
     models_to_test = ['stacking', 'ltr', 'lgbm']
     strategies_to_test = ['box4_sanrenpuku', 'ranking_anchor', 'wide_nagashi']
     
     print(f"=== {target_date} 全レース予測開始 (マルチモデル/戦略探索) ===")
     
-    race_ids = discover_race_ids(target_date)
+    race_ids = discover_race_ids(target_date, min_race)
     if not race_ids:
         print("有効なレースが見つかりませんでした。")
         return
@@ -122,6 +124,7 @@ def main():
         f.write(f"# {target_date[:4]}/{target_date[4:6]}/{target_date[6:8]} 全レース予想レポート (マルチモデル・戦略)\n\n")
         f.write(f"- 実行日時: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}\n")
         f.write(f"- 予算上限: {budget_per_combination}円 / レース・戦略\n")
+        f.write(f"- 対象レース: {min_race}R以降\n")
         f.write(f"- 使用モデル: {', '.join(models_to_test)}\n")
         f.write(f"- 使用戦略: {', '.join(strategies_to_test)}\n\n")
         
