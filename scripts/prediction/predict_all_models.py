@@ -134,7 +134,10 @@ def main():
                 f.write(f"### モデル: {c['model']} / 戦略: {c['strategy']} (自信度: {c['confidence']})\n")
                 if c['recs']:
                     for rec in c['recs']:
-                        amount_str = f" ({rec['amount']}円)" if 'amount' in rec else ""
+                        unit = rec.get('unit_amount', 0)
+                        total = rec.get('total_amount', 0)
+                        pts = rec.get('points', 1)
+                        amount_str = f" ({pts}点 x {unit}円 = 計{total}円)" if total > 0 else ""
                         f.write(f"- {rec['method']}: {rec['horse_numbers']}{amount_str}\n")
                 f.write("\n")
             f.write("---\n\n")
