@@ -66,6 +66,7 @@ def main():
     parser.add_argument("--ev_threshold", type=float, default=2.5, help="EVの閾値 (デフォルト: 2.5)")
     parser.add_argument("--budget", type=int, default=5000, help="1レースあたりの予算 (デフォルト: 5000)")
     parser.add_argument("--strategy", type=str, default="box4_sanrenpuku", help="買い目戦略 (デフォルト: box4_sanrenpuku)")
+    parser.add_argument("--min-race", type=int, default=1, help="対象とする最小レース番号 (デフォルト: 1)")
     args = parser.parse_args()
 
     TARGET_DATE = args.date
@@ -93,14 +94,16 @@ def main():
         print("有効なレースが見つかりませんでした。")
         return
 
-    # 後半戦（6R以降）に絞る
-    race_ids = [rid for rid in all_race_ids if int(rid[-2:]) >= 6]
+    MIN_RACE = args.min_race
+
+    # min_race以降に絞る
+    race_ids = [rid for rid in all_race_ids if int(rid[-2:]) >= MIN_RACE]
     
     if not race_ids:
-        print("対象レース(6R以降)が見つかりませんでした。")
+        print(f"対象レース({MIN_RACE}R以降)が見つかりませんでした。")
         return
     
-    print(f"対象レース数 (6R以降): {len(race_ids)}件")
+    print(f"対象レース数 ({MIN_RACE}R以降): {len(race_ids)}件")
 
     results = []
     from flask import Flask
@@ -215,7 +218,11 @@ def main():
                 
                 f.write("\n#### 買い目推奨:\n")
                 for rec in res['recs']:
-                    f.write(f"- **{rec['method']}**: {rec['horse_numbers']} ({rec['total_amount']}円) - {rec['reason']}\n")
+                    unit = rec.get('unit_amount', 100)
+                    total = rec.get('total_amount', 0)
+                    pts = rec.get('points', 1)
+                    amount_str = f" ({pts}点 x {unit}円 = 計{total}円)" if total > 0 else ""
+                    f.write(f"- **{rec['method']}**: {rec['horse_numbers']}{amount_str} - {rec['reason']}\n")
                 
                 f.write("\n---\n\n")
     
