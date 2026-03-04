@@ -98,8 +98,9 @@ def load_model(model_type='lgbm'):
             jockey_stats = None
 
     if model_type == 'lgbm':
-        # 従来の LGBM モデル
-        latest_model_dir = os.path.join(MODEL_DIR, 'historical_2010_2026')
+        # LGBM モデル (2025-2026データ追加版: 2026/03/05 再学習)
+        # 旧: historical_2010_2026
+        latest_model_dir = os.path.join(MODEL_DIR, 'historical_lgbm_2010_2026')
         latest_model_path = os.path.join(latest_model_dir, 'model.pkl')
         
         if os.path.exists(latest_model_path):
@@ -129,8 +130,9 @@ def load_model(model_type='lgbm'):
             m.load(stacking_model_path)
             MODELS['stacking'] = m
             
-            # ProcessorとEngineerはLGBM版を使用
-            latest_model_dir = os.path.join(MODEL_DIR, 'historical_2010_2026')
+            # ProcessorとEngineerはLGBM版を使用 (2026/03/05 更新)
+            # 旧: historical_2010_2026
+            latest_model_dir = os.path.join(MODEL_DIR, 'historical_lgbm_2010_2026')
             proc_path = os.path.join(latest_model_dir, 'processor.pkl')
             eng_path = os.path.join(latest_model_dir, 'engineer.pkl')
             if os.path.exists(proc_path):
@@ -154,8 +156,9 @@ def load_model(model_type='lgbm'):
             print("Stackingモデルのロード完了。")
 
     elif model_type == 'ltr':
-        # 新しい LTR モデル
-        ltr_model_dir = os.path.join(MODEL_DIR, 'standalone_ranking')
+        # LTR モデル (2025-2026データ追加版: 2026/03/05 再学習)
+        # 旧: standalone_ranking
+        ltr_model_dir = os.path.join(MODEL_DIR, 'historical_ltr_2010_2026')
         ltr_model_path = os.path.join(ltr_model_dir, 'ranking_model.pkl')
         
         if os.path.exists(ltr_model_path):
@@ -179,9 +182,9 @@ def load_model(model_type='lgbm'):
 
             MODELS['ltr'] = RankingWrapper(data)
             
-            # ProcessorとEngineer (LGBMと共有または独自。一旦LGBMのものを流用)
-            # スタンドアロン作成時に上位モデルと構成を合わせているため、LGBM版が使える
-            latest_model_dir = os.path.join(MODEL_DIR, 'historical_2010_2026')
+            # ProcessorとEngineer (LGBMと共有。2026/03/05 更新)
+            # 旧: historical_2010_2026
+            latest_model_dir = os.path.join(MODEL_DIR, 'historical_lgbm_2010_2026')
             proc_path = os.path.join(latest_model_dir, 'processor.pkl')
             eng_path = os.path.join(latest_model_dir, 'engineer.pkl')
             if os.path.exists(proc_path):

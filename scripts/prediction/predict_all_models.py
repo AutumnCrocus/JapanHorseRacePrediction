@@ -41,16 +41,29 @@ def main():
     parser.add_argument("--date", type=str, required=True, help="対象日付 (YYYYMMDD)")
     parser.add_argument("--budget", type=int, default=5000, help="1組み合わせあたりの予算上限 (デフォルト: 5000円)")
     parser.add_argument("--min-race", type=int, default=1, help="対象とする最小レース番号 (デフォルト: 1)")
+    parser.add_argument(
+        "--focus-ltr-wide", "-f",
+        action="store_true",
+        help="LTR×ワイド流し集中モード: ltrモデル+wide_nagashi戦略のみで予測する"
+    )
     args = parser.parse_args()
     
     target_date = args.date
     budget_per_combination = args.budget
     min_race = args.min_race
+    focus_ltr_wide = args.focus_ltr_wide
+
+    if focus_ltr_wide:
+        models_to_test = ['ltr']
+        strategies_to_test = ['wide_nagashi']
+        mode_label = "LTR×ワイド流し集中モード"
+        print(f"!!! {mode_label} で実行します (ltr / wide_nagashi のみ) !!!")
+    else:
+        models_to_test = ['stacking', 'ltr', 'lgbm']
+        strategies_to_test = ['box4_sanrenpuku', 'ranking_anchor', 'wide_nagashi']
+        mode_label = "マルチモデル・戦略モード"
     
-    models_to_test = ['stacking', 'ltr', 'lgbm']
-    strategies_to_test = ['box4_sanrenpuku', 'ranking_anchor', 'wide_nagashi']
-    
-    print(f"=== {target_date} 全レース予測開始 (マルチモデル/戦略探索) ===")
+    print(f"=== {target_date} 全レース予測開始 ({mode_label}) ===")
     
     race_ids = discover_race_ids(target_date, min_race)
     if not race_ids:
