@@ -83,7 +83,7 @@ def check_error_popup(driver):
         pass
     return None
 
-def parse_report(report_path, target_type='catboost'):
+def parse_report(report_path, target_type='catboost', target_model='ltr', target_strategy='box4_sanrenpuku'):
     bets_by_race = {}
     
     if not os.path.exists(report_path):
@@ -138,7 +138,7 @@ def parse_report(report_path, target_type='catboost'):
                     'total_amount': amount,
                     'raw_line': line
                 })
-        else:
+        elif target_type == 'existing':
             # 既存モデル (統合レポートの既存セクション)
             existing_sec = re.search(r'### 【既存モデルの推奨買い目】(.*?)(?:### 【CatBoost|\Z)', race_block, re.DOTALL)
             if existing_sec:
@@ -166,6 +166,40 @@ def parse_report(report_path, target_type='catboost'):
                                     })
                             
                             # Note: 他の方式（流しなど）の実装が必要な場合はここに追加する
+
+        elif target_type == 'all_models':
+            # all_modelsフォーマットの処理: 指定されたモデル・戦略ブロックを探す
+            pattern = rf'### モデル: {target_model} / 戦略: {target_strategy}.*?\n(.*?)(?:###|\Z)'
+            match = re.search(pattern, race_block, re.DOTALL)
+            if match:
+                lines = match.group(1).strip().split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if not line.startswith('- '): continue
+                    
+                    # 例: - BOX: [8, 11, 4, 3] (4点 x 500円 = 計2000円)
+                    m_bet = re.search(r'- ([^:]+): \[([\d, ]+)\] \(\d+点 x \d+円 = 計(\d+)円\)', line)
+                    if m_bet:
+                        method_raw = m_bet.group(1).strip()
+                        horses_str = m_bet.group(2)
+                        total_amount = int(m_bet.group(3))
+                        horses_list = [h.strip() for h in horses_str.split(',')]
+                        
+                        bet_type = '3連複'
+                        if 'sanrenpuku' in target_strategy:
+                            bet_type = '3連複'
+                        elif 'wide' in target_strategy:
+                            bet_type = 'ワイド'
+                            
+                        method = 'BOX' if method_raw == 'BOX' else method_raw
+                        
+                        bets.append({
+                            'type': bet_type,
+                            'method': method,
+                            'horses': horses_list,
+                            'total_amount': total_amount,
+                            'raw_line': line
+                        })
 
         if bets:
             bets_by_race[race_id] = bets
@@ -442,13 +476,15 @@ def perform_betting(driver, race_id, bets):
 def main():
     parser = argparse.ArgumentParser(description="指定された予想レポートから俺プロへ自動投票するスクリプト")
     parser.add_argument("--report", type=str, required=True, help="対象レポートファイルのパス")
-    parser.add_argument("--target_type", type=str, default="catboost", choices=["catboost", "existing"], help="対象とする買い目の抽出方法 (デフォルト: catboost)")
+    parser.add_argument("--target_type", type=str, default="catboost", choices=["catboost", "existing", "all_models"], help="対象とする買い目の抽出方法")
+    parser.add_argument("--target_model", type=str, default="ltr", help="all_modelsフォーマット時の対象モデル (例: ltr)")
+    parser.add_argument("--target_strategy", type=str, default="box4_sanrenpuku", help="all_modelsフォーマット時の対象戦略 (例: box4_sanrenpuku)")
     args = parser.parse_args()
 
-    logger.info(f'=== 俺プロ自動登録開始 (Target: {args.target_type}) ===')
+    logger.info(f'=== 俺プロ自動登録開始 (Target: {args.target_type}, Model: {args.target_model}, Strategy: {args.target_strategy}) ===')
     logger.info(f'Report: {args.report}')
 
-    bets_by_race = parse_report(args.report, args.target_type)
+    bets_by_race = parse_report(args.report, args.target_type, args.target_model, args.target_strategy)
     if not bets_by_race:
         logger.error("買い目が見つかりませんでした。")
         return
