@@ -32,8 +32,8 @@ def scan_race_ids_brute_force(date_str):
     target_date_jp = f"{year}年{month}月{day}日"
     print(f"Target Date: {target_date_jp}")
     
-    # 探索範囲 (東京05, 阪神09, 小倉10 等)
-    places = [5, 9, 10]
+    # 探索範囲を全国10か所に拡大 (札幌01~小倉10)
+    places = range(1, 11)
     kais = range(1, 4)    # 1~3回
     days = range(1, 13)   # 1~12日目
     
